@@ -1,0 +1,186 @@
+{
+  "case_id": "CASE_133",
+  "created_at": "2026-03-31T18:37:10.354336",
+  "source": "abaqus_auto",
+  "task": {
+    "task_id": "TASK_6",
+    "application": "机翼下蒙皮壁板",
+    "load_conditions": {
+      "type": "axial_compression",
+      "label": "单轴压缩",
+      "Nx_kN_per_m": 580.0,
+      "Nxy_kN_per_m": 0.0
+    },
+    "boundary_conditions": {
+      "type": "SSSS",
+      "label": "四边简支（SSSS）",
+      "description": "四条边均按简支处理，适合基准线性屈曲评估。",
+      "simply_supported_edges": [
+        "X0",
+        "X1",
+        "Y0",
+        "Y1"
+      ],
+      "clamped_edges": []
+    },
+    "geometry_envelope": {
+      "panel_length_mm": [
+        600.0,
+        900.0
+      ],
+      "panel_width_mm": [
+        480.0,
+        780.0
+      ],
+      "max_stiffener_height_mm": 42.0
+    },
+    "material_system": {
+      "name": "AS4/3501-6",
+      "density_kg_per_m3": 1580,
+      "E1_GPa": 135,
+      "E2_GPa": 9.8,
+      "G12_GPa": 5.2,
+      "nu12": 0.3
+    },
+    "layup_constraints": {
+      "allowed_angles": [
+        0,
+        45,
+        -45,
+        90
+      ],
+      "symmetric": true,
+      "balanced": true,
+      "min_ratio_per_angle": 0.1
+    },
+    "stiffener_type": "T",
+    "design_targets": {
+      "BLF_min": 1.2,
+      "primary_objective": "最小重量"
+    },
+    "screening_preferences": {
+      "top_k_candidates": 5
+    },
+    "candidate_generation_preferences": {
+      "total_candidates": 10
+    }
+  },
+  "design": {
+    "candidate_id": "C133",
+    "task_id": "TASK_6",
+    "source": "DOE",
+    "stiffener_type": "T",
+    "geometry": {
+      "panel_length_mm": 848.056,
+      "panel_width_mm": 483.885,
+      "skin_thickness_mm": 1.834,
+      "pitch_mm": 120.092,
+      "stiffener_height_mm": 31.728,
+      "web_thickness_mm": 1.497,
+      "flange_width_mm": 17.76,
+      "flange_thickness_mm": 2.742
+    },
+    "layup": {
+      "template_name": "QI_14",
+      "skin_layup": "[45/-45/0/90/0/-45/45]s",
+      "skin_f0": 0.286,
+      "skin_f45": 0.571,
+      "skin_f90": 0.143,
+      "ply_count": 14
+    },
+    "material_system": {
+      "name": "AS4/3501-6",
+      "density_kg_per_m3": 1580,
+      "E1_GPa": 135,
+      "E2_GPa": 9.8,
+      "G12_GPa": 5.2,
+      "nu12": 0.3
+    },
+    "load_conditions": {
+      "type": "axial_compression",
+      "label": "单轴压缩",
+      "Nx_kN_per_m": 580.0,
+      "Nxy_kN_per_m": 0.0
+    },
+    "boundary_conditions": {
+      "type": "SSSS",
+      "label": "四边简支（SSSS）",
+      "description": "四条边均按简支处理，适合基准线性屈曲评估。",
+      "simply_supported_edges": [
+        "X0",
+        "X1",
+        "Y0",
+        "Y1"
+      ],
+      "clamped_edges": []
+    },
+    "design_targets": {
+      "BLF_min": 1.2,
+      "primary_objective": "最小重量"
+    },
+    "rule_check": {
+      "is_valid": true,
+      "errors": [],
+      "suggestions": [],
+      "details": {
+        "panel_length_mm_ok": true,
+        "panel_width_mm_ok": true,
+        "skin_thickness_mm_ok": true,
+        "pitch_mm_ok": true,
+        "stiffener_height_mm_ok": true,
+        "web_thickness_mm_ok": true,
+        "flange_width_mm_ok": true,
+        "flange_thickness_mm_ok": true,
+        "symmetric": true,
+        "balanced": true,
+        "min_ratio_ok": true,
+        "height_pitch_ratio_ok": true,
+        "height_thickness_ratio_ok": true,
+        "solver_skin_thickness_ok": true,
+        "solver_pitch_ok": true,
+        "solver_height_ok": true,
+        "solver_flange_width_ok": true,
+        "solver_height_pitch_band_ok": true
+      }
+    },
+    "surrogate_BLF": null,
+    "surrogate_weight": null,
+    "rank_score": null,
+    "rationale": "DOE 拉丁超立方探索生成 | 材料=AS4/3501-6 | 铺层=QI_14",
+    "origin_summary": "",
+    "screening_summary": null,
+    "selection_reason": null,
+    "display_name": "C133",
+    "persistent_candidate_id": null
+  },
+  "abaqus_results": {
+    "candidate_id": "C133",
+    "status": "success",
+    "retry_count": 0,
+    "BLF_global": 0.089623,
+    "BLF_local": 0.09123,
+    "failure_mode": "整体屈曲",
+    "max_displacement_mm": 1.0,
+    "weight_kg_per_m2": 4.154115,
+    "verdict": "不通过",
+    "abaqus_odb": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C133\\C133.odb",
+    "abaqus_inp": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C133\\C133.inp",
+    "visualization_json": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C133\\C133_mode1.json",
+    "artifact_dir": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C133",
+    "error_type": null,
+    "error_log": null,
+    "mode_eigenvalues": [
+      0.089623,
+      0.09123,
+      0.10371,
+      0.10506,
+      0.1079
+    ],
+    "load_summary": "单轴压缩：Nx=580.0 kN/m",
+    "boundary_summary": "四边简支（SSSS）",
+    "diagnosis_summary": "历史结果已迁移，当前结论为“不通过”。"
+  },
+  "verdict": "不通过",
+  "surrogate_BLF_error_pct": null,
+  "fem_agent_retry_count": 0
+}

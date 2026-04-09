@@ -1,0 +1,66 @@
+{
+  "tasks": {
+    "updated": 36,
+    "skipped": 0,
+    "failed": 0
+  },
+  "cases": {
+    "updated": 322,
+    "skipped": 0,
+    "failed": 0
+  },
+  "case_library": {
+    "updated": 41,
+    "skipped": 0,
+    "failed": 0
+  },
+  "io": {
+    "updated": 644,
+    "skipped": 0,
+    "failed": 0
+  },
+  "abaqus_runs": {
+    "updated": 322,
+    "skipped": 0,
+    "failed": 0
+  },
+  "rag": {
+    "indexed_records": 41
+  },
+  "surrogate": {
+    "selected_model": "rf",
+    "rf": {
+      "mape": 0.12161989441565263,
+      "rmse": 0.09375553527823058
+    },
+    "mlp": {
+      "mape": 0.1457329997353162,
+      "rmse": 0.09394036987752036
+    },
+    "feature_order": [
+      "panel_length_mm",
+      "panel_width_mm",
+      "skin_thickness_mm",
+      "pitch_mm",
+      "stiffener_height_mm",
+      "web_thickness_mm",
+      "flange_width_mm",
+      "flange_thickness_mm",
+      "skin_f0",
+      "skin_f45",
+      "skin_f90",
+      "ply_count",
+      "Nx_kN_per_m",
+      "Nxy_kN_per_m",
+      "load_case_code",
+      "boundary_condition_code",
+      "density_kg_per_m3",
+      "E1_GPa",
+      "E2_GPa",
+      "G12_GPa",
+      "nu12"
+    ],
+    "training_size": 317,
+    "rf_target_transform": "log1p"
+  }
+}

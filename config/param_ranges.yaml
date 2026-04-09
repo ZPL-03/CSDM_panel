@@ -1,0 +1,43 @@
+panel_length_mm:
+  min: 600
+  max: 900
+panel_width_mm:
+  min: 480
+  max: 780
+skin_thickness_mm:
+  min: 1.2
+  max: 4.0
+pitch_mm:
+  min: 85
+  max: 150
+stiffener_height_mm:
+  min: 16
+  max: 42
+web_thickness_mm:
+  min: 1.0
+  max: 3.2
+flange_width_mm:
+  min: 12
+  max: 24
+flange_thickness_mm:
+  min: 1.0
+  max: 3.2
+Nx_kN_per_m:
+  min: 120
+  max: 1200
+layup:
+  allowed_angles: [0, 45, -45, 90]
+  min_ratio_per_angle: 0.1
+  symmetric: true
+  balanced: true
+layup_templates:
+  - name: QI_14
+    skin_layup: "[45/-45/0/90/0/-45/45]s"
+  - name: ORTHO_12
+    skin_layup: "[0/45/-45/0/90/0]s"
+  - name: SHEAR_14
+    skin_layup: "[45/0/-45/90/-45/0/45]s"
+  - name: AXIAL_16
+    skin_layup: "[0/45/0/-45/90/0/-45/45]s"
+  - name: BALANCED_18
+    skin_layup: "[45/-45/0/90/0/45/-45/0/90]s"

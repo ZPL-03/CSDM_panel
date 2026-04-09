@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cssm/task.schema.json",
+  "title": "CSDM Task Schema",
+  "type": "object",
+  "required": [
+    "task_id",
+    "application",
+    "load_conditions",
+    "boundary_conditions",
+    "geometry_envelope",
+    "material_system",
+    "layup_constraints",
+    "stiffener_type",
+    "design_targets"
+  ],
+  "properties": {
+    "task_id": {
+      "type": "string",
+      "pattern": "^TASK_[0-9]+$"
+    },
+    "application": {
+      "type": "string",
+      "minLength": 1
+    },
+    "load_conditions": {
+      "type": "object",
+      "required": ["type", "label", "Nx_kN_per_m", "Nxy_kN_per_m"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["axial_compression", "in_plane_shear", "compression_shear"]
+        },
+        "label": {
+          "type": "string"
+        },
+        "Nx_kN_per_m": {
+          "type": "number",
+          "minimum": 0
+        },
+        "Nxy_kN_per_m": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "boundary_conditions": {
+      "type": "object",
+      "required": ["type", "label", "simply_supported_edges", "clamped_edges"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["SSSS", "CCCC", "SSCC"]
+        },
+        "label": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "simply_supported_edges": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "clamped_edges": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
+      },
+      "additionalProperties": true
+    },
+    "geometry_envelope": {
+      "type": "object",
+      "required": ["panel_length_mm", "panel_width_mm", "max_stiffener_height_mm"],
+      "properties": {
+        "panel_length_mm": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {"type": "number"}
+        },
+        "panel_width_mm": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "items": {"type": "number"}
+        },
+        "max_stiffener_height_mm": {
+          "type": "number",
+          "minimum": 0
+        }
+      },
+      "additionalProperties": true
+    },
+    "candidate_generation_preferences": {
+      "type": "object",
+      "properties": {
+        "total_candidates": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 60
+        }
+      },
+      "additionalProperties": true
+    },
+    "screening_preferences": {
+      "type": "object",
+      "properties": {
+        "top_k_candidates": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 30
+        }
+      },
+      "additionalProperties": true
+    },
+    "material_system": {
+      "type": "object",
+      "required": ["name", "E1_GPa"],
+      "properties": {
+        "name": {"type": "string"},
+        "E1_GPa": {"type": "number"}
+      },
+      "additionalProperties": true
+    },
+    "layup_constraints": {
+      "type": "object",
+      "required": ["allowed_angles", "symmetric", "balanced", "min_ratio_per_angle"],
+      "properties": {
+        "allowed_angles": {
+          "type": "array",
+          "items": {"type": "number"}
+        },
+        "symmetric": {"type": "boolean"},
+        "balanced": {"type": "boolean"},
+        "min_ratio_per_angle": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": true
+    },
+    "stiffener_type": {
+      "type": "string",
+      "enum": ["T"]
+    },
+    "design_targets": {
+      "type": "object",
+      "required": ["BLF_min", "primary_objective"],
+      "properties": {
+        "BLF_min": {"type": "number", "minimum": 0},
+        "primary_objective": {"type": "string"}
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

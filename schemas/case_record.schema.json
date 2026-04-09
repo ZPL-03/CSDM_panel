@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cssm/case_record.schema.json",
+  "title": "CSDM Case Record Schema",
+  "type": "object",
+  "required": [
+    "case_id",
+    "created_at",
+    "source",
+    "task",
+    "design",
+    "abaqus_results",
+    "verdict"
+  ],
+  "properties": {
+    "case_id": {"type": "string"},
+    "created_at": {"type": "string"},
+    "source": {"type": "string"},
+    "task": {"type": "object"},
+    "design": {"type": "object"},
+    "abaqus_results": {"type": "object"},
+    "verdict": {"type": "string"},
+    "surrogate_BLF_error_pct": {"type": ["number", "null"]},
+    "fem_agent_retry_count": {"type": "integer", "minimum": 0}
+  },
+  "additionalProperties": true
+}

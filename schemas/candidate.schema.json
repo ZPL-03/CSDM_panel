@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cssm/candidate.schema.json",
+  "title": "CSDM Candidate Schema",
+  "type": "object",
+  "required": [
+    "candidate_id",
+    "task_id",
+    "source",
+    "stiffener_type",
+    "geometry",
+    "layup"
+  ],
+  "properties": {
+    "candidate_id": {
+      "type": "string",
+      "pattern": "^(C[0-9]+|TMP_[0-9]+)$"
+    },
+    "task_id": {"type": "string"},
+    "source": {
+      "type": "string",
+      "enum": ["LLM", "DOE", "CASE_TRANSFER", "MANUAL"]
+    },
+    "stiffener_type": {
+      "type": "string",
+      "enum": ["T"]
+    },
+    "geometry": {
+      "type": "object",
+      "required": [
+        "panel_length_mm",
+        "panel_width_mm",
+        "skin_thickness_mm",
+        "pitch_mm",
+        "stiffener_height_mm",
+        "web_thickness_mm",
+        "flange_width_mm",
+        "flange_thickness_mm"
+      ],
+      "properties": {
+        "panel_length_mm": {"type": "number"},
+        "panel_width_mm": {"type": "number"},
+        "skin_thickness_mm": {"type": "number"},
+        "pitch_mm": {"type": "number"},
+        "stiffener_height_mm": {"type": "number"},
+        "web_thickness_mm": {"type": "number"},
+        "flange_width_mm": {"type": "number"},
+        "flange_thickness_mm": {"type": "number"}
+      },
+      "additionalProperties": true
+    },
+    "layup": {
+      "type": "object",
+      "required": ["skin_layup", "skin_f0", "skin_f45", "skin_f90"],
+      "properties": {
+        "skin_layup": {"type": "string"},
+        "skin_f0": {"type": "number"},
+        "skin_f45": {"type": "number"},
+        "skin_f90": {"type": "number"}
+      },
+      "additionalProperties": true
+    },
+    "load_conditions": {
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["axial_compression", "in_plane_shear", "compression_shear", "单轴压缩", "面内剪切", "压剪组合"]
+        },
+        "label": {"type": "string"},
+        "Nx_kN_per_m": {"type": "number"},
+        "Nxy_kN_per_m": {"type": "number"}
+      },
+      "additionalProperties": true
+    },
+    "boundary_conditions": {
+      "type": ["object", "string"],
+      "properties": {
+        "type": {"type": "string", "enum": ["SSSS", "CCCC", "SSCC"]},
+        "label": {"type": "string"},
+        "description": {"type": "string"},
+        "simply_supported_edges": {"type": "array"},
+        "clamped_edges": {"type": "array"}
+      },
+      "additionalProperties": true
+    },
+    "material_system": {
+      "type": "object"
+    },
+    "design_targets": {
+      "type": "object"
+    },
+    "rule_check": {
+      "type": "object"
+    },
+    "surrogate_BLF": {
+      "type": ["number", "null"]
+    },
+    "surrogate_weight": {
+      "type": ["number", "null"]
+    },
+    "rank_score": {
+      "type": ["number", "null"]
+    },
+    "rationale": {
+      "type": "string"
+    },
+    "origin_summary": {"type": ["string", "null"]},
+    "screening_summary": {"type": ["string", "null"]},
+    "selection_reason": {"type": ["string", "null"]},
+    "display_name": {"type": ["string", "null"]},
+    "persistent_candidate_id": {"type": ["string", "null"]}
+  },
+  "additionalProperties": true
+}

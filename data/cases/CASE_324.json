@@ -1,0 +1,188 @@
+{
+  "case_id": "CASE_324",
+  "created_at": "2026-04-03T08:01:37.633485",
+  "source": "abaqus_auto",
+  "task": {
+    "task_id": "TASK_42",
+    "application": "机翼下蒙皮壁板",
+    "load_conditions": {
+      "type": "compression_shear",
+      "label": "压剪组合",
+      "Nx_kN_per_m": 900.0,
+      "Nxy_kN_per_m": 180.0
+    },
+    "boundary_conditions": {
+      "type": "SSCC",
+      "label": "X 向简支 + Y 向固支（SSCC）",
+      "description": "X0/X1 两边简支，Y0/Y1 两边固支。",
+      "simply_supported_edges": [
+        "X0",
+        "X1"
+      ],
+      "clamped_edges": [
+        "Y0",
+        "Y1"
+      ]
+    },
+    "geometry_envelope": {
+      "panel_length_mm": [
+        600.0,
+        800.0
+      ],
+      "panel_width_mm": [
+        500.0,
+        700.0
+      ],
+      "max_stiffener_height_mm": 50.0
+    },
+    "material_system": {
+      "name": "T300/5208",
+      "density_kg_per_m3": 1600,
+      "E1_GPa": 181,
+      "E2_GPa": 10.3,
+      "G12_GPa": 7.17,
+      "nu12": 0.28,
+      "material_key": "T300_5208",
+      "is_user_specified": false
+    },
+    "layup_constraints": {
+      "allowed_angles": [
+        0,
+        45,
+        -45,
+        90
+      ],
+      "symmetric": true,
+      "balanced": true,
+      "min_ratio_per_angle": 0.1
+    },
+    "stiffener_type": "T",
+    "design_targets": {
+      "BLF_min": 1.35,
+      "primary_objective": "最小重量"
+    }
+  },
+  "design": {
+    "candidate_id": "C324",
+    "task_id": "TASK_42",
+    "source": "DOE",
+    "stiffener_type": "T",
+    "geometry": {
+      "panel_length_mm": 782.948,
+      "panel_width_mm": 706.355,
+      "skin_thickness_mm": 1.623,
+      "pitch_mm": 128.665,
+      "stiffener_height_mm": 18.029,
+      "web_thickness_mm": 1.895,
+      "flange_width_mm": 19.431,
+      "flange_thickness_mm": 1.028
+    },
+    "layup": {
+      "template_name": "AXIAL_16",
+      "skin_layup": "[0/45/0/-45/90/0/-45/45]s",
+      "skin_f0": 0.375,
+      "skin_f45": 0.5,
+      "skin_f90": 0.125,
+      "ply_count": 16
+    },
+    "material_system": {
+      "name": "T700/Epoxy",
+      "density_kg_per_m3": 1550.0,
+      "E1_GPa": 145.0,
+      "E2_GPa": 8.9,
+      "G12_GPa": 4.9,
+      "nu12": 0.31,
+      "material_key": "T700_Epoxy"
+    },
+    "load_conditions": {
+      "type": "compression_shear",
+      "label": "压剪组合",
+      "Nx_kN_per_m": 900.0,
+      "Nxy_kN_per_m": 180.0
+    },
+    "boundary_conditions": {
+      "type": "SSCC",
+      "label": "X 向简支 + Y 向固支（SSCC）",
+      "description": "X0/X1 两边简支，Y0/Y1 两边固支。",
+      "simply_supported_edges": [
+        "X0",
+        "X1"
+      ],
+      "clamped_edges": [
+        "Y0",
+        "Y1"
+      ]
+    },
+    "design_targets": {
+      "BLF_min": 1.35,
+      "primary_objective": "最小重量"
+    },
+    "rule_check": {
+      "is_valid": true,
+      "errors": [],
+      "suggestions": [],
+      "details": {
+        "panel_length_mm_ok": true,
+        "panel_width_mm_ok": true,
+        "skin_thickness_mm_ok": true,
+        "pitch_mm_ok": true,
+        "stiffener_height_mm_ok": true,
+        "web_thickness_mm_ok": true,
+        "flange_width_mm_ok": true,
+        "flange_thickness_mm_ok": true,
+        "symmetric": true,
+        "balanced": true,
+        "min_ratio_ok": true,
+        "height_pitch_ratio_ok": true,
+        "height_thickness_ratio_ok": true,
+        "solver_skin_thickness_ok": true,
+        "solver_pitch_ok": true,
+        "solver_height_ok": true,
+        "solver_flange_width_ok": true,
+        "solver_height_pitch_band_ok": true
+      }
+    },
+    "surrogate_BLF": 0.1,
+    "surrogate_weight": 3.11,
+    "rank_score": -0.1488,
+    "rationale": "DOE 拉丁超立方探索生成 | 材料=T700/Epoxy | 铺层=AXIAL_16",
+    "origin_summary": "",
+    "screening_summary": "代理预测 BLF=0.1，面密度=3.11 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.1488。",
+    "selection_reason": "Top-2 入选：代理预测 BLF=0.1，面密度=3.11 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.1488。 当前排序靠前，适合优先进入有限元校核。",
+    "display_name": "候选样本20",
+    "persistent_candidate_id": "C324"
+  },
+  "abaqus_results": {
+    "candidate_id": "C324",
+    "status": "success",
+    "retry_count": 0,
+    "BLF_global": 0.021128,
+    "BLF_local": 0.028982,
+    "failure_mode": "整体屈曲",
+    "max_displacement_mm": 1.0,
+    "weight_kg_per_m2": 3.109665,
+    "verdict": "不通过",
+    "abaqus_odb": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C324\\C324.odb",
+    "abaqus_inp": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C324\\C324.inp",
+    "visualization_json": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C324\\C324_mode1.json",
+    "artifact_dir": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C324",
+    "error_type": null,
+    "error_log": null,
+    "mode_eigenvalues": [
+      0.021128,
+      0.028982,
+      0.031874,
+      0.033385,
+      0.03556,
+      0.039114,
+      0.041064,
+      0.042916
+    ],
+    "load_summary": "压剪组合：Nx=900.0 kN/m，Nxy=180.0 kN/m",
+    "boundary_summary": "X 向简支 + Y 向固支（SSCC）",
+    "diagnosis_summary": "线性屈曲校核已完成，当前结论为“不通过”。"
+  },
+  "verdict": "不通过",
+  "surrogate_BLF_error_pct": 373.306,
+  "fem_agent_retry_count": 0
+}

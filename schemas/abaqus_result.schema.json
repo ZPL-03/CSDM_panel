@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "cssm/abaqus_result.schema.json",
+  "title": "CSDM Abaqus Result Schema",
+  "type": "object",
+  "required": [
+    "candidate_id",
+    "status",
+    "retry_count"
+  ],
+  "properties": {
+    "candidate_id": {"type": "string"},
+    "status": {
+      "type": "string",
+      "enum": ["success", "failed", "max_retries_exceeded"]
+    },
+    "retry_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "BLF_global": {"type": ["number", "null"]},
+    "BLF_local": {"type": ["number", "null"]},
+    "failure_mode": {"type": ["string", "null"]},
+    "max_displacement_mm": {"type": ["number", "null"]},
+    "weight_kg_per_m2": {"type": ["number", "null"]},
+    "verdict": {"type": ["string", "null"]},
+    "abaqus_odb": {"type": ["string", "null"]},
+    "abaqus_inp": {"type": ["string", "null"]},
+    "visualization_json": {"type": ["string", "null"]},
+    "artifact_dir": {"type": ["string", "null"]},
+    "error_type": {"type": ["string", "null"]},
+    "error_log": {
+      "type": ["object", "string", "null"]
+    },
+    "mode_eigenvalues": {
+      "type": ["array", "null"],
+      "items": {"type": "number"}
+    },
+    "load_summary": {"type": ["string", "null"]},
+    "boundary_summary": {"type": ["string", "null"]},
+    "diagnosis_summary": {"type": ["string", "null"]}
+  },
+  "additionalProperties": true
+}

@@ -1,0 +1,56 @@
+project:
+  name: CSDM
+  timezone: Asia/Shanghai
+  default_language: zh-CN
+
+paths:
+  data_dir: data
+  io_dir: data/io
+  results_dir: data/results
+  cases_dir: data/cases
+  abaqus_runs_dir: data/abaqus_runs
+  knowledge_dir: knowledge
+  chroma_dir: knowledge/chroma_db
+  case_library_dir: knowledge/case_library
+  models_dir: models
+
+abaqus:
+  command: abaqus
+  cae_args: "cae noGUI="
+  python_args: "python"
+  max_retries: 3
+  job_timeout_seconds: 1800
+  poll_interval_seconds: 5
+  cleanup_patterns:
+    - "*.lck"
+    - "*.023"
+    - "*.com"
+  use_mock_when_unavailable: true
+
+pipeline:
+  top_k: 5
+  llm_candidates: 4
+  case_transfer_candidates: 2
+  doe_candidates: 4
+  min_case_records_for_retrain: 50
+  random_seed: 42
+  screening_score:
+    blf_weight: 1.0
+    weight_penalty: 0.08
+
+rag:
+  embedding_model: BAAI/bge-m3
+  embedding_cache_dir: models/embedding_cache
+  local_files_only: true
+  use_hash_embedding_only: false
+  allow_hash_fallback: true
+
+conversation:
+  confirmation_steps:
+    - screen_candidates
+    - fem_evaluation
+    - export_report
+
+report:
+  output_markdown: data/results/latest_report.md
+  output_pdf: data/results/latest_report.pdf

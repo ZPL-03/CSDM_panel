@@ -1,0 +1,40 @@
+T300_5208:
+  display_name: T300/5208
+  density_kg_per_m3: 1600
+  E1_GPa: 181
+  E2_GPa: 10.3
+  G12_GPa: 7.17
+  nu12: 0.28
+  tensile_strength_MPa: 1500
+  compressive_strength_MPa: 1200
+  notes: 一期默认材料体系
+AS4_3501_6:
+  display_name: AS4/3501-6
+  density_kg_per_m3: 1580
+  E1_GPa: 135
+  E2_GPa: 9.8
+  G12_GPa: 5.2
+  nu12: 0.3
+  tensile_strength_MPa: 1380
+  compressive_strength_MPa: 1100
+  notes: 典型航空级碳纤维预浸料
+IM7_8552:
+  display_name: IM7/8552
+  density_kg_per_m3: 1570
+  E1_GPa: 161
+  E2_GPa: 11.4
+  G12_GPa: 5.7
+  nu12: 0.32
+  tensile_strength_MPa: 1650
+  compressive_strength_MPa: 1250
+  notes: 中高模量复材体系
+T700_Epoxy:
+  display_name: T700/Epoxy
+  density_kg_per_m3: 1550
+  E1_GPa: 145
+  E2_GPa: 8.9
+  G12_GPa: 4.9
+  nu12: 0.31
+  tensile_strength_MPa: 1490
+  compressive_strength_MPa: 1180
+  notes: 通用高强碳纤维体系

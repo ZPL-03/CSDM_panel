@@ -1,0 +1,23 @@
+active_provider: local_ollama
+
+ollama_cloud:
+  provider: ollama_cloud
+  model: gpt-oss:20b-cloud
+  temperature: 0.2
+  max_tokens: 1800
+  timeout_seconds: 120
+  base_url: https://ollama.com/v1
+  api_key_env: OLLAMA_API_KEY
+
+local_ollama:
+  provider: local_ollama
+  model: qwen2.5:7b
+  temperature: 0.2
+  max_tokens: 1800
+  timeout_seconds: 180
+  base_url: http://127.0.0.1:11434/v1
+  api_key: ollama
+
+fallback:
+  enable_doe_only_when_llm_fails: true
+  max_format_retries: 3

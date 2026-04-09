@@ -1,0 +1,186 @@
+{
+  "case_id": "CASE_322",
+  "created_at": "2026-04-03T05:22:40.277768",
+  "source": "abaqus_auto",
+  "task": {
+    "task_id": "TASK_30",
+    "application": "复合材料加筋壁板",
+    "load_conditions": {
+      "type": "compression_shear",
+      "label": "压剪组合",
+      "Nx_kN_per_m": 1200.0,
+      "Nxy_kN_per_m": 800.0
+    },
+    "boundary_conditions": {
+      "type": "SSSS",
+      "label": "四边简支（SSSS）",
+      "description": "四条边均按简支处理，适合基准线性屈曲评估。",
+      "simply_supported_edges": [
+        "X0",
+        "X1",
+        "Y0",
+        "Y1"
+      ],
+      "clamped_edges": []
+    },
+    "geometry_envelope": {
+      "panel_length_mm": [
+        600.0,
+        800.0
+      ],
+      "panel_width_mm": [
+        500.0,
+        700.0
+      ],
+      "max_stiffener_height_mm": 50.0
+    },
+    "material_system": {
+      "name": "T300/5208",
+      "density_kg_per_m3": 1600,
+      "E1_GPa": 181,
+      "E2_GPa": 10.3,
+      "G12_GPa": 7.17,
+      "nu12": 0.28
+    },
+    "layup_constraints": {
+      "allowed_angles": [
+        0,
+        45,
+        -45,
+        90
+      ],
+      "symmetric": true,
+      "balanced": true,
+      "min_ratio_per_angle": 0.1
+    },
+    "stiffener_type": "T",
+    "design_targets": {
+      "BLF_min": 1.2,
+      "primary_objective": "最小重量"
+    },
+    "screening_preferences": {
+      "top_k_candidates": 5
+    },
+    "candidate_generation_preferences": {
+      "total_candidates": 10
+    }
+  },
+  "design": {
+    "candidate_id": "C322",
+    "task_id": "TASK_30",
+    "source": "LLM",
+    "stiffener_type": "T",
+    "geometry": {
+      "panel_length_mm": 650.0,
+      "panel_width_mm": 550.0,
+      "skin_thickness_mm": 3.0,
+      "pitch_mm": 100.0,
+      "stiffener_height_mm": 25.0,
+      "web_thickness_mm": 1.8,
+      "flange_width_mm": 17.0,
+      "flange_thickness_mm": 2.5
+    },
+    "layup": {
+      "skin_layup": "[45/-45/0/90/0/45/-45/0/90]s",
+      "skin_f0": 0.333,
+      "skin_f45": 0.444,
+      "skin_f90": 0.222
+    },
+    "material_system": {
+      "name": "T300/5208",
+      "density_kg_per_m3": 1600,
+      "E1_GPa": 181,
+      "E2_GPa": 10.3,
+      "G12_GPa": 7.17,
+      "nu12": 0.28
+    },
+    "load_conditions": {
+      "type": "compression_shear",
+      "label": "压剪组合",
+      "Nx_kN_per_m": 1200.0,
+      "Nxy_kN_per_m": 800.0
+    },
+    "boundary_conditions": {
+      "type": "SSSS",
+      "label": "四边简支（SSSS）",
+      "description": "四条边均按简支处理，适合基准线性屈曲评估。",
+      "simply_supported_edges": [
+        "X0",
+        "X1",
+        "Y0",
+        "Y1"
+      ],
+      "clamped_edges": []
+    },
+    "design_targets": {
+      "BLF_min": 1.2,
+      "primary_objective": "最小重量"
+    },
+    "rule_check": {
+      "is_valid": true,
+      "errors": [],
+      "suggestions": [],
+      "details": {
+        "panel_length_mm_ok": true,
+        "panel_width_mm_ok": true,
+        "skin_thickness_mm_ok": true,
+        "pitch_mm_ok": true,
+        "stiffener_height_mm_ok": true,
+        "web_thickness_mm_ok": true,
+        "flange_width_mm_ok": true,
+        "flange_thickness_mm_ok": true,
+        "symmetric": true,
+        "balanced": true,
+        "min_ratio_ok": true,
+        "height_pitch_ratio_ok": true,
+        "height_thickness_ratio_ok": true,
+        "solver_skin_thickness_ok": true,
+        "solver_pitch_ok": true,
+        "solver_height_ok": true,
+        "solver_flange_width_ok": true,
+        "solver_height_pitch_band_ok": true
+      }
+    },
+    "surrogate_BLF": 0.207,
+    "surrogate_weight": 6.327,
+    "rank_score": -0.2992,
+    "rationale": "基于任务要求和参考案例生成 | 材料=T300/5208 | 铺层=BALANCED_16",
+    "origin_summary": "",
+    "screening_summary": "代理预测 BLF=0.207，面密度=6.327 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.2992。",
+    "selection_reason": "Top-5 入选：代理预测 BLF=0.207，面密度=6.327 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.2992。 当前排序靠前，适合优先进入有限元校核。",
+    "display_name": "候选样本1",
+    "persistent_candidate_id": "C322"
+  },
+  "abaqus_results": {
+    "candidate_id": "C322",
+    "status": "max_retries_exceeded",
+    "retry_count": 2,
+    "BLF_global": null,
+    "BLF_local": null,
+    "failure_mode": null,
+    "max_displacement_mm": null,
+    "weight_kg_per_m2": null,
+    "verdict": null,
+    "abaqus_odb": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C322\\C322.odb",
+    "abaqus_inp": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C322\\C322.inp",
+    "visualization_json": null,
+    "artifact_dir": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C322",
+    "error_type": "blf_negative",
+    "error_log": {
+      "eigenvalues": [
+        -0.0585534,
+        -0.0930574,
+        -0.11,
+        -0.13147,
+        -0.15537
+      ]
+    },
+    "mode_eigenvalues": null,
+    "load_summary": "压剪组合：Nx=1200.0 kN/m，Nxy=800.0 kN/m",
+    "boundary_summary": "四边简支（SSSS）",
+    "diagnosis_summary": "求得负特征值，通常意味着载荷方向或边界设置需要复核。"
+  },
+  "verdict": "失败",
+  "surrogate_BLF_error_pct": null,
+  "fem_agent_retry_count": 2
+}
