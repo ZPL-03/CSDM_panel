@@ -3,7 +3,6 @@
   "created_at": "2026-04-03T08:00:19.357559",
   "source": "abaqus_auto",
   "task": {
-    "task_id": "TASK_42",
     "application": "机翼下蒙皮壁板",
     "load_conditions": {
       "type": "compression_shear",
@@ -60,11 +59,16 @@
     "design_targets": {
       "BLF_min": 1.35,
       "primary_objective": "最小重量"
+    },
+    "candidate_generation_preferences": {
+      "total_candidates": 10
+    },
+    "screening_preferences": {
+      "top_k_candidates": 5
     }
   },
   "design": {
     "candidate_id": "C323",
-    "task_id": "TASK_42",
     "source": "DOE",
     "stiffener_type": "T",
     "geometry": {
@@ -143,14 +147,7 @@
       }
     },
     "surrogate_BLF": 0.087,
-    "surrogate_weight": 2.828,
-    "rank_score": -0.1392,
-    "rationale": "DOE 拉丁超立方探索生成 | 材料=AS4/3501-6 | 铺层=SHEAR_14",
-    "origin_summary": "",
-    "screening_summary": "代理预测 BLF=0.087，面密度=2.828 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.1392。",
-    "selection_reason": "Top-1 入选：代理预测 BLF=0.087，面密度=2.828 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.1392。 当前排序靠前，适合优先进入有限元校核。",
-    "display_name": "候选样本14",
-    "persistent_candidate_id": "C323"
+    "rationale": "DOE 拉丁超立方探索生成 | 材料=AS4/3501-6 | 铺层=SHEAR_14"
   },
   "abaqus_results": {
     "candidate_id": "C323",

@@ -14,11 +14,12 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from core.io_utils import read_json, write_json
-from core.paths import ABAQUS_RUNS_DIR, CASES_DIR, CASE_LIBRARY_DIR, CHROMA_DIR, IO_DIR, RESULTS_DIR, TASKS_DIR
+from core.paths import ABAQUS_RUNS_DIR, CASES_DIR, CASE_LIBRARY_DIR, CHROMA_DIR, IO_DIR, RESULTS_DIR
 from core.rag_engine import RAGEngine
 from core.schema_validator import validate_or_raise
 from core.surrogate_model import SurrogateModelManager
 from core.task_contract import (
+    build_task_request_record,
     describe_boundary_conditions,
     describe_load_conditions,
     normalize_boundary_conditions,
@@ -45,19 +46,32 @@ def normalize_result_document(result: Dict, design: Dict | None = None) -> Dict:
     return normalized
 
 
+def _task_payload(task: Dict | None) -> Dict:
+    return normalize_task_payload(dict(task or {}))
+
+
+def _normalize_candidate_source(source: object) -> str:
+    raw = str(source or "").strip().upper()
+    if raw in {"LLM", "DOE", "CASE_TRANSFER"}:
+        return raw
+    return "DOE"
+
+
 def normalize_candidate_document(candidate: Dict, task: Dict | None = None) -> Dict:
     normalized = dict(candidate)
-    task = task or {}
-    normalized["task_id"] = normalized.get("task_id") or task.get("task_id")
+    task_payload = _task_payload(task)
+    normalized["source"] = _normalize_candidate_source(normalized.get("source"))
+    normalized.pop("task_id", None)
+    normalized.pop("request_id", None)
+    normalized.pop("task_fingerprint", None)
     normalized["load_conditions"] = normalize_load_conditions(
-        normalized.get("load_conditions", task.get("load_conditions", {}))
+        normalized.get("load_conditions", task_payload.get("load_conditions", {}))
     )
     normalized["boundary_conditions"] = normalize_boundary_conditions(
-        normalized.get("boundary_conditions", task.get("boundary_conditions", {}))
+        normalized.get("boundary_conditions", task_payload.get("boundary_conditions", {}))
     )
-    if task:
-        normalized["design_targets"] = dict(normalized.get("design_targets") or task.get("design_targets", {}))
-        normalized["material_system"] = dict(normalized.get("material_system") or task.get("material_system", {}))
+    normalized["design_targets"] = dict(normalized.get("design_targets") or task_payload.get("design_targets", {}))
+    normalized["material_system"] = dict(normalized.get("material_system") or task_payload.get("material_system", {}))
     normalized.setdefault("origin_summary", "")
     normalized.setdefault("screening_summary", None)
     normalized.setdefault("selection_reason", None)
@@ -68,11 +82,18 @@ def normalize_candidate_document(candidate: Dict, task: Dict | None = None) -> D
 
 def normalize_case_record(record: Dict) -> Dict:
     normalized = dict(record)
-    task = normalize_task_payload(dict(normalized.get("task", {})))
-    design = normalize_candidate_document(dict(normalized.get("design", {})), task)
+    task_payload = _task_payload(normalized.get("task", {}))
+    design = normalize_candidate_document(
+        dict(normalized.get("design", {})),
+        task_payload,
+    )
     abaqus_results = normalize_result_document(dict(normalized.get("abaqus_results", {})), design)
 
-    normalized["task"] = task
+    normalized.pop("task_id", None)
+    normalized.pop("request_id", None)
+    normalized.pop("task_fingerprint", None)
+    normalized["candidate_id"] = str(normalized.get("candidate_id") or design.get("candidate_id") or "") or None
+    normalized["task"] = task_payload
     normalized["design"] = design
     normalized["abaqus_results"] = abaqus_results
     normalized["verdict"] = normalized.get("verdict") or abaqus_results.get("verdict") or "未知"
@@ -91,15 +112,6 @@ def _migrate_json_files(paths: Iterable[Path], normalizer) -> Dict[str, int]:
         except Exception:
             summary["failed"] += 1
     return summary
-
-
-def migrate_tasks() -> Dict[str, int]:
-    def _normalize(payload: Dict) -> Dict:
-        normalized = normalize_task_payload(payload)
-        validate_or_raise("task.schema.json", normalized)
-        return normalized
-
-    return _migrate_json_files(sorted(TASKS_DIR.glob("TASK_*.json")), _normalize)
 
 
 def migrate_cases() -> Dict[str, int]:
@@ -183,7 +195,6 @@ def maybe_retrain_surrogate() -> Dict | None:
 
 def run_migration(rebuild_rag: bool, retrain_surrogate: bool) -> Dict:
     summary = {
-        "tasks": migrate_tasks(),
         "cases": migrate_cases(),
         "case_library": migrate_case_library(),
         "io": migrate_io_payloads(),

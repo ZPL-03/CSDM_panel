@@ -9,6 +9,7 @@ import numpy as np
 from core.config_loader import load_app_config, load_material_db, load_param_ranges
 from core.id_utils import format_candidate_id
 from core.rule_checker import RuleChecker
+from core.task_contract import task_payload_from_request
 
 
 class DOESampler:
@@ -52,8 +53,11 @@ class DOESampler:
             )
         return catalog
 
+    def _task_payload(self, task: Dict) -> Dict:
+        return task_payload_from_request(task)
+
     def _material_candidates(self, task: Dict) -> List[Dict]:
-        material = dict(task.get("material_system", {}))
+        material = dict(self._task_payload(task).get("material_system", {}))
         if material.get("is_user_specified", False):
             return [material]
         return [dict(item) for item in self.material_catalog] or [material]
@@ -61,7 +65,7 @@ class DOESampler:
     def _select_material(self, task: Dict, ordinal_index: int) -> Dict:
         options = self._material_candidates(task)
         if not options:
-            return dict(task.get("material_system", {}))
+            return dict(self._task_payload(task).get("material_system", {}))
         return dict(options[(max(ordinal_index, 1) - 1) % len(options)])
 
     def _lhs(self, dimensions: int, samples: int, seed_offset: int = 0) -> np.ndarray:
@@ -136,9 +140,9 @@ class DOESampler:
                 layup = self._layup_payload(rng)
                 candidate_index = start_index + len(valid_candidates)
                 material_system = self._select_material(task, candidate_index)
+                task_payload = self._task_payload(task)
                 candidate = {
                     "candidate_id": candidate_id_factory(candidate_index),
-                    "task_id": task["task_id"],
                     "source": "DOE",
                     "stiffener_type": "T",
                     "geometry": geometry,
@@ -149,9 +153,9 @@ class DOESampler:
                     "rank_score": None,
                     "rationale": self._estimate_rationale(material_system.get("name", "Unknown"), layup.get("template_name", "LAYUP")),
                     "material_system": material_system,
-                    "load_conditions": task["load_conditions"],
-                    "boundary_conditions": task["boundary_conditions"],
-                    "design_targets": task["design_targets"],
+                    "load_conditions": task_payload["load_conditions"],
+                    "boundary_conditions": task_payload["boundary_conditions"],
+                    "design_targets": task_payload["design_targets"],
                 }
                 rule_check = self.rule_checker.run(candidate, strict_solver_window=strict_solver_window)
                 candidate["rule_check"] = rule_check

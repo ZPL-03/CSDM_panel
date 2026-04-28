@@ -3,7 +3,6 @@
   "created_at": "2026-03-31T19:00:11.408928",
   "source": "abaqus_auto",
   "task": {
-    "task_id": "TASK_9",
     "application": "复合材料加筋壁板",
     "load_conditions": {
       "type": "axial_compression",
@@ -67,7 +66,6 @@
   },
   "design": {
     "candidate_id": "C223",
-    "task_id": "TASK_9",
     "source": "DOE",
     "stiffener_type": "T",
     "geometry": {
@@ -144,14 +142,7 @@
       }
     },
     "surrogate_BLF": null,
-    "surrogate_weight": null,
-    "rank_score": null,
-    "rationale": "DOE 拉丁超立方探索生成 | 材料=T300/5208 | 铺层=ORTHO_12",
-    "origin_summary": "",
-    "screening_summary": null,
-    "selection_reason": null,
-    "display_name": "C223",
-    "persistent_candidate_id": null
+    "rationale": "DOE 拉丁超立方探索生成 | 材料=T300/5208 | 铺层=ORTHO_12"
   },
   "abaqus_results": {
     "candidate_id": "C223",

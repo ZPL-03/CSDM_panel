@@ -6,8 +6,7 @@ import json
 import os
 from typing import Dict, List
 from urllib import request as urllib_request
-
-from openai import OpenAI
+from urllib.parse import urlparse
 
 from core.config_loader import load_llm_config
 
@@ -58,12 +57,30 @@ class LLMBackend:
         if not api_key:
             raise ValueError(f"未设置 LLM API Key，请配置环境变量 {api_key_env}")
 
-        self.client = OpenAI(base_url=self.base_url, api_key=api_key)
+        self.client = None
+        if self.provider != "local_ollama":
+            try:
+                from openai import OpenAI
+            except Exception as exc:
+                raise ValueError("当前环境未安装 openai 依赖") from exc
+            self.client = OpenAI(base_url=self.base_url, api_key=api_key)
 
-    def _chat_local_ollama(self, system_prompt: str, user_prompt: str, json_mode: bool = False) -> str:
+    def _json_output_budget(self) -> int:
+        return max(int(self.max_tokens), 4096)
+
+    def _chat_local_ollama(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        json_mode: bool = False,
+        max_tokens_override: int | None = None,
+    ) -> str:
         native_base_url = self.base_url.rstrip("/")
         if native_base_url.endswith("/v1"):
-            native_base_url = native_base_url[:-3]
+            native_base_url = native_base_url[:-3].rstrip("/")
+        parsed_base_url = urlparse(native_base_url)
+        use_direct_connection = parsed_base_url.hostname in {"127.0.0.1", "localhost", "::1"}
+        num_predict = int(max_tokens_override or (self._json_output_budget() if json_mode else self.max_tokens))
 
         payload = {
             "model": self.model,
@@ -74,7 +91,7 @@ class LLMBackend:
             "stream": False,
             "options": {
                 "temperature": self.temperature,
-                "num_predict": self.max_tokens,
+                "num_predict": num_predict,
             },
         }
         if json_mode:
@@ -86,18 +103,28 @@ class LLMBackend:
             headers={"Content-Type": "application/json"},
             method="POST",
         )
-        with urllib_request.urlopen(req, timeout=300) as response:
+        opener = (
+            urllib_request.build_opener(urllib_request.ProxyHandler({}))
+            if use_direct_connection
+            else urllib_request.build_opener()
+        )
+        with opener.open(req, timeout=300) as response:
             body = json.loads(response.read().decode("utf-8"))
         return body.get("message", {}).get("content", "")
 
-    def chat(self, system_prompt: str, user_prompt: str) -> str:
+    def chat(self, system_prompt: str, user_prompt: str, max_tokens_override: int | None = None) -> str:
         if self.provider == "local_ollama":
-            return self._chat_local_ollama(system_prompt, user_prompt, json_mode=False)
+            return self._chat_local_ollama(
+                system_prompt,
+                user_prompt,
+                json_mode=False,
+                max_tokens_override=max_tokens_override,
+            )
 
         response = self.client.chat.completions.create(
             model=self.model,
             temperature=self.temperature,
-            max_tokens=self.max_tokens,
+            max_tokens=int(max_tokens_override or self.max_tokens),
             messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -134,13 +161,22 @@ class LLMBackend:
     def _repair_json(self, broken_text: str) -> str:
         repair_system = "你是 JSON 修复器。请把用户提供的内容修复成合法 JSON，除 JSON 外不要输出任何说明。"
         repair_user = f"请修复为合法 JSON：\n{broken_text}"
-        return self.chat(repair_system, repair_user)
+        return self.chat(repair_system, repair_user, max_tokens_override=self._json_output_budget())
 
     def generate_json(self, system_prompt: str, user_prompt: str) -> Dict | List:
         if self.provider == "local_ollama":
-            text = self._chat_local_ollama(system_prompt, user_prompt, json_mode=True)
+            text = self._chat_local_ollama(
+                system_prompt,
+                user_prompt,
+                json_mode=True,
+                max_tokens_override=self._json_output_budget(),
+            )
             extracted = self._extract_json_text(text)
-            return json.loads(extracted)
+            try:
+                return json.loads(extracted)
+            except json.JSONDecodeError:
+                repaired = self._extract_json_text(self._repair_json(extracted))
+                return json.loads(repaired)
 
         text = self.chat(system_prompt, user_prompt)
         extracted = self._extract_json_text(text)

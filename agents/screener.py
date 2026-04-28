@@ -7,6 +7,7 @@ from typing import Dict, List
 from agents.base import BaseAgent
 from core.config_loader import load_app_config
 from core.surrogate_model import SurrogateModelManager
+from core.task_contract import effective_screen_top_k
 
 
 class ScreenerAgent(BaseAgent):
@@ -48,7 +49,7 @@ class ScreenerAgent(BaseAgent):
         task = input_data["task"]
         candidates = input_data["candidates"]
         predictions = self.model_manager.predict_candidates(candidates, task)
-        requested_top_k = int(task.get("screening_preferences", {}).get("top_k_candidates", self.config["pipeline"]["top_k"]))
+        requested_top_k = effective_screen_top_k(task, len(candidates)) or int(self.config["pipeline"]["top_k"])
 
         enriched: List[Dict] = []
         for candidate, predicted_blf in zip(candidates, predictions):

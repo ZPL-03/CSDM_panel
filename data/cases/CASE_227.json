@@ -3,7 +3,6 @@
   "created_at": "2026-03-31T19:02:03.747209",
   "source": "abaqus_auto",
   "task": {
-    "task_id": "TASK_10",
     "application": "机翼下蒙皮壁板",
     "load_conditions": {
       "type": "axial_compression",
@@ -67,7 +66,6 @@
   },
   "design": {
     "candidate_id": "C227",
-    "task_id": "TASK_10",
     "source": "DOE",
     "stiffener_type": "T",
     "geometry": {
@@ -144,14 +142,7 @@
       }
     },
     "surrogate_BLF": null,
-    "surrogate_weight": null,
-    "rank_score": null,
-    "rationale": "DOE 拉丁超立方探索生成 | 材料=AS4/3501-6 | 铺层=QI_14",
-    "origin_summary": "",
-    "screening_summary": null,
-    "selection_reason": null,
-    "display_name": "C227",
-    "persistent_candidate_id": null
+    "rationale": "DOE 拉丁超立方探索生成 | 材料=AS4/3501-6 | 铺层=QI_14"
   },
   "abaqus_results": {
     "candidate_id": "C227",

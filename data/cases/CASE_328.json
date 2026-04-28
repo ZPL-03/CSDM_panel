@@ -3,7 +3,6 @@
   "created_at": "2026-04-03T08:06:22.809972",
   "source": "abaqus_auto",
   "task": {
-    "task_id": "TASK_42",
     "application": "机翼下蒙皮壁板",
     "load_conditions": {
       "type": "compression_shear",
@@ -60,11 +59,16 @@
     "design_targets": {
       "BLF_min": 1.35,
       "primary_objective": "最小重量"
+    },
+    "candidate_generation_preferences": {
+      "total_candidates": 10
+    },
+    "screening_preferences": {
+      "top_k_candidates": 5
     }
   },
   "design": {
     "candidate_id": "C328",
-    "task_id": "TASK_42",
     "source": "CASE_TRANSFER",
     "stiffener_type": "T",
     "geometry": {
@@ -141,14 +145,7 @@
       }
     },
     "surrogate_BLF": 0.241,
-    "surrogate_weight": 5.824,
-    "rank_score": -0.2249,
-    "rationale": "参考历史案例 CASE_57 微调生成",
-    "origin_summary": "参考 CASE_57 | BLF=1.3139 | 重量=5.824078",
-    "screening_summary": "代理预测 BLF=0.241，面密度=5.824 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.2249。",
-    "selection_reason": "Top-6 入选：代理预测 BLF=0.241，面密度=5.824 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.2249。 当前排序靠前，适合优先进入有限元校核。",
-    "display_name": "候选样本8",
-    "persistent_candidate_id": "C328"
+    "rationale": "参考历史案例 CASE_57 微调生成"
   },
   "abaqus_results": {
     "candidate_id": "C328",

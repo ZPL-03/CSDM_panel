@@ -4,17 +4,25 @@ import json
 from typing import Any, Dict, List
 
 from agents.base import BaseAgent
+from core.case_retriever import CaseRetriever
 from core.config_loader import load_app_config, load_llm_config, load_material_db
 from core.doe_sampler import DOESampler
 from core.id_utils import format_temp_candidate_id
+from core.literature_corpus import LiteratureCorpus
 from core.llm_backend import LLMBackend
-from core.rag_engine import RAGEngine
 from core.rule_checker import RuleChecker
 from core.schema_validator import SchemaValidationError, validate_or_raise
-from core.task_contract import describe_boundary_conditions, describe_load_conditions
+from core.task_contract import (
+    describe_boundary_conditions,
+    describe_load_conditions,
+    requested_candidate_pool_size,
+    task_payload_from_request,
+)
 
 
 class CandidateGenAgent(BaseAgent):
+    """候选生成编排器，统一调度 LLM、案例迁移与 DOE 三条路径。"""
+
     agent_name = "CANDIDATE_GEN"
 
     def __init__(self, progress_callback=None) -> None:
@@ -24,7 +32,8 @@ class CandidateGenAgent(BaseAgent):
         self.material_db = load_material_db()
         self.doe_sampler = DOESampler()
         self.rule_checker = RuleChecker()
-        self.rag_engine = RAGEngine()
+        self.case_retriever = CaseRetriever()
+        self.literature_corpus = LiteratureCorpus()
         self.material_catalog = self._build_material_catalog()
         self.llm_backend: LLMBackend | None = None
         try:
@@ -84,14 +93,19 @@ class CandidateGenAgent(BaseAgent):
             )
         return catalog
 
+    def _task_payload(self, task: Dict) -> Dict[str, Any]:
+        return task_payload_from_request(task)
+
     def _material_options(self, task: Dict) -> List[Dict[str, Any]]:
-        task_material = dict(task.get("material_system", {}))
+        task_payload = self._task_payload(task)
+        task_material = dict(task_payload.get("material_system", {}))
         if task_material.get("is_user_specified", False):
             return [task_material]
         return [dict(item) for item in self.material_catalog] or [task_material]
 
     def _resolve_material_system(self, task: Dict, raw_material: Any, index: int) -> Dict[str, Any]:
-        task_material = dict(task.get("material_system", {}))
+        task_payload = self._task_payload(task)
+        task_material = dict(task_payload.get("material_system", {}))
         if task_material.get("is_user_specified", False):
             return task_material
 
@@ -112,47 +126,13 @@ class CandidateGenAgent(BaseAgent):
             return task_material
         return dict(options[(max(index, 1) - 1) % len(options)])
 
-    def _successful_cases(self, task: Dict, top_k: int) -> List[Dict]:
-        retrieved = self.rag_engine.retrieve(task, top_k=top_k * 3)
-        valid_cases: List[Dict] = []
-        for item in retrieved:
-            record = self._coerce_dict(item)
-            if record is None:
-                continue
-            abaqus_results = record.get("abaqus_results", {})
-            if not isinstance(abaqus_results, dict):
-                continue
-            if abaqus_results.get("status") != "success":
-                continue
-            if abaqus_results.get("BLF_global") is None:
-                continue
-            design = record.get("design")
-            if not isinstance(design, dict) or not design:
-                continue
-            valid_cases.append(record)
-            if len(valid_cases) >= top_k:
-                break
-        return valid_cases
+    def _literature_guidance(self, task: Dict, top_k: int) -> List[str]:
+        """仅为 LLM 路径检索文献片段，避免与历史案例迁移职责混用。"""
+        return self.literature_corpus.format_snippets(task, top_k=max(1, top_k))
 
-    def _reference_designs(self, task: Dict, top_k: int) -> List[Dict]:
-        references: List[Dict] = []
-        for case in self._successful_cases(task, top_k=top_k):
-            design = case.get("design", {})
-            results = case.get("abaqus_results", {})
-            references.append(
-                {
-                    "candidate_id": design.get("candidate_id"),
-                    "geometry": design.get("geometry", {}),
-                    "layup": design.get("layup", {}),
-                    "material_system": design.get("material_system", {}),
-                    "BLF_global": results.get("BLF_global"),
-                    "weight_kg_per_m2": results.get("weight_kg_per_m2"),
-                    "rationale": design.get("rationale", ""),
-                }
-            )
-        return references
-
-    def _build_prompt(self, task: Dict, retrieved_cases: List[Dict], desired_count: int) -> tuple[str, str]:
+    def _build_prompt(self, task: Dict, literature_guidance: List[str], desired_count: int) -> tuple[str, str]:
+        """构造 LLM 候选生成 Prompt，只注入任务约束和文献依据。"""
+        task_payload = self._task_payload(task)
         material_options = [item.get("name", "") for item in self._material_options(task)]
         system_prompt = (
             "你是复合材料加筋壁板结构设计专家。"
@@ -163,20 +143,22 @@ class CandidateGenAgent(BaseAgent):
             "不要输出 case_id、task、abaqus_results、verdict、created_at 等历史字段。"
             "方案必须满足 T 形筋、线性屈曲场景，并与任务中的工况和边界一致。"
         )
+        literature_text = "\n\n".join(literature_guidance) if literature_guidance else "当前没有可用文献片段，请仅依据任务约束生成。"
         user_prompt = (
-            f"请基于以下任务和参考案例生成 {desired_count} 个候选方案，只输出 JSON。\n"
+            f"请基于以下任务和文献依据生成 {desired_count} 个候选方案，只输出 JSON。\n"
             "geometry 必须包含 panel_length_mm、panel_width_mm、skin_thickness_mm、pitch_mm、"
             "stiffener_height_mm、web_thickness_mm、flange_width_mm、flange_thickness_mm。\n"
             "layup 必须包含 skin_layup、skin_f0、skin_f45、skin_f90。\n"
             f"可选材料体系：{', '.join(material_options)}。\n"
-            f"工况说明：{describe_load_conditions(task['load_conditions'])}\n"
-            f"边界说明：{describe_boundary_conditions(task['boundary_conditions'])}\n"
-            f"任务：\n{json.dumps(task, ensure_ascii=False, indent=2)}\n"
-            f"参考案例：\n{json.dumps(retrieved_cases[:3], ensure_ascii=False, indent=2)}"
+            f"工况说明：{describe_load_conditions(task_payload['load_conditions'])}\n"
+            f"边界说明：{describe_boundary_conditions(task_payload['boundary_conditions'])}\n"
+            f"任务：\n{json.dumps(task_payload, ensure_ascii=False, indent=2)}\n"
+            f"文献依据：\n{literature_text}"
         )
         return system_prompt, user_prompt
 
     def _normalize_candidate(self, task: Dict, raw: Dict[str, Any], index: int, source: str) -> Dict:
+        task_payload = self._task_payload(task)
         geometry = raw.get("geometry", {})
         layup = raw.get("layup", {})
         if not isinstance(geometry, dict):
@@ -187,7 +169,6 @@ class CandidateGenAgent(BaseAgent):
 
         candidate = {
             "candidate_id": format_temp_candidate_id(index),
-            "task_id": task["task_id"],
             "source": source,
             "stiffener_type": "T",
             "geometry": {
@@ -208,18 +189,12 @@ class CandidateGenAgent(BaseAgent):
             },
             "rule_check": {},
             "surrogate_BLF": None,
-            "surrogate_weight": None,
             "rank_score": None,
             "rationale": str(raw.get("rationale", f"{source} 生成候选")),
-            "origin_summary": str(raw.get("origin_summary", "")),
-            "screening_summary": None,
-            "selection_reason": None,
             "material_system": material_system,
-            "load_conditions": task["load_conditions"],
-            "boundary_conditions": task["boundary_conditions"],
-            "design_targets": task["design_targets"],
-            "display_name": f"候选样本{index}",
-            "persistent_candidate_id": None,
+            "load_conditions": task_payload["load_conditions"],
+            "boundary_conditions": task_payload["boundary_conditions"],
+            "design_targets": task_payload["design_targets"],
         }
         candidate["rule_check"] = self.rule_checker.run(candidate, strict_solver_window=True)
         validate_or_raise("candidate.schema.json", candidate)
@@ -259,8 +234,8 @@ class CandidateGenAgent(BaseAgent):
         if self.llm_backend is None or desired_count <= 0:
             return []
 
-        retrieved_cases = self._reference_designs(task, top_k=max(3, desired_count))
-        system_prompt, user_prompt = self._build_prompt(task, retrieved_cases, desired_count)
+        literature_guidance = self._literature_guidance(task, top_k=max(3, desired_count))
+        system_prompt, user_prompt = self._build_prompt(task, literature_guidance, desired_count)
 
         for _ in range(int(self.llm_config["fallback"]["max_format_retries"])):
             try:
@@ -278,28 +253,24 @@ class CandidateGenAgent(BaseAgent):
         return []
 
     def _case_transfer_candidates(self, task: Dict, start_index: int, desired_count: int) -> List[Dict]:
+        """从结构化历史案例中迁移候选，不向 LLM 提供历史案例原文。"""
         if desired_count <= 0:
             return []
         transferred: List[Dict] = []
-        for offset, case in enumerate(self._successful_cases(task, top_k=desired_count)):
+        for offset, case in enumerate(self.case_retriever.retrieve_transferable_cases(task, top_k=desired_count)):
             raw_design = case.get("design", {})
             if not isinstance(raw_design, dict) or not raw_design:
                 continue
             abaqus_results = case.get("abaqus_results", {})
             candidate = self._normalize_candidate(task, raw_design, start_index + offset, "CASE_TRANSFER")
             candidate["rationale"] = f"参考历史案例 {case.get('case_id', 'UNKNOWN')} 微调生成"
-            candidate["origin_summary"] = (
-                f"参考 {case.get('case_id', 'UNKNOWN')} | "
-                f"BLF={abaqus_results.get('BLF_global')} | "
-                f"重量={abaqus_results.get('weight_kg_per_m2')}"
-            )
             transferred.append(candidate)
             if len(transferred) >= desired_count:
                 break
         return transferred
 
     def _resolve_source_targets(self, task: Dict) -> Dict[str, int]:
-        target_total = int(task.get("candidate_generation_preferences", {}).get("total_candidates", 0) or 0)
+        target_total = requested_candidate_pool_size(task)
         if target_total <= 0:
             target_total = int(
                 self.app_config["pipeline"]["llm_candidates"]
@@ -357,9 +328,6 @@ class CandidateGenAgent(BaseAgent):
             strict_solver_window=True,
             id_factory=format_temp_candidate_id,
         )
-        for offset, candidate in enumerate(doe_candidates, start=next_index):
-            candidate["display_name"] = f"候选样本{offset}"
-            candidate["persistent_candidate_id"] = None
         candidates.extend(doe_candidates)
         candidates = candidates[: source_targets["total"]]
         self.emit(

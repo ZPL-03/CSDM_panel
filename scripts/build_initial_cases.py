@@ -19,11 +19,16 @@ from agents.knowledge_agent import KnowledgeAgent
 from core.config_loader import load_material_db
 from core.doe_sampler import DOESampler
 from core.id_utils import next_candidate_index, next_task_id
-from core.io_utils import write_json
-from core.paths import ABAQUS_RUNS_DIR, CASES_DIR, CASE_LIBRARY_DIR, CHROMA_DIR, IO_DIR, MODELS_DIR, RESULTS_DIR, TASKS_DIR
+from core.paths import ABAQUS_RUNS_DIR, CASES_DIR, CASE_LIBRARY_DIR, CHROMA_DIR, IO_DIR, MODELS_DIR, RESULTS_DIR
 from core.schema_validator import validate_or_raise
 from core.surrogate_model import SurrogateModelManager
-from core.task_contract import boundary_condition_payload, load_condition_payload, normalize_task_payload
+from core.task_contract import (
+    boundary_condition_payload,
+    build_task_request_record,
+    load_condition_payload,
+    normalize_task_payload,
+    task_payload_from_request,
+)
 
 
 MODEL_FILES = [
@@ -46,9 +51,8 @@ def task_application(index: int) -> str:
 
 def default_task(material_key: str, nx_kN_per_m: float, task_index: int) -> Dict:
     material = load_material_db()[material_key]
-    task = normalize_task_payload(
+    task_payload = normalize_task_payload(
         {
-            "task_id": next_task_id(),
             "application": task_application(task_index),
             "load_conditions": load_condition_payload("axial_compression", nx_kN_per_m=nx_kN_per_m),
             "boundary_conditions": boundary_condition_payload("SSSS"),
@@ -75,12 +79,12 @@ def default_task(material_key: str, nx_kN_per_m: float, task_index: int) -> Dict
             "design_targets": {"BLF_min": 1.2, "primary_objective": "最小重量"},
         }
     )
-    validate_or_raise("task.schema.json", task)
-    return task
-
-
-def persist_task(task: Dict) -> None:
-    write_json(TASKS_DIR / f"{task['task_id']}.json", task)
+    validate_or_raise("task.schema.json", task_payload)
+    return build_task_request_record(
+        task_payload,
+        task_id=next_task_id(),
+        source="initial_case_build",
+    )
 
 
 def clear_dir(path: Path) -> None:
@@ -95,7 +99,7 @@ def clear_dir(path: Path) -> None:
 
 
 def reset_dataset() -> None:
-    for directory in [TASKS_DIR, IO_DIR, RESULTS_DIR, CASES_DIR, ABAQUS_RUNS_DIR, CASE_LIBRARY_DIR]:
+    for directory in [IO_DIR, RESULTS_DIR, CASES_DIR, ABAQUS_RUNS_DIR, CASE_LIBRARY_DIR]:
         clear_dir(directory)
     if CHROMA_DIR.exists():
         shutil.rmtree(CHROMA_DIR, ignore_errors=True)
@@ -121,12 +125,13 @@ def build_candidates(task: Dict, count: int, start_index: int, strict_solver_win
 
 def solve_candidate(task: Dict, candidate: Dict, mock_mode: bool) -> Tuple[Dict, Dict]:
     agent = FEMAgent()
+    task_payload = task_payload_from_request(task)
     payload = dict(candidate)
     payload["mock_mode"] = mock_mode
-    payload["design_targets"] = task["design_targets"]
-    payload["load_conditions"] = task["load_conditions"]
-    payload["boundary_conditions"] = task["boundary_conditions"]
-    payload["material_system"] = task["material_system"]
+    payload["design_targets"] = task_payload["design_targets"]
+    payload["load_conditions"] = task_payload["load_conditions"]
+    payload["boundary_conditions"] = task_payload["boundary_conditions"]
+    payload["material_system"] = task_payload["material_system"]
     result = agent.run(payload)
     return payload, result
 
@@ -150,7 +155,6 @@ def run_task_batch(task: Dict, count: int, workers: int, mock_mode: bool, strict
     if count <= 0:
         return []
 
-    persist_task(task)
     start_index = next_candidate_index()
     candidates = build_candidates(
         task=task,
@@ -172,11 +176,12 @@ def run_task_batch(task: Dict, count: int, workers: int, mock_mode: bool, strict
             artifact_dir = Path(str(result.get("artifact_dir", ""))) if result.get("artifact_dir") else None
             if artifact_dir and artifact_dir.exists():
                 clean_run_directory(artifact_dir, candidate["candidate_id"])
+            task_payload = task_payload_from_request(task)
             records.append(
                 {
-                    "task_id": task["task_id"],
+                    "task_id": task.get("task_id"),
                     "candidate_id": candidate["candidate_id"],
-                    "material": task["material_system"].get("name"),
+                    "material": task_payload["material_system"].get("name"),
                     "status": result["status"],
                     "BLF_global": result.get("BLF_global"),
                     "BLF_local": result.get("BLF_local"),

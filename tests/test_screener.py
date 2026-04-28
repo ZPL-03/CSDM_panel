@@ -5,7 +5,7 @@ def _candidate(index: int) -> dict:
     return {
         "candidate_id": f"TMP_{index}",
         "task_id": "TASK_1",
-        "source": "MANUAL",
+        "source": "DOE",
         "stiffener_type": "T",
         "geometry": {
             "panel_length_mm": 700,
@@ -38,7 +38,23 @@ def test_screener_uses_task_top_k_candidates() -> None:
     )()
 
     task = {
-        "screening_preferences": {"top_k_candidates": 2},
+        "task_id": "TASK_1",
+        "source": "test",
+        "task": {
+            "application": "复合材料加筋壁板",
+            "load_conditions": {"type": "axial_compression", "Nx_kN_per_m": 900.0},
+            "boundary_conditions": {"type": "SSSS"},
+            "geometry_envelope": {
+                "panel_length_mm": [600, 800],
+                "panel_width_mm": [500, 700],
+                "max_stiffener_height_mm": 50,
+            },
+            "material_system": {"name": "T300/5208"},
+            "layup_constraints": {"allowed_angles": [0, 45, -45, 90], "symmetric": True, "balanced": True, "min_ratio_per_angle": 0.1},
+            "stiffener_type": "T",
+            "design_targets": {"BLF_min": 1.2, "primary_objective": "最小重量"},
+            "screening_preferences": {"top_k_candidates": 2},
+        },
     }
     candidates = [_candidate(1), _candidate(2), _candidate(3), _candidate(4)]
 

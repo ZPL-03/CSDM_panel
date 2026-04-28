@@ -7,19 +7,11 @@ from pathlib import Path
 from typing import Dict, List
 from xml.sax.saxutils import escape
 
-from reportlab.lib.pagesizes import A4
-from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
-from reportlab.lib.enums import TA_LEFT
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.cidfonts import UnicodeCIDFont
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
-
 from agents.base import BaseAgent
-from core.llm_backend import LLMBackend
 from core.io_utils import write_text
+from core.llm_backend import LLMBackend
 from core.paths import RESULTS_DIR
-from core.task_contract import describe_boundary_conditions, describe_load_conditions
+from core.task_contract import describe_boundary_conditions, describe_load_conditions, task_payload_from_request
 
 
 class ReportGenAgent(BaseAgent):
@@ -34,14 +26,15 @@ class ReportGenAgent(BaseAgent):
             self.llm_backend = None
 
     def _build_structured_summary(self, task: Dict, results: List[Dict], candidates: List[Dict]) -> Dict:
+        task_payload = task_payload_from_request(task)
         passed = [result for result in results if result.get("verdict") == "通过"]
         best_blf = max(results, key=lambda item: float(item.get("BLF_global") or 0.0), default=None)
         lightest = min(results, key=lambda item: float(item.get("weight_kg_per_m2") or 1e9), default=None)
         return {
-            "task_id": task["task_id"],
-            "application": task["application"],
-            "load_conditions": describe_load_conditions(task["load_conditions"]),
-            "boundary_conditions": describe_boundary_conditions(task["boundary_conditions"]),
+            "session_task_id": task.get("task_id"),
+            "application": task_payload["application"],
+            "load_conditions": describe_load_conditions(task_payload["load_conditions"]),
+            "boundary_conditions": describe_boundary_conditions(task_payload["boundary_conditions"]),
             "result_count": len(results),
             "passed_count": len(passed),
             "best_blf_candidate": best_blf.get("candidate_id") if best_blf else None,
@@ -94,15 +87,16 @@ class ReportGenAgent(BaseAgent):
         return "\n\n".join([overall, compare, suggestion])
 
     def _render_markdown(self, task: Dict, results: List[Dict], candidates: List[Dict]) -> str:
+        task_payload = task_payload_from_request(task)
         summary = self._build_structured_summary(task, results, candidates)
         narrative = self._render_narrative(summary)
         lines = [
             "# CSDM 设计报告",
             "",
-            f"- 任务 ID：`{task['task_id']}`",
-            f"- 应用场景：{task['application']}",
-            f"- 工况：{describe_load_conditions(task['load_conditions'])}",
-            f"- 边界条件：{describe_boundary_conditions(task['boundary_conditions'])}",
+            f"- 会话任务编号：`{task.get('task_id') or '-'}`",
+            f"- 应用场景：{task_payload['application']}",
+            f"- 工况：{describe_load_conditions(task_payload['load_conditions'])}",
+            f"- 边界条件：{describe_boundary_conditions(task_payload['boundary_conditions'])}",
             "",
             "## 工程摘要",
             "",
@@ -147,7 +141,30 @@ class ReportGenAgent(BaseAgent):
             )
         return "\n".join(lines)
 
+    def _reportlab(self):
+        from reportlab.lib.enums import TA_LEFT
+        from reportlab.lib.pagesizes import A4
+        from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+        from reportlab.pdfbase import pdfmetrics
+        from reportlab.pdfbase.cidfonts import UnicodeCIDFont
+        from reportlab.pdfbase.ttfonts import TTFont
+        from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer
+
+        return {
+            "TA_LEFT": TA_LEFT,
+            "A4": A4,
+            "ParagraphStyle": ParagraphStyle,
+            "getSampleStyleSheet": getSampleStyleSheet,
+            "pdfmetrics": pdfmetrics,
+            "UnicodeCIDFont": UnicodeCIDFont,
+            "TTFont": TTFont,
+            "Paragraph": Paragraph,
+            "SimpleDocTemplate": SimpleDocTemplate,
+            "Spacer": Spacer,
+        }
+
     def _register_font(self) -> str:
+        rl = self._reportlab()
         preferred_fonts = [
             ("CSDM_SimSun", Path("C:/Windows/Fonts/simsun.ttc")),
             ("CSDM_MSYH", Path("C:/Windows/Fonts/msyh.ttc")),
@@ -156,64 +173,63 @@ class ReportGenAgent(BaseAgent):
         for font_name, font_path in preferred_fonts:
             try:
                 if font_path.exists():
-                    pdfmetrics.registerFont(TTFont(font_name, str(font_path)))
+                    rl["pdfmetrics"].registerFont(rl["TTFont"](font_name, str(font_path)))
                     return font_name
             except Exception:
                 continue
 
         fallback_font = "STSong-Light"
-        pdfmetrics.registerFont(UnicodeCIDFont(fallback_font))
+        rl["pdfmetrics"].registerFont(rl["UnicodeCIDFont"](fallback_font))
         return fallback_font
 
-    def _pdf_styles(self, font_name: str) -> Dict[str, ParagraphStyle]:
-        """构建 PDF 排版样式，统一开启 CJK 自动换行。"""
-
-        stylesheet = getSampleStyleSheet()
-        body = ParagraphStyle(
+    def _pdf_styles(self, font_name: str) -> Dict[str, object]:
+        rl = self._reportlab()
+        stylesheet = rl["getSampleStyleSheet"]()
+        body = rl["ParagraphStyle"](
             name="CSDMBody",
             parent=stylesheet["BodyText"],
             fontName=font_name,
             fontSize=10.5,
             leading=15,
-            alignment=TA_LEFT,
+            alignment=rl["TA_LEFT"],
             wordWrap="CJK",
             spaceAfter=4,
         )
         return {
-            "title": ParagraphStyle(
+            "title": rl["ParagraphStyle"](
                 name="CSDMTitle",
                 parent=stylesheet["Title"],
                 fontName=font_name,
                 fontSize=18,
                 leading=24,
-                alignment=TA_LEFT,
+                alignment=rl["TA_LEFT"],
                 wordWrap="CJK",
                 spaceAfter=12,
             ),
-            "heading2": ParagraphStyle(
+            "heading2": rl["ParagraphStyle"](
                 name="CSDMHeading2",
                 parent=stylesheet["Heading2"],
                 fontName=font_name,
                 fontSize=14,
                 leading=20,
-                alignment=TA_LEFT,
+                alignment=rl["TA_LEFT"],
                 wordWrap="CJK",
                 spaceBefore=10,
                 spaceAfter=6,
             ),
-            "heading3": ParagraphStyle(
+            "heading3": rl["ParagraphStyle"](
                 name="CSDMHeading3",
                 parent=stylesheet["Heading3"],
                 fontName=font_name,
                 fontSize=12,
                 leading=18,
-                alignment=TA_LEFT,
+                alignment=rl["TA_LEFT"],
                 wordWrap="CJK",
                 spaceBefore=8,
                 spaceAfter=4,
             ),
             "body": body,
-            "bullet": ParagraphStyle(
+            "bullet": rl["ParagraphStyle"](
                 name="CSDMBullet",
                 parent=body,
                 leftIndent=14,
@@ -224,14 +240,11 @@ class ReportGenAgent(BaseAgent):
         }
 
     def _paragraph_text_for_pdf(self, text: str) -> str:
-        """将 Markdown 单行文本安全转换为 ReportLab 段落内容。"""
-
         normalized = text.replace("\t", "    ").strip()
         return escape(normalized)
 
     def _build_pdf_story(self, markdown_text: str, font_name: str) -> List[object]:
-        """将 Markdown 风格文本转换为可自动分页和换行的 Flowable 列表。"""
-
+        rl = self._reportlab()
         styles = self._pdf_styles(font_name)
         story: List[object] = []
 
@@ -239,21 +252,21 @@ class ReportGenAgent(BaseAgent):
             stripped = raw_line.strip()
             if not stripped:
                 if story:
-                    story.append(Spacer(1, 6))
+                    story.append(rl["Spacer"](1, 6))
                 continue
 
             if stripped.startswith("# "):
-                story.append(Paragraph(self._paragraph_text_for_pdf(stripped[2:]), styles["title"]))
+                story.append(rl["Paragraph"](self._paragraph_text_for_pdf(stripped[2:]), styles["title"]))
                 continue
             if stripped.startswith("## "):
-                story.append(Paragraph(self._paragraph_text_for_pdf(stripped[3:]), styles["heading2"]))
+                story.append(rl["Paragraph"](self._paragraph_text_for_pdf(stripped[3:]), styles["heading2"]))
                 continue
             if stripped.startswith("### "):
-                story.append(Paragraph(self._paragraph_text_for_pdf(stripped[4:]), styles["heading3"]))
+                story.append(rl["Paragraph"](self._paragraph_text_for_pdf(stripped[4:]), styles["heading3"]))
                 continue
             if stripped.startswith("- "):
                 story.append(
-                    Paragraph(
+                    rl["Paragraph"](
                         self._paragraph_text_for_pdf(stripped[2:]),
                         styles["bullet"],
                         bulletText="•",
@@ -261,18 +274,19 @@ class ReportGenAgent(BaseAgent):
                 )
                 continue
 
-            story.append(Paragraph(self._paragraph_text_for_pdf(stripped), styles["body"]))
+            story.append(rl["Paragraph"](self._paragraph_text_for_pdf(stripped), styles["body"]))
 
         if not story:
-            story.append(Paragraph("CSDM 设计报告内容为空。", styles["body"]))
+            story.append(rl["Paragraph"]("CSDM 设计报告内容为空。", styles["body"]))
         return story
 
     def _write_pdf(self, markdown_text: str, pdf_path: Path) -> None:
+        rl = self._reportlab()
         pdf_path.parent.mkdir(parents=True, exist_ok=True)
         font_name = self._register_font()
-        document = SimpleDocTemplate(
+        document = rl["SimpleDocTemplate"](
             str(pdf_path),
-            pagesize=A4,
+            pagesize=rl["A4"],
             leftMargin=40,
             rightMargin=40,
             topMargin=48,
@@ -291,6 +305,15 @@ class ReportGenAgent(BaseAgent):
         markdown_path = RESULTS_DIR / "latest_report.md"
         pdf_path = RESULTS_DIR / "latest_report.pdf"
         write_text(markdown_path, markdown_text)
-        self._write_pdf(markdown_text, pdf_path)
-        self.emit("Markdown/PDF 报告已生成")
-        return {"markdown_path": str(markdown_path), "pdf_path": str(pdf_path), "content": markdown_text}
+        pdf_generated = False
+        try:
+            self._write_pdf(markdown_text, pdf_path)
+            pdf_generated = True
+        except ModuleNotFoundError as exc:
+            self.emit(f"PDF 依赖缺失，已跳过 PDF 导出：{exc}")
+        self.emit("Markdown/PDF 报告已生成" if pdf_generated else "Markdown 报告已生成")
+        return {
+            "markdown_path": str(markdown_path),
+            "pdf_path": str(pdf_path) if pdf_generated else None,
+            "content": markdown_text,
+        }

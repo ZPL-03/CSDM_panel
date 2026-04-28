@@ -5,6 +5,7 @@
   "type": "object",
   "required": [
     "case_id",
+    "task_id",
     "created_at",
     "source",
     "task",
@@ -13,7 +14,8 @@
     "verdict"
   ],
   "properties": {
-    "case_id": {"type": "string"},
+    "case_id": {"type": "string", "pattern": "^CASE_[0-9]+$"},
+    "task_id": {"type": "string", "pattern": "^TASK_[0-9]+$"},
     "created_at": {"type": "string"},
     "source": {"type": "string"},
     "task": {"type": "object"},

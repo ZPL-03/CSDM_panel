@@ -3,7 +3,6 @@
   "created_at": "2026-04-03T04:49:38.501171",
   "source": "abaqus_auto",
   "task": {
-    "task_id": "TASK_29",
     "application": "复合材料加筋壁板",
     "load_conditions": {
       "type": "axial_compression",
@@ -67,7 +66,6 @@
   },
   "design": {
     "candidate_id": "C313",
-    "task_id": "TASK_29",
     "source": "DOE",
     "stiffener_type": "T",
     "geometry": {
@@ -144,14 +142,7 @@
       }
     },
     "surrogate_BLF": 0.075,
-    "surrogate_weight": 4.117,
-    "rank_score": -0.2544,
-    "rationale": "DOE 拉丁超立方探索生成 | 材料=T300/5208 | 铺层=QI_14",
-    "origin_summary": "",
-    "screening_summary": "代理预测 BLF=0.075，面密度=4.117 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.2544。",
-    "selection_reason": "Top-1 入选：代理预测 BLF=0.075，面密度=4.117 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.2544。 当前排序靠前，适合优先进入有限元校核。",
-    "display_name": "候选样本8",
-    "persistent_candidate_id": "C313"
+    "rationale": "DOE 拉丁超立方探索生成 | 材料=T300/5208 | 铺层=QI_14"
   },
   "abaqus_results": {
     "candidate_id": "C313",

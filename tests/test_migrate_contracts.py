@@ -4,15 +4,19 @@ from scripts.migrate_contracts import normalize_case_record, normalize_candidate
 def test_normalize_candidate_document_upgrades_legacy_boundary_and_load() -> None:
     candidate = {
         "candidate_id": "C1",
-        "task_id": "TASK_1",
         "source": "MANUAL",
         "stiffener_type": "T",
         "geometry": {},
         "layup": {},
         "load_conditions": {"type": "单轴压缩", "Nx_kN_per_m": 880},
         "boundary_conditions": "四边简支（SSSS）",
+        "request_id": "REQ_ABCDEF123456",
+        "task_fingerprint": "TFP_ABCDEF1234567890",
     }
     normalized = normalize_candidate_document(candidate)
+    assert normalized["source"] == "DOE"
+    assert "request_id" not in normalized
+    assert "task_fingerprint" not in normalized
     assert normalized["load_conditions"]["type"] == "axial_compression"
     assert normalized["boundary_conditions"]["type"] == "SSSS"
 
@@ -29,13 +33,15 @@ def test_normalize_result_document_adds_human_readable_summaries() -> None:
     assert normalized["diagnosis_summary"]
 
 
-def test_normalize_case_record_preserves_ids_and_upgrades_nested_contract() -> None:
+def test_normalize_case_record_drops_legacy_identity_and_upgrades_nested_contract() -> None:
     record = {
         "case_id": "CASE_9",
+        "task_id": "TASK_9",
         "created_at": "2026-01-01T00:00:00",
         "source": "abaqus_auto",
+        "request_id": "REQ_ABCDEF123456",
+        "task_fingerprint": "TFP_ABCDEF1234567890",
         "task": {
-            "task_id": "TASK_7",
             "application": "复合材料加筋壁板",
             "load_conditions": {"type": "单轴压缩", "Nx_kN_per_m": 850},
             "boundary_conditions": "四边简支（SSSS）",
@@ -47,7 +53,9 @@ def test_normalize_case_record_preserves_ids_and_upgrades_nested_contract() -> N
         },
         "design": {
             "candidate_id": "C9",
-            "task_id": "TASK_7",
+            "task_id": "TASK_9",
+            "request_id": "REQ_ABCDEF123456",
+            "task_fingerprint": "TFP_ABCDEF1234567890",
             "source": "MANUAL",
             "stiffener_type": "T",
             "geometry": {"panel_length_mm": 700, "panel_width_mm": 600, "skin_thickness_mm": 2.5, "pitch_mm": 120, "stiffener_height_mm": 28, "web_thickness_mm": 2.0, "flange_width_mm": 16, "flange_thickness_mm": 2.0},
@@ -59,6 +67,12 @@ def test_normalize_case_record_preserves_ids_and_upgrades_nested_contract() -> N
     }
     normalized = normalize_case_record(record)
     assert normalized["case_id"] == "CASE_9"
-    assert normalized["task"]["task_id"] == "TASK_7"
+    assert "task_id" not in normalized
+    assert "request_id" not in normalized
+    assert "task_fingerprint" not in normalized
+    assert "task_id" not in normalized["design"]
+    assert "request_id" not in normalized["design"]
+    assert "task_fingerprint" not in normalized["design"]
+    assert normalized["design"]["source"] == "DOE"
     assert normalized["design"]["boundary_conditions"]["type"] == "SSSS"
     assert normalized["abaqus_results"]["diagnosis_summary"]

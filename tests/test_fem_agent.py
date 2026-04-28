@@ -4,9 +4,9 @@ from agents.fem_agent import FEMAgent
 def test_fem_agent_mock_run() -> None:
     agent = FEMAgent()
     candidate = {
-        "candidate_id": "C1",
+        "candidate_id": "C901",
         "task_id": "TASK_1",
-        "source": "MANUAL",
+        "source": "DOE",
         "stiffener_type": "T",
         "geometry": {
             "panel_length_mm": 700,

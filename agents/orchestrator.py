@@ -10,7 +10,7 @@ from agents.fem_agent import FEMAgent
 from agents.knowledge_agent import KnowledgeAgent
 from agents.report_gen import ReportGenAgent
 from agents.screener import ScreenerAgent
-from core.id_utils import format_candidate_id, next_candidate_index
+from core.id_utils import format_candidate_id, next_candidate_index, task_file_name
 from core.io_utils import write_json
 from core.paths import TASKS_DIR
 from core.task_contract import (
@@ -20,6 +20,7 @@ from core.task_contract import (
     requested_candidate_pool_size,
     requested_screen_top_k,
     summarize_task,
+    task_payload_from_request,
 )
 from core.task_parser import TaskParser
 
@@ -36,33 +37,24 @@ class OrchestratorAgent(BaseAgent):
         self.knowledge_agent = KnowledgeAgent(progress_callback)
         self.report_gen = ReportGenAgent(progress_callback)
 
-    def _persist_task(self, task: Dict) -> None:
-        write_json(TASKS_DIR / f"{task['task_id']}.json", task)
+    def _task_payload(self, task: Dict) -> Dict:
+        return task_payload_from_request(task)
 
-    def parse_instruction(self, text: str) -> Dict:
-        task = self.task_parser.parse_instruction(text)
-        self._persist_task(task)
-        summary = summarize_task(task)
-        self.emit_event(
-            "task_parsed",
-            (
-                f"任务已结构化：{summary['application']} | "
-                f"{summary['load_conditions']} | "
-                f"{summary['boundary_conditions']} | "
-                f"{summary['candidate_pool']} | "
-                f"{summary['top_k']}"
-            ),
-            {"task": task, "summary": summary},
-        )
-        return task
+    def _task_event_context(self, task: Dict) -> Dict:
+        return {
+            "task_id": task.get("task_id"),
+            "created_at": task.get("created_at"),
+            "source": task.get("source"),
+        }
 
     def _attach_task_context(self, task: Dict, candidate: Dict) -> Dict:
+        task_payload = self._task_payload(task)
         enriched = dict(candidate)
-        enriched["task_id"] = task["task_id"]
-        enriched["design_targets"] = task["design_targets"]
-        enriched["load_conditions"] = task["load_conditions"]
-        enriched["boundary_conditions"] = task["boundary_conditions"]
-        enriched["material_system"] = dict(candidate.get("material_system") or task["material_system"])
+        enriched.pop("task_id", None)
+        enriched["design_targets"] = dict(candidate.get("design_targets") or task_payload["design_targets"])
+        enriched["load_conditions"] = dict(candidate.get("load_conditions") or task_payload["load_conditions"])
+        enriched["boundary_conditions"] = dict(candidate.get("boundary_conditions") or task_payload["boundary_conditions"])
+        enriched["material_system"] = dict(candidate.get("material_system") or task_payload["material_system"])
         return enriched
 
     def _promote_candidate_for_fem(self, task: Dict, candidate: Dict) -> Dict:
@@ -79,16 +71,38 @@ class OrchestratorAgent(BaseAgent):
         promoted["candidate_id"] = persistent_candidate_id
         return promoted
 
+    def parse_instruction(self, text: str) -> Dict:
+        task = self.task_parser.parse_instruction(text)
+
+        # 写入任务台账
+        task_path = TASKS_DIR / task_file_name(task["task_id"])
+        write_json(task_path, task)
+
+        summary = summarize_task(task)
+        self.emit_event(
+            "task_parsed",
+            (
+                f"任务已结构化：{summary['application']} | "
+                f"{summary['load_conditions']} | "
+                f"{summary['boundary_conditions']} | "
+                f"{summary['candidate_pool']} | "
+                f"{summary['top_k']}"
+            ),
+            {"task": task, "summary": summary, **self._task_event_context(task)},
+        )
+        return task
+
     def generate_candidates(self, task: Dict) -> List[Dict]:
+        task_payload = self._task_payload(task)
         target_total = requested_candidate_pool_size(task)
         self.emit_event(
             "candidate_generation_started",
             (
-                f"开始生成候选方案：{describe_load_conditions(task['load_conditions'])} / "
-                f"{describe_boundary_conditions(task['boundary_conditions'])} / "
+                f"开始生成候选方案：{describe_load_conditions(task_payload['load_conditions'])} / "
+                f"{describe_boundary_conditions(task_payload['boundary_conditions'])} / "
                 f"候选池目标 {target_total} 个"
             ),
-            {"task_id": task["task_id"], "target_total_candidates": target_total},
+            {**self._task_event_context(task), "target_total_candidates": target_total},
         )
         candidates = [self._attach_task_context(task, candidate) for candidate in self.candidate_gen.run(task)]
         source_counter: Dict[str, int] = {}
@@ -100,7 +114,7 @@ class OrchestratorAgent(BaseAgent):
             f"候选生成完成，目标 {target_total} 个，实际 {len(candidates)} 个："
             + " / ".join(f"{key}={value}" for key, value in sorted(source_counter.items())),
             {
-                "task_id": task["task_id"],
+                **self._task_event_context(task),
                 "candidate_count": len(candidates),
                 "target_total_candidates": target_total,
                 "source_counter": source_counter,
@@ -121,7 +135,7 @@ class OrchestratorAgent(BaseAgent):
                 f"评分公式：{score_formula}"
             ),
             {
-                "task_id": task["task_id"],
+                **self._task_event_context(task),
                 "input_count": len(candidates),
                 "score_formula": score_formula,
                 "requested_top_k_candidates": requested_top_k,
@@ -133,7 +147,7 @@ class OrchestratorAgent(BaseAgent):
             "screening_completed",
             f"DNN 初筛完成，请求 Top-{requested_top_k}，实际输出 {len(screened)} 个。",
             {
-                "task_id": task["task_id"],
+                **self._task_event_context(task),
                 "input_count": len(candidates),
                 "output_count": len(screened),
                 "score_formula": score_formula,
@@ -150,7 +164,7 @@ class OrchestratorAgent(BaseAgent):
             "fem_started",
             f"开始校核 {candidate.get('display_name', fem_candidate.get('session_candidate_id', '候选样本'))} "
             f"-> {fem_candidate['candidate_id']}",
-            {"candidate": fem_candidate},
+            {**self._task_event_context(task), "candidate": fem_candidate},
         )
         result = self.fem_agent.run(fem_candidate)
         result["session_candidate_id"] = fem_candidate.get("session_candidate_id")
@@ -159,7 +173,11 @@ class OrchestratorAgent(BaseAgent):
         return result
 
     def generate_report(self, task: Dict, results: List[Dict], candidates: List[Dict] | None = None) -> Dict:
-        self.emit_event("report_started", "开始生成设计报告", {"task_id": task["task_id"], "result_count": len(results)})
+        self.emit_event(
+            "report_started",
+            "开始生成设计报告",
+            {**self._task_event_context(task), "result_count": len(results)},
+        )
         return self.report_gen.run({"task": task, "results": results, "candidates": candidates or []})
 
     def run(self, user_instruction: str) -> Dict:

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import Any, Dict, Iterable, List
+from datetime import datetime, timezone
+from typing import Any, Dict, Iterable
 
 
 DEFAULT_ALLOWED_ANGLES = [0, 45, -45, 90]
@@ -163,7 +164,6 @@ def describe_load_conditions(load_conditions: Any) -> str:
 
 
 def equivalent_in_plane_load(load_conditions: Any) -> float:
-    """把不同工况换算成便于筛选和 mock 估算的等效面内载荷水平。"""
     normalized = normalize_load_conditions(load_conditions)
     nx_value = float(normalized.get("Nx_kN_per_m", 0.0))
     nxy_value = float(normalized.get("Nxy_kN_per_m", 0.0))
@@ -176,7 +176,6 @@ def equivalent_in_plane_load(load_conditions: Any) -> float:
 
 
 def boundary_stiffness_factor(boundary_conditions: Any) -> float:
-    """给不同边界条件一个轻量刚度修正系数，供 mock 估算和说明使用。"""
     normalized = normalize_boundary_conditions(boundary_conditions)
     mapping = {
         "SSSS": 1.00,
@@ -249,12 +248,10 @@ def normalize_candidate_generation_preferences(preferences: Dict[str, Any] | Non
 def normalize_task_payload(
     task: Dict[str, Any],
     *,
-    task_id: str | None = None,
     material_system: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     normalized = dict(task)
-    if task_id:
-        normalized["task_id"] = task_id
+    normalized.pop("task_id", None)
     if material_system:
         normalized["material_system"] = dict(material_system)
 
@@ -278,8 +275,41 @@ def normalize_task_payload(
     return normalized
 
 
+def task_instance_label(task_record: Dict[str, Any] | None) -> str:
+    task_id = str((task_record or {}).get("task_id") or "").strip()
+    return task_id or "-"
+
+
+def task_payload_from_request(task_record: Dict[str, Any] | None) -> Dict[str, Any]:
+    if not isinstance(task_record, dict):
+        return normalize_task_payload({})
+    if isinstance(task_record.get("task"), dict):
+        return normalize_task_payload(dict(task_record.get("task") or {}))
+    return normalize_task_payload(dict(task_record))
+
+
+def build_task_request_record(
+    task: Dict[str, Any],
+    *,
+    task_id: str,
+    source: str,
+    created_at: str | None = None,
+) -> Dict[str, Any]:
+    return {
+        "task_id": str(task_id).strip(),
+        "created_at": str(created_at or datetime.now(timezone.utc).isoformat()),
+        "source": str(source),
+        "task": normalize_task_payload(task),
+    }
+
+
+def task_identity_payload(task_record: Dict[str, Any] | None) -> Dict[str, str]:
+    task_id = str((task_record or {}).get("task_id") or "").strip()
+    return {"task_id": task_id} if task_id else {}
+
+
 def summarize_task(task: Dict[str, Any]) -> Dict[str, str]:
-    normalized_task = normalize_task_payload(task)
+    normalized_task = task_payload_from_request(task)
     return {
         "application": normalized_task["application"],
         "load_conditions": describe_load_conditions(normalized_task["load_conditions"]),
@@ -294,17 +324,14 @@ def summarize_task(task: Dict[str, Any]) -> Dict[str, str]:
 
 
 def requested_candidate_pool_size(task: Dict[str, Any] | None) -> int:
-    """返回任务期望的初始候选池规模。"""
-    normalized_task = normalize_task_payload(task or {})
+    normalized_task = task_payload_from_request(task or {})
     return int(normalized_task["candidate_generation_preferences"]["total_candidates"])
 
 
 def requested_screen_top_k(task: Dict[str, Any] | None) -> int:
-    """返回任务期望的 DNN 初筛保留数量。"""
-    normalized_task = normalize_task_payload(task or {})
+    normalized_task = task_payload_from_request(task or {})
     return int(normalized_task["screening_preferences"]["top_k_candidates"])
 
 
 def effective_screen_top_k(task: Dict[str, Any] | None, available_count: int) -> int:
-    """返回在当前候选数量下实际可保留的样本数。"""
     return max(0, min(requested_screen_top_k(task), max(int(available_count), 0)))

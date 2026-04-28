@@ -3,7 +3,6 @@
   "created_at": "2026-04-01T03:12:15.082845",
   "source": "abaqus_auto",
   "task": {
-    "task_id": "TASK_17",
     "application": "复合材料加筋壁板",
     "load_conditions": {
       "type": "axial_compression",
@@ -67,7 +66,6 @@
   },
   "design": {
     "candidate_id": "C309",
-    "task_id": "TASK_17",
     "source": "CASE_TRANSFER",
     "stiffener_type": "T",
     "geometry": {
@@ -142,14 +140,7 @@
       }
     },
     "surrogate_BLF": 0.265,
-    "surrogate_weight": 6.182,
-    "rank_score": -0.2296,
-    "rationale": "参考历史案例 CASE_2 微调生成",
-    "origin_summary": "",
-    "screening_summary": null,
-    "selection_reason": null,
-    "display_name": "C309",
-    "persistent_candidate_id": null
+    "rationale": "参考历史案例 CASE_2 微调生成"
   },
   "abaqus_results": {
     "candidate_id": "C309",

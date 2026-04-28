@@ -3,7 +3,6 @@
   "created_at": "2026-03-31T18:04:45.242142",
   "source": "abaqus_auto",
   "task": {
-    "task_id": "TASK_1",
     "application": "复合材料加筋壁板",
     "load_conditions": {
       "type": "axial_compression",
@@ -67,7 +66,6 @@
   },
   "design": {
     "candidate_id": "C1",
-    "task_id": "TASK_1",
     "source": "DOE",
     "stiffener_type": "T",
     "geometry": {
@@ -144,41 +142,48 @@
       }
     },
     "surrogate_BLF": null,
-    "surrogate_weight": null,
-    "rank_score": null,
-    "rationale": "DOE 拉丁超立方探索生成 | 材料=T300/5208 | 铺层=AXIAL_16",
-    "origin_summary": "",
-    "screening_summary": null,
-    "selection_reason": null,
-    "display_name": "C1",
-    "persistent_candidate_id": null
+    "rationale": "DOE 拉丁超立方探索生成 | 材料=T300/5208 | 铺层=AXIAL_16"
   },
   "abaqus_results": {
-    "candidate_id": "C1",
     "status": "success",
-    "retry_count": 0,
-    "BLF_global": 0.28944,
-    "BLF_local": 0.30481,
-    "failure_mode": "整体屈曲",
-    "max_displacement_mm": 1.0,
-    "weight_kg_per_m2": 3.438633,
-    "verdict": "不通过",
     "abaqus_odb": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C1\\C1.odb",
-    "abaqus_inp": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C1\\C1.inp",
     "visualization_json": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C1\\C1_mode1.json",
-    "artifact_dir": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C1",
+    "failure_mode": "整体屈曲",
     "error_type": null,
+    "max_displacement_mm": 1.0,
     "error_log": null,
+    "BLF_local": 0.39233,
+    "BLF_global": 0.35473,
+    "verdict": "不通过",
+    "candidate_id": "C1",
     "mode_eigenvalues": [
-      0.28944,
-      0.30481,
-      0.30948,
-      0.32562,
-      0.34146
+      0.35473,
+      0.39233,
+      0.39385,
+      0.41225,
+      0.4311,
+      0.44955,
+      0.4739,
+      0.47865
     ],
+    "abaqus_inp": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C1\\C1.inp",
+    "analysis_flags": {
+      "first_positive_mode_index": 1,
+      "negative_modes_skipped": 0
+    },
+    "effective_mode_eigenvalues": [
+      0.35473,
+      0.39233,
+      0.39385,
+      0.41225,
+      0.4311
+    ],
+    "retry_count": 0,
+    "weight_kg_per_m2": 3.438633,
+    "artifact_dir": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C1",
     "load_summary": "单轴压缩：Nx=120.0 kN/m",
     "boundary_summary": "四边简支（SSSS）",
-    "diagnosis_summary": "历史结果已迁移，当前结论为“不通过”。"
+    "diagnosis_summary": "线性屈曲校核已完成，当前结论为“不通过”。"
   },
   "verdict": "不通过",
   "surrogate_BLF_error_pct": null,

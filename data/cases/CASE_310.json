@@ -3,7 +3,6 @@
   "created_at": "2026-04-01T03:25:52.725285",
   "source": "abaqus_auto",
   "task": {
-    "task_id": "TASK_18",
     "application": "复合材料加筋壁板",
     "load_conditions": {
       "type": "axial_compression",
@@ -67,7 +66,6 @@
   },
   "design": {
     "candidate_id": "C310",
-    "task_id": "TASK_18",
     "source": "LLM",
     "stiffener_type": "T",
     "geometry": {
@@ -142,14 +140,7 @@
       }
     },
     "surrogate_BLF": 0.264,
-    "surrogate_weight": 5.794,
-    "rank_score": -0.1995,
-    "rationale": "基于任务要求和参考案例生成 | 材料=T300/5208 | 铺层=SHEAR_14",
-    "origin_summary": "",
-    "screening_summary": null,
-    "selection_reason": null,
-    "display_name": "C310",
-    "persistent_candidate_id": null
+    "rationale": "基于任务要求和参考案例生成 | 材料=T300/5208 | 铺层=SHEAR_14"
   },
   "abaqus_results": {
     "candidate_id": "C310",

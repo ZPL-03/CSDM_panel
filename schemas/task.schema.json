@@ -4,7 +4,6 @@
   "title": "CSDM Task Schema",
   "type": "object",
   "required": [
-    "task_id",
     "application",
     "load_conditions",
     "boundary_conditions",
@@ -15,10 +14,6 @@
     "design_targets"
   ],
   "properties": {
-    "task_id": {
-      "type": "string",
-      "pattern": "^TASK_[0-9]+$"
-    },
     "application": {
       "type": "string",
       "minLength": 1

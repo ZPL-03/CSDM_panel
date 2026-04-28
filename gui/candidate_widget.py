@@ -19,6 +19,18 @@ from gui.interactive_view import InteractivePlotWidget
 from core.task_contract import describe_boundary_conditions, describe_load_conditions
 
 
+SOURCE_LABELS = {
+    "LLM": "LLM 文献增强",
+    "CASE_TRANSFER": "历史案例迁移",
+    "DOE": "DOE 参数采样",
+}
+
+
+def _format_source_label(source: object) -> str:
+    key = str(source or "UNKNOWN")
+    return SOURCE_LABELS.get(key, key)
+
+
 def _format_number(value: object, digits: int = 3) -> str:
     if value is None or value == "":
         return "-"
@@ -91,12 +103,13 @@ class CandidateWidget(QWidget):
 
         for row, candidate in enumerate(self.candidates):
             source = str(candidate.get("source", "UNKNOWN"))
-            source_counter[source] = source_counter.get(source, 0) + 1
+            source_label = _format_source_label(source)
+            source_counter[source_label] = source_counter.get(source_label, 0) + 1
             result = self._result_for_candidate(candidate)
             archive_id = candidate.get("persistent_candidate_id") or (result or {}).get("candidate_id", "-")
             values = [
                 candidate.get("display_name", candidate.get("candidate_id", "")),
-                source,
+                source_label,
                 _format_number(candidate.get("surrogate_BLF")),
                 _format_number(candidate.get("surrogate_weight")),
                 _format_number(candidate.get("rank_score"), 4),
@@ -174,7 +187,7 @@ class CandidateWidget(QWidget):
             )
 
         html = (
-            f"<h3>{candidate.get('display_name', candidate.get('candidate_id'))} | {candidate.get('source')}</h3>"
+            f"<h3>{candidate.get('display_name', candidate.get('candidate_id'))} | {_format_source_label(candidate.get('source'))}</h3>"
             f"<p><b>会话编号：</b>{candidate.get('candidate_id', '-')}<br>"
             f"<b>正式编号：</b>{archive_id}</p>"
             f"<p><b>生成说明：</b>{candidate.get('rationale', '-')}</p>"

@@ -3,7 +3,6 @@
   "created_at": "2026-04-03T05:22:40.277768",
   "source": "abaqus_auto",
   "task": {
-    "task_id": "TASK_30",
     "application": "复合材料加筋壁板",
     "load_conditions": {
       "type": "compression_shear",
@@ -67,7 +66,6 @@
   },
   "design": {
     "candidate_id": "C322",
-    "task_id": "TASK_30",
     "source": "LLM",
     "stiffener_type": "T",
     "geometry": {
@@ -142,14 +140,7 @@
       }
     },
     "surrogate_BLF": 0.207,
-    "surrogate_weight": 6.327,
-    "rank_score": -0.2992,
-    "rationale": "基于任务要求和参考案例生成 | 材料=T300/5208 | 铺层=BALANCED_16",
-    "origin_summary": "",
-    "screening_summary": "代理预测 BLF=0.207，面密度=6.327 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.2992。",
-    "selection_reason": "Top-5 入选：代理预测 BLF=0.207，面密度=6.327 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.2992。 当前排序靠前，适合优先进入有限元校核。",
-    "display_name": "候选样本1",
-    "persistent_candidate_id": "C322"
+    "rationale": "基于任务要求和参考案例生成 | 材料=T300/5208 | 铺层=BALANCED_16"
   },
   "abaqus_results": {
     "candidate_id": "C322",

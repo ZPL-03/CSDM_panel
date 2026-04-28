@@ -3,7 +3,6 @@
   "created_at": "2026-04-03T04:43:32.853798",
   "source": "abaqus_auto",
   "task": {
-    "task_id": "TASK_28",
     "application": "复合材料加筋壁板",
     "load_conditions": {
       "type": "axial_compression",
@@ -67,7 +66,6 @@
   },
   "design": {
     "candidate_id": "C312",
-    "task_id": "TASK_28",
     "source": "CASE_TRANSFER",
     "stiffener_type": "T",
     "geometry": {
@@ -142,14 +140,7 @@
       }
     },
     "surrogate_BLF": 0.186,
-    "surrogate_weight": 5.15,
-    "rank_score": -0.226,
-    "rationale": "参考历史案例 CASE_13 微调生成",
-    "origin_summary": "参考 CASE_13 | BLF=1.4907 | 重量=5.149609",
-    "screening_summary": "代理预测 BLF=0.186，面密度=5.15 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.226。",
-    "selection_reason": "Top-1 入选：代理预测 BLF=0.186，面密度=5.15 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.226。 当前排序靠前，适合优先进入有限元校核。",
-    "display_name": "候选样本6",
-    "persistent_candidate_id": "C312"
+    "rationale": "参考历史案例 CASE_13 微调生成"
   },
   "abaqus_results": {
     "candidate_id": "C312",

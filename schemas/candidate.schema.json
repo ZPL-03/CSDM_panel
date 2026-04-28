@@ -5,7 +5,6 @@
   "type": "object",
   "required": [
     "candidate_id",
-    "task_id",
     "source",
     "stiffener_type",
     "geometry",
@@ -16,10 +15,9 @@
       "type": "string",
       "pattern": "^(C[0-9]+|TMP_[0-9]+)$"
     },
-    "task_id": {"type": "string"},
     "source": {
       "type": "string",
-      "enum": ["LLM", "DOE", "CASE_TRANSFER", "MANUAL"]
+      "enum": ["LLM", "DOE", "CASE_TRANSFER"]
     },
     "stiffener_type": {
       "type": "string",

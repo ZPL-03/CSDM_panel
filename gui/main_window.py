@@ -36,6 +36,7 @@ from core.task_contract import (
     effective_screen_top_k,
     requested_candidate_pool_size,
     requested_screen_top_k,
+    task_payload_from_request,
 )
 from gui.abaqus_widget import AbaqusWidget
 from gui.candidate_widget import CandidateWidget
@@ -677,21 +678,22 @@ class MainWindow(QMainWindow):
         if not self.session.task:
             return self._initial_task_html()
         task = self.session.task
-        material = task.get("material_system", {})
+        task_payload = task_payload_from_request(task)
+        material = task_payload.get("material_system", {})
         generated_count = len(self.session.candidates)
         candidate_pool_target = requested_candidate_pool_size(task)
         requested_top_k = requested_screen_top_k(task)
         effective_top_k = effective_screen_top_k(task, generated_count)
         return (
             "<h3>当前任务</h3>"
-            f"<p><b>任务编号：</b>{task.get('task_id')}</p>"
-            f"<p><b>应用场景：</b>{task.get('application')}</p>"
-            f"<p><b>工况：</b>{describe_load_conditions(task.get('load_conditions', {}))}</p>"
-            f"<p><b>边界条件：</b>{describe_boundary_conditions(task.get('boundary_conditions', {}))}</p>"
+            f"<p><b>会话任务编号：</b>{task.get('task_id')}</p>"
+            f"<p><b>应用场景：</b>{task_payload.get('application')}</p>"
+            f"<p><b>工况：</b>{describe_load_conditions(task_payload.get('load_conditions', {}))}</p>"
+            f"<p><b>边界条件：</b>{describe_boundary_conditions(task_payload.get('boundary_conditions', {}))}</p>"
             f"<p><b>候选池：</b>{generated_count} / 目标 {candidate_pool_target}</p>"
             f"<p><b>初筛目标：</b>Top-{requested_top_k}（当前最多 {effective_top_k}）</p>"
             f"<p><b>材料：</b>{material.get('name')} | E1={material.get('E1_GPa')} GPa | 密度={material.get('density_kg_per_m3')} kg/m^3</p>"
-            f"<p><b>目标：</b>BLF >= {task.get('design_targets', {}).get('BLF_min')}，{task.get('design_targets', {}).get('primary_objective')}</p>"
+            f"<p><b>目标：</b>BLF >= {task_payload.get('design_targets', {}).get('BLF_min')}，{task_payload.get('design_targets', {}).get('primary_objective')}</p>"
             f"<p><b>阶段：</b>{self.session.stage}</p>"
         )
 

@@ -15,10 +15,30 @@ if str(ROOT) not in sys.path:
 from agents.fem_agent import FEMAgent
 from core.io_utils import read_json, write_json
 from core.paths import CASES_DIR, CASE_LIBRARY_DIR, IO_DIR
+from scripts.clean_debug_artifacts import purge_business_records
 from scripts.migrate_contracts import normalize_case_record
 
 
-def rebuild_case(case_path: Path) -> dict:
+def _should_store_case_library_record(payload: dict) -> bool:
+    results = dict(payload.get("abaqus_results", {}))
+    return results.get("status") == "success" and results.get("verdict") == "通过"
+
+
+def _write_case_library_record(case_path: Path, payload: dict) -> None:
+    library_path = CASE_LIBRARY_DIR / case_path.name
+    if _should_store_case_library_record(payload):
+        write_json(library_path, payload)
+        return
+    library_path.unlink(missing_ok=True)
+
+
+def _clear_existing_candidate_artifacts(payload: dict) -> None:
+    candidate_id = str(payload.get("design", {}).get("candidate_id") or payload.get("candidate_id") or "").strip()
+    case_id = str(payload.get("case_id") or "").strip()
+    purge_business_records([candidate_id] if candidate_id else [], [case_id] if case_id else [])
+
+
+def rebuild_case(case_path: Path, *, force: bool = False) -> dict:
     """对单个案例重新执行 FEM 求解并回写结果。"""
     payload = normalize_case_record(read_json(case_path))
     candidate = payload["design"]
@@ -27,11 +47,18 @@ def rebuild_case(case_path: Path) -> dict:
     candidate["boundary_conditions"] = payload["task"]["boundary_conditions"]
     candidate["material_system"] = payload["task"]["material_system"]
 
+    if force:
+        _clear_existing_candidate_artifacts(payload)
+        write_json(case_path, payload)
+
     result = FEMAgent().run(candidate)
     payload["abaqus_results"] = result
+    payload["candidate_id"] = candidate["candidate_id"]
+    payload["verdict"] = result.get("verdict") or payload.get("verdict") or "未知"
+    payload["fem_agent_retry_count"] = int(result.get("retry_count", 0) or 0)
 
     write_json(case_path, payload)
-    write_json(CASE_LIBRARY_DIR / case_path.name, payload)
+    _write_case_library_record(case_path, payload)
     write_json(IO_DIR / f"result_{candidate['candidate_id']}.json", result)
     return {
         "case_id": payload["case_id"],
@@ -39,6 +66,7 @@ def rebuild_case(case_path: Path) -> dict:
         "status": result["status"],
         "abaqus_odb": result.get("abaqus_odb"),
         "abaqus_inp": result.get("abaqus_inp"),
+        "force": force,
     }
 
 
@@ -53,6 +81,7 @@ def main() -> int:
         default=[],
         help="只重建指定 candidate_id，可重复传入",
     )
+    parser.add_argument("--force", action="store_true", help="重建前先精确清理指定样本旧工件")
     args = parser.parse_args()
 
     selected_case_ids = {item.strip() for item in args.case_id if item.strip()}
@@ -69,7 +98,7 @@ def main() -> int:
             continue
 
         odb_path = payload.get("abaqus_results", {}).get("abaqus_odb")
-        if odb_path and Path(odb_path).exists():
+        if not args.force and odb_path and Path(odb_path).exists():
             continue
         pending.append(case_path)
 
@@ -82,7 +111,7 @@ def main() -> int:
 
     results = []
     with ThreadPoolExecutor(max_workers=max(1, args.workers)) as executor:
-        future_map = {executor.submit(rebuild_case, case_path): case_path for case_path in pending}
+        future_map = {executor.submit(rebuild_case, case_path, force=args.force): case_path for case_path in pending}
         for future in as_completed(future_map):
             result = future.result()
             results.append(result)

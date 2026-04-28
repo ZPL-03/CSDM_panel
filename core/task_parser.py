@@ -15,12 +15,14 @@ from core.task_contract import (
     DEFAULT_DESIGN_TARGETS,
     DEFAULT_GEOMETRY_ENVELOPE,
     DEFAULT_LAYUP_CONSTRAINTS,
+    build_task_request_record,
     describe_boundary_conditions,
     describe_load_conditions,
     normalize_boundary_conditions,
     normalize_geometry_envelope,
     normalize_load_conditions,
     normalize_task_payload,
+    task_payload_from_request,
 )
 
 
@@ -91,24 +93,53 @@ class TaskParser:
         nxy_value = None
 
         axial_patterns = [
-            r"(?:Nx|轴压|压缩载荷|压缩)\D*([0-9]+(?:\.[0-9]+)?)\s*(?:kN/m|kn/m)",
-            r"([0-9]+(?:\.[0-9]+)?)\s*(?:kN/m|kn/m)",
+            r"(?:\bNx\b|轴压|压缩载荷|压缩荷载|压缩)\s*(?:为|是)?\s*[:：=]?[\s,，]*([0-9]+(?:\.[0-9]+)?)\s*(?:[kK]\s*[nN]\s*/\s*[mM])?",
+            r"(?:受压|压缩工况)\s*[:：=]?[\s,，]*([0-9]+(?:\.[0-9]+)?)\s*(?:[kK]\s*[nN]\s*/\s*[mM])?",
         ]
         shear_patterns = [
-            r"(?:Nxy|剪切载荷|剪切|面内剪切)\D*([0-9]+(?:\.[0-9]+)?)\s*(?:kN/m|kn/m)",
+            r"(?:\bNxy\b|剪切载荷|剪切荷载|剪切|面内剪切)\s*(?:为|是)?\s*[:：=]?[\s,，]*([0-9]+(?:\.[0-9]+)?)\s*(?:[kK]\s*[nN]\s*/\s*[mM])?",
+            r"(?:受剪|剪切工况)\s*[:：=]?[\s,，]*([0-9]+(?:\.[0-9]+)?)\s*(?:[kK]\s*[nN]\s*/\s*[mM])?",
         ]
+
+        compact_text = re.sub(r"\s+", "", text)
+        compact_axial_patterns = [r"(?:压缩载荷|压缩荷载|压缩|轴压|Nx)([0-9]+(?:\.[0-9]+)?)(?:[kK][nN]/[mM])?"]
+        compact_shear_patterns = [r"(?:剪切载荷|剪切荷载|剪切|面内剪切|Nxy)([0-9]+(?:\.[0-9]+)?)(?:[kK][nN]/[mM])?"]
 
         for pattern in axial_patterns:
             nx_value = self._extract_float(pattern, text)
             if nx_value is not None:
                 break
+        if nx_value is None:
+            for pattern in compact_axial_patterns:
+                nx_value = self._extract_float(pattern, compact_text)
+                if nx_value is not None:
+                    break
+
         for pattern in shear_patterns:
             nxy_value = self._extract_float(pattern, text)
             if nxy_value is not None:
                 break
+        if nxy_value is None:
+            for pattern in compact_shear_patterns:
+                nxy_value = self._extract_float(pattern, compact_text)
+                if nxy_value is not None:
+                    break
 
         lowered = text.lower()
-        if "压剪" in text or ("压缩" in text and ("剪切" in text or "shear" in lowered)):
+        has_explicit_nx = re.search(r"\bNx\b", text, flags=re.IGNORECASE) is not None or re.search(r"Nx(?!y)", compact_text, flags=re.IGNORECASE) is not None
+        has_explicit_nxy = re.search(r"\bNxy\b", text, flags=re.IGNORECASE) is not None or re.search(r"Nxy", compact_text, flags=re.IGNORECASE) is not None
+        has_axial_text = any(token in text for token in ["轴压", "压缩载荷", "压缩荷载", "压缩", "受压"])
+        has_shear_text = any(token in text for token in ["剪切载荷", "剪切荷载", "剪切", "面内剪切", "受剪"])
+        has_axial = has_explicit_nx or has_axial_text
+        has_shear = has_explicit_nxy or has_shear_text or "shear" in lowered
+        explicit_compression_shear = "压剪" in text or ((has_explicit_nx or has_axial_text) and (has_explicit_nxy or has_shear_text or "shear" in lowered))
+
+        if not has_axial:
+            nx_value = None
+        if not has_shear:
+            nxy_value = None
+
+        if explicit_compression_shear:
             return normalize_load_conditions(
                 {
                     "type": "compression_shear",
@@ -116,12 +147,12 @@ class TaskParser:
                     "Nxy_kN_per_m": nxy_value or 220.0,
                 }
             )
-        if "剪切" in text or "nxy" in lowered or "shear" in lowered:
+        if has_shear:
             return normalize_load_conditions(
                 {
                     "type": "in_plane_shear",
                     "Nx_kN_per_m": 0.0,
-                    "Nxy_kN_per_m": nxy_value or nx_value or 220.0,
+                    "Nxy_kN_per_m": nxy_value or 220.0,
                 }
             )
         return normalize_load_conditions(
@@ -163,9 +194,12 @@ class TaskParser:
 
     def _extract_top_k_candidates(self, text: str) -> int:
         patterns = [
-            r"(?:初筛保留|DNN初筛保留|筛选后保留|初步保留)\s*([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)",
-            r"(?:初筛|筛选|DNN初筛)\D{0,8}(?:Top[- ]?|TOP[- ]?|top[- ]?)\s*([1-9][0-9]?)",
+            r"(?:初筛保留|DNN初筛保留|筛选后保留|初步保留)\s*([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
             r"(?:初筛数量|筛选数量|TopK|Top-K)\D{0,4}([1-9][0-9]?)",
+            r"([1-9][0-9]?)\s*(?:个)?初筛",
+            r"(?:初筛|筛选|DNN初筛)\D{0,8}(?:Top[- ]?|TOP[- ]?|top[- ]?)\s*([1-9][0-9]?)",
+            r"(?:初筛|筛选|DNN初筛)\s*([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
+            r"(?:筛)\s*([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
         ]
         for pattern in patterns:
             match = re.search(pattern, text, flags=re.IGNORECASE)
@@ -176,7 +210,8 @@ class TaskParser:
     def _extract_total_candidates(self, text: str) -> int:
         patterns = [
             r"(?:总候选|候选总数|候选池|初始候选|候选方案综述)\D{0,6}([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
-            r"(?:生成|给出|提供|输出)\s*([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)",
+            r"(?:生成|给出|提供|输出)\s*([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
+            r"([1-9][0-9]?)\s*(?:个)?候选",
             r"(?:候选(?:数量)?|样本(?:数量)?)\D{0,6}([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
         ]
         for pattern in patterns:
@@ -266,12 +301,16 @@ class TaskParser:
         llm_payload = self._llm_hints(text, hints)
         merged = _deep_merge(hints, llm_payload)
         merged = self._apply_locked_rule_hints(hints, merged)
-        task = normalize_task_payload(merged, task_id=next_task_id())
+        task = normalize_task_payload(merged)
         validate_or_raise("task.schema.json", task)
-        return task
+        return build_task_request_record(
+            task,
+            task_id=next_task_id(),
+            source="gui_instruction",
+        )
 
     def describe_parse_result(self, task: Dict[str, Any]) -> str:
-        normalized = normalize_task_payload(task)
+        normalized = task_payload_from_request(task)
         return (
             f"已解析任务：{normalized['application']} | "
             f"{describe_load_conditions(normalized['load_conditions'])} | "

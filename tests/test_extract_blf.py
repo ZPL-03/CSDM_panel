@@ -38,7 +38,7 @@ def _candidate_payload() -> dict:
     return {
         "candidate_id": "C950",
         "task_id": "TASK_1",
-        "source": "MANUAL",
+        "source": "DOE",
         "stiffener_type": "T",
         "geometry": {
             "panel_length_mm": 720,

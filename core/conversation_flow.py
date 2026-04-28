@@ -14,6 +14,7 @@ from core.task_contract import (
     effective_screen_top_k,
     requested_candidate_pool_size,
     requested_screen_top_k,
+    task_payload_from_request,
 )
 
 
@@ -83,12 +84,73 @@ class ConversationFlowController:
 
         if stage == "task_summary":
             task = payload.get("task", {})
+            task_payload = task_payload_from_request(task)
             target_total = requested_candidate_pool_size(task)
             top_k = requested_screen_top_k(task)
             return (
-                f"我已经把你的需求整理成结构化任务了，当前按 {describe_load_conditions(task.get('load_conditions', {}))} "
-                f"和 {describe_boundary_conditions(task.get('boundary_conditions', {}))} 来生成方案，候选池先按 {target_total} 个目标展开，后续初筛会保留 Top-{top_k}。"
+                f"我已经把你的需求整理成结构化任务了，当前按 {describe_load_conditions(task_payload.get('load_conditions', {}))} "
+                f"和 {describe_boundary_conditions(task_payload.get('boundary_conditions', {}))} 来生成方案，候选池先按 {target_total} 个目标展开，后续初筛会保留 Top-{top_k}。"
             )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
         if stage == "candidate_summary":
             return "我先把初始方案池铺开，再用代理模型做一轮便宜但有解释性的预筛选；如果实际生成数小于目标值，通常说明有一部分方案在规则约束下被提前拦住了。"
         if stage == "screening_summary":
@@ -111,6 +173,7 @@ class ConversationFlowController:
         self._emit("conversation_started", "已接收设计需求，正在解析任务并生成初始候选。", {"instruction": instruction})
 
         task = self.orchestrator.parse_instruction(instruction)
+        task_payload = task_payload_from_request(task)
         candidates = self.orchestrator.generate_candidates(task)
 
         state.task = task
@@ -123,9 +186,9 @@ class ConversationFlowController:
         self._emit(
             "task_summary",
             (
-                f"任务摘要：{task['application']} | "
-                f"{describe_load_conditions(task['load_conditions'])} | "
-                f"{describe_boundary_conditions(task['boundary_conditions'])} | "
+                f"任务摘要：{task_payload['application']} | "
+                f"{describe_load_conditions(task_payload['load_conditions'])} | "
+                f"{describe_boundary_conditions(task_payload['boundary_conditions'])} | "
                 f"候选池目标 {target_counts['candidate_pool_target']} 个 | "
                 f"初筛保留 Top-{target_counts['requested_top_k']}"
             ),

@@ -3,7 +3,6 @@ from core.schema_validator import validate_or_raise
 
 def test_task_schema_passes() -> None:
     payload = {
-        "task_id": "TASK_1",
         "application": "机翼下翼面壁板",
         "load_conditions": {"type": "compression_shear", "label": "压剪组合", "Nx_kN_per_m": 850, "Nxy_kN_per_m": 180},
         "boundary_conditions": {
@@ -20,3 +19,28 @@ def test_task_schema_passes() -> None:
         "design_targets": {"BLF_min": 1.2, "primary_objective": "最小重量"},
     }
     validate_or_raise("task.schema.json", payload)
+
+
+def test_candidate_schema_passes_without_task_identity() -> None:
+    payload = {
+        "candidate_id": "TMP_1",
+        "source": "LLM",
+        "stiffener_type": "T",
+        "geometry": {
+            "panel_length_mm": 700,
+            "panel_width_mm": 600,
+            "skin_thickness_mm": 2.5,
+            "pitch_mm": 120,
+            "stiffener_height_mm": 28,
+            "web_thickness_mm": 2.0,
+            "flange_width_mm": 16,
+            "flange_thickness_mm": 2.0,
+        },
+        "layup": {
+            "skin_layup": "[45/-45/0/90/0/-45/45]s",
+            "skin_f0": 0.286,
+            "skin_f45": 0.571,
+            "skin_f90": 0.143,
+        },
+    }
+    validate_or_raise("candidate.schema.json", payload)

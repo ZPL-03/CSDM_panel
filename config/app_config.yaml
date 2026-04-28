@@ -45,6 +45,21 @@ rag:
   use_hash_embedding_only: false
   allow_hash_fallback: true
 
+literature:
+  enabled: true
+  collection_name: csdm_literature_corpus
+  top_k: 5
+  chunk_chars: 1200
+  chunk_overlap: 150
+  metadata_only_default: true
+  download_oa_pdfs: false
+  parse_oa_pdfs: false
+  max_results_per_query: 50
+  sources:
+    - openalex
+    - crossref
+    - unpaywall
+
 conversation:
   confirmation_steps:
     - screen_candidates

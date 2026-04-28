@@ -13,7 +13,12 @@ from core.paths import CASE_LIBRARY_DIR, CASES_DIR
 from core.rag_engine import RAGEngine
 from core.schema_validator import validate_or_raise
 from core.surrogate_model import SurrogateModelManager
-from core.task_contract import normalize_boundary_conditions, normalize_load_conditions, normalize_task_payload
+from core.task_contract import (
+    normalize_boundary_conditions,
+    normalize_load_conditions,
+    normalize_task_payload,
+    task_payload_from_request,
+)
 
 
 class KnowledgeAgent(BaseAgent):
@@ -27,15 +32,16 @@ class KnowledgeAgent(BaseAgent):
         self.min_case_records_for_retrain = int(self.config["pipeline"]["min_case_records_for_retrain"])
 
     def _sanitize_task(self, task: Dict) -> Dict:
-        normalized = normalize_task_payload(dict(task))
+        normalized = task_payload_from_request(task)
         return {
-            "task_id": normalized.get("task_id"),
             "application": normalized.get("application"),
             "load_conditions": dict(normalized.get("load_conditions", {})),
             "boundary_conditions": dict(normalized.get("boundary_conditions", {})),
             "geometry_envelope": dict(normalized.get("geometry_envelope", {})),
             "material_system": dict(normalized.get("material_system", {})),
             "layup_constraints": dict(normalized.get("layup_constraints", {})),
+            "candidate_generation_preferences": dict(normalized.get("candidate_generation_preferences", {})),
+            "screening_preferences": dict(normalized.get("screening_preferences", {})),
             "stiffener_type": normalized.get("stiffener_type", "T"),
             "design_targets": dict(normalized.get("design_targets", {})),
         }
@@ -43,7 +49,6 @@ class KnowledgeAgent(BaseAgent):
     def _sanitize_design(self, design: Dict) -> Dict:
         return {
             "candidate_id": design.get("candidate_id"),
-            "task_id": design.get("task_id"),
             "source": design.get("source"),
             "stiffener_type": design.get("stiffener_type", "T"),
             "geometry": dict(design.get("geometry", {})),
@@ -54,14 +59,7 @@ class KnowledgeAgent(BaseAgent):
             "design_targets": dict(design.get("design_targets", {})),
             "rule_check": dict(design.get("rule_check", {})),
             "surrogate_BLF": design.get("surrogate_BLF"),
-            "surrogate_weight": design.get("surrogate_weight"),
-            "rank_score": design.get("rank_score"),
             "rationale": design.get("rationale", ""),
-            "origin_summary": design.get("origin_summary", ""),
-            "screening_summary": design.get("screening_summary"),
-            "selection_reason": design.get("selection_reason"),
-            "display_name": design.get("display_name"),
-            "persistent_candidate_id": design.get("persistent_candidate_id"),
         }
 
     def _sanitize_abaqus_results(self, abaqus_results: Dict) -> Dict:
@@ -96,6 +94,7 @@ class KnowledgeAgent(BaseAgent):
         verdict = clean_results.get("verdict") or ("失败" if clean_results.get("status") != "success" else "未知")
         record = {
             "case_id": case_id,
+            "task_id": task.get("task_id"),
             "created_at": datetime.utcnow().isoformat(),
             "source": "abaqus_auto",
             "task": clean_task,
