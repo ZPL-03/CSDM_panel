@@ -237,12 +237,9 @@ D:/anaconda3/envs/GPT/python.exe -m pytest tests -q
 
 - [项目全流程梳理与开发指南](docs/CSDM_项目全流程梳理与开发指南.md)
 - [接口约定](docs/接口约定.md)
-<<<<<<< HEAD
-=======
 
 ## 14. 下一步计划
 
 - 持续积累真实校核案例，提升代理模型质量
 - 为 `README` 补充 GUI 截图和示例对话
 - 将关键设计案例整理为公开 benchmark 数据集
->>>>>>> c2c67a9fbe018aa98415740bb5fb2f34276a7899
