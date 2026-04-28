@@ -1,0 +1,7338 @@
+{
+  "meta": {
+    "count": 860,
+    "db_response_time_ms": 88,
+    "page": 1,
+    "per_page": 8,
+    "groups_count": null,
+    "cost_usd": 0.001
+  },
+  "results": [
+    {
+      "id": "https://openalex.org/W2544676729",
+      "doi": "https://doi.org/10.1002/pc.24239",
+      "title": "Investigation on the buckling and postbuckling performance of aero stiffened composite panels under axial compression",
+      "display_name": "Investigation on the buckling and postbuckling performance of aero stiffened composite panels under axial compression",
+      "relevance_score": 492.8201,
+      "publication_year": 2016,
+      "publication_date": "2016-10-31",
+      "ids": {
+        "openalex": "https://openalex.org/W2544676729",
+        "doi": "https://doi.org/10.1002/pc.24239",
+        "mag": "2544676729"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "doi:10.1002/pc.24239",
+        "is_oa": false,
+        "landing_page_url": "https://doi.org/10.1002/pc.24239",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S156806727",
+          "display_name": "Polymer Composites",
+          "issn_l": "0272-8397",
+          "issn": [
+            "0272-8397",
+            "1548-0569"
+          ],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": true,
+          "host_organization": "https://openalex.org/P4310320595",
+          "host_organization_name": "Wiley",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310320595"
+          ],
+          "host_organization_lineage_names": [
+            "Wiley"
+          ],
+          "type": "journal"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Polymer Composites",
+        "raw_type": "journal-article"
+      },
+      "type": "article",
+      "indexed_in": [
+        "crossref"
+      ],
+      "open_access": {
+        "is_oa": false,
+        "oa_status": "closed",
+        "oa_url": null,
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5101442369",
+            "display_name": "Yu Feng",
+            "orcid": "https://orcid.org/0000-0002-4634-9465"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I4210104252",
+              "display_name": "Air Force Engineering University",
+              "ror": "https://ror.org/00seraz22",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "Yu Feng",
+          "raw_affiliation_strings": [
+            "Aeronautics and Astronautics Engineering College Air Force Engineering University Xi′an 710038 People's Republic of China"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Aeronautics and Astronautics Engineering College Air Force Engineering University Xi′an 710038 People's Republic of China",
+              "institution_ids": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5100425898",
+            "display_name": "Haoyu Zhang",
+            "orcid": "https://orcid.org/0000-0003-4405-8530"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I4210104252",
+              "display_name": "Air Force Engineering University",
+              "ror": "https://ror.org/00seraz22",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Haoyu Zhang",
+          "raw_affiliation_strings": [
+            "Aeronautics and Astronautics Engineering College Air Force Engineering University Xi′an 710038 People's Republic of China"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Aeronautics and Astronautics Engineering College Air Force Engineering University Xi′an 710038 People's Republic of China",
+              "institution_ids": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5102242573",
+            "display_name": "Tan Xiangfei",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I4210104252",
+              "display_name": "Air Force Engineering University",
+              "ror": "https://ror.org/00seraz22",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Xiangfei Tan",
+          "raw_affiliation_strings": [
+            "Aeronautics and Astronautics Engineering College Air Force Engineering University Xi′an 710038 People's Republic of China"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Aeronautics and Astronautics Engineering College Air Force Engineering University Xi′an 710038 People's Republic of China",
+              "institution_ids": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5112266199",
+            "display_name": "Tao An",
+            "orcid": "https://orcid.org/0009-0004-5120-0448"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I4210104252",
+              "display_name": "Air Force Engineering University",
+              "ror": "https://ror.org/00seraz22",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Tao An",
+          "raw_affiliation_strings": [
+            "Aeronautics and Astronautics Engineering College Air Force Engineering University Xi′an 710038 People's Republic of China"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Aeronautics and Astronautics Engineering College Air Force Engineering University Xi′an 710038 People's Republic of China",
+              "institution_ids": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5014654600",
+            "display_name": "Yuting He",
+            "orcid": "https://orcid.org/0000-0002-8715-4330"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I4210104252",
+              "display_name": "Air Force Engineering University",
+              "ror": "https://ror.org/00seraz22",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Yuting He",
+          "raw_affiliation_strings": [
+            "Aeronautics and Astronautics Engineering College Air Force Engineering University Xi′an 710038 People's Republic of China"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Aeronautics and Astronautics Engineering College Air Force Engineering University Xi′an 710038 People's Republic of China",
+              "institution_ids": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "last",
+          "author": {
+            "id": "https://openalex.org/A5101672062",
+            "display_name": "Jie Zheng",
+            "orcid": "https://orcid.org/0000-0001-7297-0426"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I11838497",
+              "display_name": "Aviation Industry Corporation of China (China)",
+              "ror": "https://ror.org/02wq41p38",
+              "country_code": "CN",
+              "type": "company",
+              "lineage": [
+                "https://openalex.org/I11838497"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Jie Zheng",
+          "raw_affiliation_strings": [
+            "The First Aircraft Institute, Aviation Industry Corporation Xi′an 710089 People's Republic of China"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "The First Aircraft Institute, Aviation Industry Corporation Xi′an 710089 People's Republic of China",
+              "institution_ids": [
+                "https://openalex.org/I11838497"
+              ]
+            }
+          ]
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 1,
+      "institutions_distinct_count": 6,
+      "corresponding_author_ids": [
+        "https://openalex.org/A5101442369"
+      ],
+      "corresponding_institution_ids": [
+        "https://openalex.org/I4210104252"
+      ],
+      "apc_list": {
+        "value": 4070,
+        "currency": "USD",
+        "value_usd": 4070
+      },
+      "apc_paid": null,
+      "fwci": 0.8587,
+      "has_fulltext": false,
+      "cited_by_count": 20,
+      "citation_normalized_percentile": {
+        "value": 0.7387915,
+        "is_in_top_1_percent": false,
+        "is_in_top_10_percent": false
+      },
+      "cited_by_percentile_year": {
+        "min": 90,
+        "max": 98
+      },
+      "biblio": {
+        "volume": "39",
+        "issue": "7",
+        "first_page": "2547",
+        "last_page": "2559"
+      },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T10221",
+        "display_name": "Composite Structure Analysis and Optimization",
+        "score": 0.9995999932289124,
+        "subfield": {
+          "id": "https://openalex.org/subfields/2211",
+          "display_name": "Mechanics of Materials"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/22",
+          "display_name": "Engineering"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T10221",
+          "display_name": "Composite Structure Analysis and Optimization",
+          "score": 0.9995999932289124,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T10219",
+          "display_name": "Mechanical Behavior of Composites",
+          "score": 0.9990000128746033,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T11870",
+          "display_name": "Structural Analysis and Optimization",
+          "score": 0.9957000017166138,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/buckling",
+          "display_name": "Buckling",
+          "score": 0.9606643915176392
+        },
+        {
+          "id": "https://openalex.org/keywords/structural-engineering",
+          "display_name": "Structural engineering",
+          "score": 0.7044655680656433
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-number",
+          "display_name": "Composite number",
+          "score": 0.6639373302459717
+        },
+        {
+          "id": "https://openalex.org/keywords/materials-science",
+          "display_name": "Materials science",
+          "score": 0.6316315531730652
+        },
+        {
+          "id": "https://openalex.org/keywords/compression",
+          "display_name": "Compression (physics)",
+          "score": 0.5010886192321777
+        },
+        {
+          "id": "https://openalex.org/keywords/tearing",
+          "display_name": "Tearing",
+          "score": 0.49525561928749084
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-material",
+          "display_name": "Composite material",
+          "score": 0.4592224955558777
+        },
+        {
+          "id": "https://openalex.org/keywords/nonlinear-system",
+          "display_name": "Nonlinear system",
+          "score": 0.42632976174354553
+        },
+        {
+          "id": "https://openalex.org/keywords/engineering",
+          "display_name": "Engineering",
+          "score": 0.16441774368286133
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C85476182",
+          "wikidata": "https://www.wikidata.org/wiki/Q693104",
+          "display_name": "Buckling",
+          "level": 2,
+          "score": 0.9606643915176392
+        },
+        {
+          "id": "https://openalex.org/C66938386",
+          "wikidata": "https://www.wikidata.org/wiki/Q633538",
+          "display_name": "Structural engineering",
+          "level": 1,
+          "score": 0.7044655680656433
+        },
+        {
+          "id": "https://openalex.org/C104779481",
+          "wikidata": "https://www.wikidata.org/wiki/Q50707",
+          "display_name": "Composite number",
+          "level": 2,
+          "score": 0.6639373302459717
+        },
+        {
+          "id": "https://openalex.org/C192562407",
+          "wikidata": "https://www.wikidata.org/wiki/Q228736",
+          "display_name": "Materials science",
+          "level": 0,
+          "score": 0.6316315531730652
+        },
+        {
+          "id": "https://openalex.org/C180016635",
+          "wikidata": "https://www.wikidata.org/wiki/Q2712821",
+          "display_name": "Compression (physics)",
+          "level": 2,
+          "score": 0.5010886192321777
+        },
+        {
+          "id": "https://openalex.org/C2776097996",
+          "wikidata": "https://www.wikidata.org/wiki/Q2219270",
+          "display_name": "Tearing",
+          "level": 2,
+          "score": 0.49525561928749084
+        },
+        {
+          "id": "https://openalex.org/C159985019",
+          "wikidata": "https://www.wikidata.org/wiki/Q181790",
+          "display_name": "Composite material",
+          "level": 1,
+          "score": 0.4592224955558777
+        },
+        {
+          "id": "https://openalex.org/C158622935",
+          "wikidata": "https://www.wikidata.org/wiki/Q660848",
+          "display_name": "Nonlinear system",
+          "level": 2,
+          "score": 0.42632976174354553
+        },
+        {
+          "id": "https://openalex.org/C127413603",
+          "wikidata": "https://www.wikidata.org/wiki/Q11023",
+          "display_name": "Engineering",
+          "level": 0,
+          "score": 0.16441774368286133
+        },
+        {
+          "id": "https://openalex.org/C121332964",
+          "wikidata": "https://www.wikidata.org/wiki/Q413",
+          "display_name": "Physics",
+          "level": 0,
+          "score": 0.0
+        },
+        {
+          "id": "https://openalex.org/C62520636",
+          "wikidata": "https://www.wikidata.org/wiki/Q944",
+          "display_name": "Quantum mechanics",
+          "level": 1,
+          "score": 0.0
+        }
+      ],
+      "mesh": [],
+      "locations_count": 1,
+      "locations": [
+        {
+          "id": "doi:10.1002/pc.24239",
+          "is_oa": false,
+          "landing_page_url": "https://doi.org/10.1002/pc.24239",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S156806727",
+            "display_name": "Polymer Composites",
+            "issn_l": "0272-8397",
+            "issn": [
+              "0272-8397",
+              "1548-0569"
+            ],
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": true,
+            "host_organization": "https://openalex.org/P4310320595",
+            "host_organization_name": "Wiley",
+            "host_organization_lineage": [
+              "https://openalex.org/P4310320595"
+            ],
+            "host_organization_lineage_names": [
+              "Wiley"
+            ],
+            "type": "journal"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "Polymer Composites",
+          "raw_type": "journal-article"
+        }
+      ],
+      "best_oa_location": null,
+      "sustainable_development_goals": [
+        {
+          "score": 0.5,
+          "id": "https://metadata.un.org/sdg/14",
+          "display_name": "Life below water"
+        }
+      ],
+      "awards": [
+        {
+          "id": "https://openalex.org/G1880804566",
+          "display_name": null,
+          "funder_award_id": "51475470",
+          "funder_id": "https://openalex.org/F4320321001",
+          "funder_display_name": "National Natural Science Foundation of China"
+        }
+      ],
+      "funders": [
+        {
+          "id": "https://openalex.org/F4320321001",
+          "display_name": "National Natural Science Foundation of China",
+          "ror": "https://ror.org/01h0zpd94"
+        }
+      ],
+      "has_content": {
+        "grobid_xml": false,
+        "pdf": false
+      },
+      "content_urls": null,
+      "referenced_works_count": 18,
+      "referenced_works": [
+        "https://openalex.org/W1972216174",
+        "https://openalex.org/W1997425060",
+        "https://openalex.org/W2006654794",
+        "https://openalex.org/W2007967534",
+        "https://openalex.org/W2022394038",
+        "https://openalex.org/W2022505640",
+        "https://openalex.org/W2032986107",
+        "https://openalex.org/W2046597904",
+        "https://openalex.org/W2052658365",
+        "https://openalex.org/W2055139195",
+        "https://openalex.org/W2062718840",
+        "https://openalex.org/W2071569803",
+        "https://openalex.org/W2081082582",
+        "https://openalex.org/W2096898372",
+        "https://openalex.org/W2117741939",
+        "https://openalex.org/W2145797703",
+        "https://openalex.org/W2206138092",
+        "https://openalex.org/W2274950976"
+      ],
+      "related_works": [
+        "https://openalex.org/W2390233534",
+        "https://openalex.org/W2592107811",
+        "https://openalex.org/W2392184754",
+        "https://openalex.org/W2117001472",
+        "https://openalex.org/W1981691034",
+        "https://openalex.org/W1983838257",
+        "https://openalex.org/W2375713655",
+        "https://openalex.org/W2604650478",
+        "https://openalex.org/W2512300812",
+        "https://openalex.org/W2292720690"
+      ],
+      "abstract_inverted_index": {
+        "Buckling": [
+          0,
+          115
+        ],
+        "and": [
+          1,
+          53,
+          90,
+          123
+        ],
+        "postbuckling": [
+          2,
+          31
+        ],
+        "performances": [
+          3
+        ],
+        "of": [
+          4,
+          43,
+          48,
+          55,
+          64,
+          88,
+          104,
+          175
+        ],
+        "aero": [
+          5
+        ],
+        "stiffened": [
+          6,
+          65
+        ],
+        "composite": [
+          7,
+          66
+        ],
+        "panels": [
+          8,
+          67
+        ],
+        "were": [
+          9
+        ],
+        "studied": [
+          10
+        ],
+        "in": [
+          11,
+          81,
+          92
+        ],
+        "this": [
+          12
+        ],
+        "article.": [
+          13
+        ],
+        "The": [
+          14,
+          34,
+          98,
+          158
+        ],
+        "average": [
+          15,
+          24
+        ],
+        "failure": [
+          16,
+          35,
+          135,
+          143
+        ],
+        "load": [
+          17,
+          116,
+          136,
+          144
+        ],
+        "is": [
+          18
+        ],
+        "2.43": [
+          19
+        ],
+        "times": [
+          20
+        ],
+        "larger": [
+          21
+        ],
+        "than": [
+          22
+        ],
+        "the": [
+          23,
+          29,
+          41,
+          61,
+          71,
+          86,
+          120,
+          134,
+          142,
+          148,
+          165
+        ],
+        "buckling": [
+          25,
+          62,
+          99,
+          103,
+          111
+        ],
+        "load,": [
+          26
+        ],
+        "which": [
+          27,
+          39,
+          106,
+          139
+        ],
+        "indicates": [
+          28
+        ],
+        "high": [
+          30
+        ],
+        "carrying": [
+          32
+        ],
+        "capacity.": [
+          33
+        ],
+        "modes": [
+          36
+        ],
+        "are": [
+          37,
+          77,
+          96,
+          101,
+          161
+        ],
+        "complex,": [
+          38
+        ],
+        "contain": [
+          40
+        ],
+        "debonding": [
+          42
+        ],
+        "skin": [
+          44,
+          83,
+          94
+        ],
+        "to": [
+          45,
+          59,
+          132,
+          164
+        ],
+        "stiffeners,": [
+          46
+        ],
+        "breaking": [
+          47
+        ],
+        "stiffeners": [
+          49
+        ],
+        "together": [
+          50
+        ],
+        "with": [
+          51
+        ],
+        "tearing": [
+          52
+        ],
+        "splitting": [
+          54
+        ],
+        "skin.": [
+          56
+        ],
+        "A": [
+          57
+        ],
+        "method": [
+          58,
+          155
+        ],
+        "verify": [
+          60
+        ],
+        "patterns": [
+          63,
+          100
+        ],
+        "was": [
+          68,
+          117,
+          127,
+          137,
+          151
+        ],
+        "proposed": [
+          69
+        ],
+        "by": [
+          70,
+          156
+        ],
+        "analysis": [
+          72,
+          150
+        ],
+        "based": [
+          73
+        ],
+        "on": [
+          74
+        ],
+        "strains.": [
+          75
+        ],
+        "There": [
+          76
+        ],
+        "four": [
+          78
+        ],
+        "half": [
+          79
+        ],
+        "waves": [
+          80
+        ],
+        "each": [
+          82,
+          93
+        ],
+        "bay.": [
+          84
+        ],
+        "However,": [
+          85
+        ],
+        "locations": [
+          87
+        ],
+        "convex": [
+          89
+        ],
+        "concave": [
+          91
+        ],
+        "bay": [
+          95
+        ],
+        "different.": [
+          97
+        ],
+        "local": [
+          102
+        ],
+        "skin,": [
+          105
+        ],
+        "keep": [
+          107
+        ],
+        "stable": [
+          108
+        ],
+        "without": [
+          109
+        ],
+        "global": [
+          110
+        ],
+        "occurring": [
+          112
+        ],
+        "during": [
+          113
+        ],
+        "compression.": [
+          114
+        ],
+        "evaluated": [
+          118
+        ],
+        "using": [
+          119,
+          153
+        ],
+        "governing": [
+          121
+        ],
+        "function": [
+          122
+        ],
+        "a": [
+          124
+        ],
+        "stronger": [
+          125
+        ],
+        "result": [
+          126
+        ],
+        "obtained.": [
+          128
+        ],
+        "An": [
+          129
+        ],
+        "engineering": [
+          130
+        ],
+        "approach": [
+          131
+        ],
+        "estimate": [
+          133
+        ],
+        "proposed,": [
+          138
+        ],
+        "could": [
+          140
+        ],
+        "predict": [
+          141
+        ],
+        "accurately.": [
+          145
+        ],
+        "At": [
+          146
+        ],
+        "last,": [
+          147
+        ],
+        "FE": [
+          149,
+          159
+        ],
+        "conducted": [
+          152
+        ],
+        "nonlinear": [
+          154
+        ],
+        "ABAQUS.": [
+          157
+        ],
+        "results": [
+          160
+        ],
+        "very": [
+          162
+        ],
+        "consistent": [
+          163
+        ],
+        "experimental": [
+          166
+        ],
+        "ones.": [
+          167
+        ],
+        "POLYM.": [
+          168
+        ],
+        "COMPOS.,": [
+          169
+        ],
+        "39:2547–2559,": [
+          170
+        ],
+        "2018.": [
+          171
+        ],
+        "©": [
+          172
+        ],
+        "2016": [
+          173
+        ],
+        "Society": [
+          174
+        ],
+        "Plastics": [
+          176
+        ],
+        "Engineers": [
+          177
+        ]
+      },
+      "counts_by_year": [
+        {
+          "year": 2025,
+          "cited_by_count": 3
+        },
+        {
+          "year": 2024,
+          "cited_by_count": 4
+        },
+        {
+          "year": 2023,
+          "cited_by_count": 2
+        },
+        {
+          "year": 2022,
+          "cited_by_count": 3
+        },
+        {
+          "year": 2021,
+          "cited_by_count": 3
+        },
+        {
+          "year": 2020,
+          "cited_by_count": 2
+        },
+        {
+          "year": 2018,
+          "cited_by_count": 1
+        },
+        {
+          "year": 2017,
+          "cited_by_count": 1
+        },
+        {
+          "year": 2016,
+          "cited_by_count": 1
+        }
+      ],
+      "updated_date": "2025-11-06T03:46:38.306776",
+      "created_date": "2025-10-10T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W3008493061",
+      "doi": "https://doi.org/10.1016/j.compstruct.2020.112132",
+      "title": "Effects of hygrothermal environment on the buckling and postbuckling performances of stiffened composite panels under axial compression",
+      "display_name": "Effects of hygrothermal environment on the buckling and postbuckling performances of stiffened composite panels under axial compression",
+      "relevance_score": 436.69427,
+      "publication_year": 2020,
+      "publication_date": "2020-02-26",
+      "ids": {
+        "openalex": "https://openalex.org/W3008493061",
+        "doi": "https://doi.org/10.1016/j.compstruct.2020.112132",
+        "mag": "3008493061"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "doi:10.1016/j.compstruct.2020.112132",
+        "is_oa": false,
+        "landing_page_url": "https://doi.org/10.1016/j.compstruct.2020.112132",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S52363224",
+          "display_name": "Composite Structures",
+          "issn_l": "0263-8223",
+          "issn": [
+            "0263-8223",
+            "1879-1085"
+          ],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": true,
+          "host_organization": "https://openalex.org/P4310320990",
+          "host_organization_name": "Elsevier BV",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310320990"
+          ],
+          "host_organization_lineage_names": [
+            "Elsevier BV"
+          ],
+          "type": "journal"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Composite Structures",
+        "raw_type": "journal-article"
+      },
+      "type": "article",
+      "indexed_in": [
+        "crossref"
+      ],
+      "open_access": {
+        "is_oa": false,
+        "oa_status": "closed",
+        "oa_url": null,
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5101442369",
+            "display_name": "Yu Feng",
+            "orcid": "https://orcid.org/0000-0002-4634-9465"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I4210104252",
+              "display_name": "Air Force Engineering University",
+              "ror": "https://ror.org/00seraz22",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "Yu Feng",
+          "raw_affiliation_strings": [
+            "Aeronautics and Astronautics Engineering College, Air Force Engineering University, Xi′an 710038, China"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Aeronautics and Astronautics Engineering College, Air Force Engineering University, Xi′an 710038, China",
+              "institution_ids": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5053347482",
+            "display_name": "Binlin Ma",
+            "orcid": "https://orcid.org/0000-0001-6749-9617"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I4210104252",
+              "display_name": "Air Force Engineering University",
+              "ror": "https://ror.org/00seraz22",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Binlin Ma",
+          "raw_affiliation_strings": [
+            "Aeronautics and Astronautics Engineering College, Air Force Engineering University, Xi′an 710038, China"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Aeronautics and Astronautics Engineering College, Air Force Engineering University, Xi′an 710038, China",
+              "institution_ids": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5091852303",
+            "display_name": "Ronghong Cui",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I4210104252",
+              "display_name": "Air Force Engineering University",
+              "ror": "https://ror.org/00seraz22",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Ronghong Cui",
+          "raw_affiliation_strings": [
+            "Aeronautics and Astronautics Engineering College, Air Force Engineering University, Xi′an 710038, China"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Aeronautics and Astronautics Engineering College, Air Force Engineering University, Xi′an 710038, China",
+              "institution_ids": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5112266199",
+            "display_name": "Tao An",
+            "orcid": "https://orcid.org/0009-0004-5120-0448"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I4210104252",
+              "display_name": "Air Force Engineering University",
+              "ror": "https://ror.org/00seraz22",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Tao An",
+          "raw_affiliation_strings": [
+            "Aeronautics and Astronautics Engineering College, Air Force Engineering University, Xi′an 710038, China"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Aeronautics and Astronautics Engineering College, Air Force Engineering University, Xi′an 710038, China",
+              "institution_ids": [
+                "https://openalex.org/I4210104252"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5014654600",
+            "display_name": "Yuting He",
+            "orcid": "https://orcid.org/0000-0002-8715-4330"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I17145004",
+              "display_name": "Northwestern Polytechnical University",
+              "ror": "https://ror.org/01y0j0j86",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I17145004"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Yuting He",
+          "raw_affiliation_strings": [
+            "School of Aeronautics, Northwestern Polytechnical University, Xi′an 710072, China"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "School of Aeronautics, Northwestern Polytechnical University, Xi′an 710072, China",
+              "institution_ids": [
+                "https://openalex.org/I17145004"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "last",
+          "author": {
+            "id": "https://openalex.org/A5018148423",
+            "display_name": "Shengbo Jiao",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I4210167232",
+              "display_name": "PLA Air Force Aviation University",
+              "ror": "https://ror.org/031g2ra50",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I4210167232"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Shengbo Jiao",
+          "raw_affiliation_strings": [
+            "School of Aviation on Operations and Services, Aviation University of Air Force, Chang Chun 130000, China"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "School of Aviation on Operations and Services, Aviation University of Air Force, Chang Chun 130000, China",
+              "institution_ids": [
+                "https://openalex.org/I4210167232"
+              ]
+            }
+          ]
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 1,
+      "institutions_distinct_count": 6,
+      "corresponding_author_ids": [
+        "https://openalex.org/A5101442369"
+      ],
+      "corresponding_institution_ids": [
+        "https://openalex.org/I4210104252"
+      ],
+      "apc_list": {
+        "value": 4270,
+        "currency": "USD",
+        "value_usd": 4270
+      },
+      "apc_paid": null,
+      "fwci": 1.3581,
+      "has_fulltext": false,
+      "cited_by_count": 16,
+      "citation_normalized_percentile": {
+        "value": 0.75961395,
+        "is_in_top_1_percent": false,
+        "is_in_top_10_percent": false
+      },
+      "cited_by_percentile_year": {
+        "min": 94,
+        "max": 99
+      },
+      "biblio": {
+        "volume": "242",
+        "issue": null,
+        "first_page": "112132",
+        "last_page": "112132"
+      },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T10221",
+        "display_name": "Composite Structure Analysis and Optimization",
+        "score": 0.9994999766349792,
+        "subfield": {
+          "id": "https://openalex.org/subfields/2211",
+          "display_name": "Mechanics of Materials"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/22",
+          "display_name": "Engineering"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T10221",
+          "display_name": "Composite Structure Analysis and Optimization",
+          "score": 0.9994999766349792,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T10219",
+          "display_name": "Mechanical Behavior of Composites",
+          "score": 0.9991999864578247,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T11870",
+          "display_name": "Structural Analysis and Optimization",
+          "score": 0.9987000226974487,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/materials-science",
+          "display_name": "Materials science",
+          "score": 0.7853755950927734
+        },
+        {
+          "id": "https://openalex.org/keywords/buckling",
+          "display_name": "Buckling",
+          "score": 0.7729058265686035
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-number",
+          "display_name": "Composite number",
+          "score": 0.7651580572128296
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-material",
+          "display_name": "Composite material",
+          "score": 0.7418535947799683
+        },
+        {
+          "id": "https://openalex.org/keywords/moisture",
+          "display_name": "Moisture",
+          "score": 0.691939651966095
+        },
+        {
+          "id": "https://openalex.org/keywords/compression",
+          "display_name": "Compression (physics)",
+          "score": 0.5861372351646423
+        },
+        {
+          "id": "https://openalex.org/keywords/finite-element-method",
+          "display_name": "Finite element method",
+          "score": 0.5727570652961731
+        },
+        {
+          "id": "https://openalex.org/keywords/water-content",
+          "display_name": "Water content",
+          "score": 0.5709481835365295
+        },
+        {
+          "id": "https://openalex.org/keywords/structural-engineering",
+          "display_name": "Structural engineering",
+          "score": 0.46411117911338806
+        },
+        {
+          "id": "https://openalex.org/keywords/distilled-water",
+          "display_name": "Distilled water",
+          "score": 0.4282177686691284
+        },
+        {
+          "id": "https://openalex.org/keywords/geotechnical-engineering",
+          "display_name": "Geotechnical engineering",
+          "score": 0.1565072238445282
+        },
+        {
+          "id": "https://openalex.org/keywords/engineering",
+          "display_name": "Engineering",
+          "score": 0.08478561043739319
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C192562407",
+          "wikidata": "https://www.wikidata.org/wiki/Q228736",
+          "display_name": "Materials science",
+          "level": 0,
+          "score": 0.7853755950927734
+        },
+        {
+          "id": "https://openalex.org/C85476182",
+          "wikidata": "https://www.wikidata.org/wiki/Q693104",
+          "display_name": "Buckling",
+          "level": 2,
+          "score": 0.7729058265686035
+        },
+        {
+          "id": "https://openalex.org/C104779481",
+          "wikidata": "https://www.wikidata.org/wiki/Q50707",
+          "display_name": "Composite number",
+          "level": 2,
+          "score": 0.7651580572128296
+        },
+        {
+          "id": "https://openalex.org/C159985019",
+          "wikidata": "https://www.wikidata.org/wiki/Q181790",
+          "display_name": "Composite material",
+          "level": 1,
+          "score": 0.7418535947799683
+        },
+        {
+          "id": "https://openalex.org/C176864760",
+          "wikidata": "https://www.wikidata.org/wiki/Q217651",
+          "display_name": "Moisture",
+          "level": 2,
+          "score": 0.691939651966095
+        },
+        {
+          "id": "https://openalex.org/C180016635",
+          "wikidata": "https://www.wikidata.org/wiki/Q2712821",
+          "display_name": "Compression (physics)",
+          "level": 2,
+          "score": 0.5861372351646423
+        },
+        {
+          "id": "https://openalex.org/C135628077",
+          "wikidata": "https://www.wikidata.org/wiki/Q220184",
+          "display_name": "Finite element method",
+          "level": 2,
+          "score": 0.5727570652961731
+        },
+        {
+          "id": "https://openalex.org/C24939127",
+          "wikidata": "https://www.wikidata.org/wiki/Q373499",
+          "display_name": "Water content",
+          "level": 2,
+          "score": 0.5709481835365295
+        },
+        {
+          "id": "https://openalex.org/C66938386",
+          "wikidata": "https://www.wikidata.org/wiki/Q633538",
+          "display_name": "Structural engineering",
+          "level": 1,
+          "score": 0.46411117911338806
+        },
+        {
+          "id": "https://openalex.org/C2779429693",
+          "wikidata": "https://www.wikidata.org/wiki/Q274959",
+          "display_name": "Distilled water",
+          "level": 2,
+          "score": 0.4282177686691284
+        },
+        {
+          "id": "https://openalex.org/C187320778",
+          "wikidata": "https://www.wikidata.org/wiki/Q1349130",
+          "display_name": "Geotechnical engineering",
+          "level": 1,
+          "score": 0.1565072238445282
+        },
+        {
+          "id": "https://openalex.org/C127413603",
+          "wikidata": "https://www.wikidata.org/wiki/Q11023",
+          "display_name": "Engineering",
+          "level": 0,
+          "score": 0.08478561043739319
+        },
+        {
+          "id": "https://openalex.org/C43617362",
+          "wikidata": "https://www.wikidata.org/wiki/Q170050",
+          "display_name": "Chromatography",
+          "level": 1,
+          "score": 0.0
+        },
+        {
+          "id": "https://openalex.org/C185592680",
+          "wikidata": "https://www.wikidata.org/wiki/Q2329",
+          "display_name": "Chemistry",
+          "level": 0,
+          "score": 0.0
+        }
+      ],
+      "mesh": [],
+      "locations_count": 1,
+      "locations": [
+        {
+          "id": "doi:10.1016/j.compstruct.2020.112132",
+          "is_oa": false,
+          "landing_page_url": "https://doi.org/10.1016/j.compstruct.2020.112132",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S52363224",
+            "display_name": "Composite Structures",
+            "issn_l": "0263-8223",
+            "issn": [
+              "0263-8223",
+              "1879-1085"
+            ],
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": true,
+            "host_organization": "https://openalex.org/P4310320990",
+            "host_organization_name": "Elsevier BV",
+            "host_organization_lineage": [
+              "https://openalex.org/P4310320990"
+            ],
+            "host_organization_lineage_names": [
+              "Elsevier BV"
+            ],
+            "type": "journal"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "Composite Structures",
+          "raw_type": "journal-article"
+        }
+      ],
+      "best_oa_location": null,
+      "sustainable_development_goals": [
+        {
+          "score": 0.5199999809265137,
+          "id": "https://metadata.un.org/sdg/6",
+          "display_name": "Clean water and sanitation"
+        }
+      ],
+      "awards": [
+        {
+          "id": "https://openalex.org/G7197376891",
+          "display_name": null,
+          "funder_award_id": "51805538",
+          "funder_id": "https://openalex.org/F4320321001",
+          "funder_display_name": "National Natural Science Foundation of China"
+        }
+      ],
+      "funders": [
+        {
+          "id": "https://openalex.org/F4320321001",
+          "display_name": "National Natural Science Foundation of China",
+          "ror": "https://ror.org/01h0zpd94"
+        }
+      ],
+      "has_content": {
+        "grobid_xml": false,
+        "pdf": false
+      },
+      "content_urls": null,
+      "referenced_works_count": 38,
+      "referenced_works": [
+        "https://openalex.org/W602985098",
+        "https://openalex.org/W952034798",
+        "https://openalex.org/W1972216174",
+        "https://openalex.org/W1973660642",
+        "https://openalex.org/W1982877750",
+        "https://openalex.org/W1990186545",
+        "https://openalex.org/W1994181563",
+        "https://openalex.org/W1997425060",
+        "https://openalex.org/W2003360374",
+        "https://openalex.org/W2010360046",
+        "https://openalex.org/W2015877950",
+        "https://openalex.org/W2025096281",
+        "https://openalex.org/W2026214575",
+        "https://openalex.org/W2032545740",
+        "https://openalex.org/W2039842012",
+        "https://openalex.org/W2041371113",
+        "https://openalex.org/W2052658365",
+        "https://openalex.org/W2055691152",
+        "https://openalex.org/W2060154818",
+        "https://openalex.org/W2068587323",
+        "https://openalex.org/W2075985866",
+        "https://openalex.org/W2079933640",
+        "https://openalex.org/W2082281183",
+        "https://openalex.org/W2092324514",
+        "https://openalex.org/W2103483639",
+        "https://openalex.org/W2103642993",
+        "https://openalex.org/W2114668222",
+        "https://openalex.org/W2189922207",
+        "https://openalex.org/W2274950976",
+        "https://openalex.org/W2299610597",
+        "https://openalex.org/W2312459396",
+        "https://openalex.org/W2544676729",
+        "https://openalex.org/W2550177320",
+        "https://openalex.org/W2574850588",
+        "https://openalex.org/W2602492439",
+        "https://openalex.org/W2729852328",
+        "https://openalex.org/W2767253101",
+        "https://openalex.org/W2801327440"
+      ],
+      "related_works": [
+        "https://openalex.org/W946793292",
+        "https://openalex.org/W2941013975",
+        "https://openalex.org/W4362700434",
+        "https://openalex.org/W194827383",
+        "https://openalex.org/W2004808456",
+        "https://openalex.org/W1994943997",
+        "https://openalex.org/W3034644892",
+        "https://openalex.org/W2790729869",
+        "https://openalex.org/W1994142029",
+        "https://openalex.org/W2182921589"
+      ],
+      "abstract_inverted_index": null,
+      "counts_by_year": [
+        {
+          "year": 2026,
+          "cited_by_count": 1
+        },
+        {
+          "year": 2025,
+          "cited_by_count": 2
+        },
+        {
+          "year": 2024,
+          "cited_by_count": 4
+        },
+        {
+          "year": 2022,
+          "cited_by_count": 4
+        },
+        {
+          "year": 2021,
+          "cited_by_count": 3
+        },
+        {
+          "year": 2020,
+          "cited_by_count": 2
+        }
+      ],
+      "updated_date": "2025-11-06T03:46:38.306776",
+      "created_date": "2025-10-10T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W2089649876",
+      "doi": "https://doi.org/10.2140/jomms.2009.4.1187",
+      "title": "Buckling and postbuckling behavior of laminated composite stringer stiffened curved panels under axial compression: Experiments and design guidelines",
+      "display_name": "Buckling and postbuckling behavior of laminated composite stringer stiffened curved panels under axial compression: Experiments and design guidelines",
+      "relevance_score": 367.43567,
+      "publication_year": 2009,
+      "publication_date": "2009-12-26",
+      "ids": {
+        "openalex": "https://openalex.org/W2089649876",
+        "doi": "https://doi.org/10.2140/jomms.2009.4.1187",
+        "mag": "2089649876"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "doi:10.2140/jomms.2009.4.1187",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.2140/jomms.2009.4.1187",
+        "pdf_url": "https://msp.org/jomms/2009/4-7/jomms-v4-n7-p02-s.pdf",
+        "source": {
+          "id": "https://openalex.org/S206540885",
+          "display_name": "Journal of mechanics of materials and structures",
+          "issn_l": "1559-3959",
+          "issn": [
+            "1559-3959",
+            "2157-5428"
+          ],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": true,
+          "host_organization": "https://openalex.org/P4310320446",
+          "host_organization_name": "Mathematical Sciences Publishers",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310320446"
+          ],
+          "host_organization_lineage_names": [
+            "Mathematical Sciences Publishers"
+          ],
+          "type": "journal"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Journal of Mechanics of Materials and Structures",
+        "raw_type": "journal-article"
+      },
+      "type": "article",
+      "indexed_in": [
+        "crossref"
+      ],
+      "open_access": {
+        "is_oa": true,
+        "oa_status": "bronze",
+        "oa_url": "https://msp.org/jomms/2009/4-7/jomms-v4-n7-p02-s.pdf",
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5013226512",
+            "display_name": "Haim Abramovich",
+            "orcid": "https://orcid.org/0000-0002-2563-1875"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I174306211",
+              "display_name": "Technion – Israel Institute of Technology",
+              "ror": "https://ror.org/03qryx823",
+              "country_code": "IL",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I174306211"
+              ]
+            }
+          ],
+          "countries": [
+            "IL"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "Haim Abramovich",
+          "raw_affiliation_strings": [
+            "TECHNION-Israel Institute of Technology"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "TECHNION-Israel Institute of Technology",
+              "institution_ids": [
+                "https://openalex.org/I174306211"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "last",
+          "author": {
+            "id": "https://openalex.org/A5103393122",
+            "display_name": "Tanchum Weller",
+            "orcid": null
+          },
+          "institutions": [],
+          "countries": [],
+          "is_corresponding": false,
+          "raw_author_name": "Tanchum Weller",
+          "raw_affiliation_strings": [],
+          "affiliations": []
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 1,
+      "institutions_distinct_count": 2,
+      "corresponding_author_ids": [
+        "https://openalex.org/A5013226512"
+      ],
+      "corresponding_institution_ids": [
+        "https://openalex.org/I174306211"
+      ],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": 0.0,
+      "has_fulltext": true,
+      "cited_by_count": 22,
+      "citation_normalized_percentile": {
+        "value": 0.14967597,
+        "is_in_top_1_percent": false,
+        "is_in_top_10_percent": false
+      },
+      "cited_by_percentile_year": {
+        "min": 89,
+        "max": 98
+      },
+      "biblio": {
+        "volume": "4",
+        "issue": "7-8",
+        "first_page": "1187",
+        "last_page": "1207"
+      },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T10221",
+        "display_name": "Composite Structure Analysis and Optimization",
+        "score": 0.9998999834060669,
+        "subfield": {
+          "id": "https://openalex.org/subfields/2211",
+          "display_name": "Mechanics of Materials"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/22",
+          "display_name": "Engineering"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T10221",
+          "display_name": "Composite Structure Analysis and Optimization",
+          "score": 0.9998999834060669,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T10713",
+          "display_name": "Structural Load-Bearing Analysis",
+          "score": 0.9984999895095825,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T10219",
+          "display_name": "Mechanical Behavior of Composites",
+          "score": 0.998199999332428,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/buckling",
+          "display_name": "Buckling",
+          "score": 0.9327644109725952
+        },
+        {
+          "id": "https://openalex.org/keywords/structural-engineering",
+          "display_name": "Structural engineering",
+          "score": 0.8127788305282593
+        },
+        {
+          "id": "https://openalex.org/keywords/stiffness",
+          "display_name": "Stiffness",
+          "score": 0.6197376251220703
+        },
+        {
+          "id": "https://openalex.org/keywords/stringer",
+          "display_name": "Stringer",
+          "score": 0.5697570443153381
+        },
+        {
+          "id": "https://openalex.org/keywords/aerospace",
+          "display_name": "Aerospace",
+          "score": 0.5594799518585205
+        },
+        {
+          "id": "https://openalex.org/keywords/shell",
+          "display_name": "Shell (structure)",
+          "score": 0.5585010051727295
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-number",
+          "display_name": "Composite number",
+          "score": 0.5278018712997437
+        },
+        {
+          "id": "https://openalex.org/keywords/critical-load",
+          "display_name": "Critical load",
+          "score": 0.49221721291542053
+        },
+        {
+          "id": "https://openalex.org/keywords/compression",
+          "display_name": "Compression (physics)",
+          "score": 0.41070249676704407
+        },
+        {
+          "id": "https://openalex.org/keywords/materials-science",
+          "display_name": "Materials science",
+          "score": 0.3763652443885803
+        },
+        {
+          "id": "https://openalex.org/keywords/engineering",
+          "display_name": "Engineering",
+          "score": 0.36441105604171753
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-material",
+          "display_name": "Composite material",
+          "score": 0.2235809564590454
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C85476182",
+          "wikidata": "https://www.wikidata.org/wiki/Q693104",
+          "display_name": "Buckling",
+          "level": 2,
+          "score": 0.9327644109725952
+        },
+        {
+          "id": "https://openalex.org/C66938386",
+          "wikidata": "https://www.wikidata.org/wiki/Q633538",
+          "display_name": "Structural engineering",
+          "level": 1,
+          "score": 0.8127788305282593
+        },
+        {
+          "id": "https://openalex.org/C2779372316",
+          "wikidata": "https://www.wikidata.org/wiki/Q569057",
+          "display_name": "Stiffness",
+          "level": 2,
+          "score": 0.6197376251220703
+        },
+        {
+          "id": "https://openalex.org/C2778843982",
+          "wikidata": "https://www.wikidata.org/wiki/Q7624008",
+          "display_name": "Stringer",
+          "level": 2,
+          "score": 0.5697570443153381
+        },
+        {
+          "id": "https://openalex.org/C167740415",
+          "wikidata": "https://www.wikidata.org/wiki/Q2876213",
+          "display_name": "Aerospace",
+          "level": 2,
+          "score": 0.5594799518585205
+        },
+        {
+          "id": "https://openalex.org/C2781052500",
+          "wikidata": "https://www.wikidata.org/wiki/Q2230313",
+          "display_name": "Shell (structure)",
+          "level": 2,
+          "score": 0.5585010051727295
+        },
+        {
+          "id": "https://openalex.org/C104779481",
+          "wikidata": "https://www.wikidata.org/wiki/Q50707",
+          "display_name": "Composite number",
+          "level": 2,
+          "score": 0.5278018712997437
+        },
+        {
+          "id": "https://openalex.org/C2777457327",
+          "wikidata": "https://www.wikidata.org/wiki/Q11254316",
+          "display_name": "Critical load",
+          "level": 3,
+          "score": 0.49221721291542053
+        },
+        {
+          "id": "https://openalex.org/C180016635",
+          "wikidata": "https://www.wikidata.org/wiki/Q2712821",
+          "display_name": "Compression (physics)",
+          "level": 2,
+          "score": 0.41070249676704407
+        },
+        {
+          "id": "https://openalex.org/C192562407",
+          "wikidata": "https://www.wikidata.org/wiki/Q228736",
+          "display_name": "Materials science",
+          "level": 0,
+          "score": 0.3763652443885803
+        },
+        {
+          "id": "https://openalex.org/C127413603",
+          "wikidata": "https://www.wikidata.org/wiki/Q11023",
+          "display_name": "Engineering",
+          "level": 0,
+          "score": 0.36441105604171753
+        },
+        {
+          "id": "https://openalex.org/C159985019",
+          "wikidata": "https://www.wikidata.org/wiki/Q181790",
+          "display_name": "Composite material",
+          "level": 1,
+          "score": 0.2235809564590454
+        },
+        {
+          "id": "https://openalex.org/C146978453",
+          "wikidata": "https://www.wikidata.org/wiki/Q3798668",
+          "display_name": "Aerospace engineering",
+          "level": 1,
+          "score": 0.0
+        }
+      ],
+      "mesh": [],
+      "locations_count": 1,
+      "locations": [
+        {
+          "id": "doi:10.2140/jomms.2009.4.1187",
+          "is_oa": true,
+          "landing_page_url": "https://doi.org/10.2140/jomms.2009.4.1187",
+          "pdf_url": "https://msp.org/jomms/2009/4-7/jomms-v4-n7-p02-s.pdf",
+          "source": {
+            "id": "https://openalex.org/S206540885",
+            "display_name": "Journal of mechanics of materials and structures",
+            "issn_l": "1559-3959",
+            "issn": [
+              "1559-3959",
+              "2157-5428"
+            ],
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": true,
+            "host_organization": "https://openalex.org/P4310320446",
+            "host_organization_name": "Mathematical Sciences Publishers",
+            "host_organization_lineage": [
+              "https://openalex.org/P4310320446"
+            ],
+            "host_organization_lineage_names": [
+              "Mathematical Sciences Publishers"
+            ],
+            "type": "journal"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "Journal of Mechanics of Materials and Structures",
+          "raw_type": "journal-article"
+        }
+      ],
+      "best_oa_location": {
+        "id": "doi:10.2140/jomms.2009.4.1187",
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.2140/jomms.2009.4.1187",
+        "pdf_url": "https://msp.org/jomms/2009/4-7/jomms-v4-n7-p02-s.pdf",
+        "source": {
+          "id": "https://openalex.org/S206540885",
+          "display_name": "Journal of mechanics of materials and structures",
+          "issn_l": "1559-3959",
+          "issn": [
+            "1559-3959",
+            "2157-5428"
+          ],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": true,
+          "host_organization": "https://openalex.org/P4310320446",
+          "host_organization_name": "Mathematical Sciences Publishers",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310320446"
+          ],
+          "host_organization_lineage_names": [
+            "Mathematical Sciences Publishers"
+          ],
+          "type": "journal"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Journal of Mechanics of Materials and Structures",
+        "raw_type": "journal-article"
+      },
+      "sustainable_development_goals": [
+        {
+          "score": 0.7599999904632568,
+          "id": "https://metadata.un.org/sdg/14",
+          "display_name": "Life below water"
+        }
+      ],
+      "awards": [],
+      "funders": [
+        {
+          "id": "https://openalex.org/F4320320300",
+          "display_name": "European Commission",
+          "ror": "https://ror.org/00k4n6c32"
+        }
+      ],
+      "has_content": {
+        "grobid_xml": true,
+        "pdf": true
+      },
+      "content_urls": {
+        "pdf": "https://content.openalex.org/works/W2089649876.pdf",
+        "grobid_xml": "https://content.openalex.org/works/W2089649876.grobid-xml"
+      },
+      "referenced_works_count": 26,
+      "referenced_works": [
+        "https://openalex.org/W23942543",
+        "https://openalex.org/W231450412",
+        "https://openalex.org/W310087030",
+        "https://openalex.org/W632652616",
+        "https://openalex.org/W1968630084",
+        "https://openalex.org/W1972216174",
+        "https://openalex.org/W1990518300",
+        "https://openalex.org/W2001596609",
+        "https://openalex.org/W2004940268",
+        "https://openalex.org/W2010360046",
+        "https://openalex.org/W2034884683",
+        "https://openalex.org/W2053274125",
+        "https://openalex.org/W2067363196",
+        "https://openalex.org/W2069117633",
+        "https://openalex.org/W2069858081",
+        "https://openalex.org/W2087427052",
+        "https://openalex.org/W2093649616",
+        "https://openalex.org/W2106988037",
+        "https://openalex.org/W2132266683",
+        "https://openalex.org/W2149045623",
+        "https://openalex.org/W2169950308",
+        "https://openalex.org/W2171357490",
+        "https://openalex.org/W2313926095",
+        "https://openalex.org/W2327920399",
+        "https://openalex.org/W4232141283",
+        "https://openalex.org/W4285719527"
+      ],
+      "related_works": [
+        "https://openalex.org/W1985099620",
+        "https://openalex.org/W2019224223",
+        "https://openalex.org/W181294392",
+        "https://openalex.org/W1965835843",
+        "https://openalex.org/W2562321665",
+        "https://openalex.org/W3116977977",
+        "https://openalex.org/W1677885503",
+        "https://openalex.org/W2351272910",
+        "https://openalex.org/W2351257627",
+        "https://openalex.org/W263776422"
+      ],
+      "abstract_inverted_index": {
+        "An": [
+          0
+        ],
+        "extensive": [
+          1
+        ],
+        "test": [
+          2,
+          34
+        ],
+        "series": [
+          3
+        ],
+        "on": [
+          4
+        ],
+        "circular": [
+          5
+        ],
+        "cylindrical": [
+          6
+        ],
+        "laminated": [
+          7
+        ],
+        "composite": [
+          8,
+          56
+        ],
+        "stringer-stiffened": [
+          9
+        ],
+        "panels": [
+          10
+        ],
+        "subjected": [
+          11
+        ],
+        "to": [
+          12
+        ],
+        "axial": [
+          13,
+          22
+        ],
+        "compression,": [
+          14
+        ],
+        "shear": [
+          15,
+          19,
+          25
+        ],
+        "loading": [
+          16
+        ],
+        "introduced": [
+          17
+        ],
+        "by": [
+          18,
+          45,
+          75
+        ],
+        "and": [
+          20,
+          24,
+          73
+        ],
+        "combined": [
+          21
+        ],
+        "compression": [
+          23
+        ],
+        "was": [
+          26,
+          36,
+          71
+        ],
+        "carried": [
+          27
+        ],
+        "out": [
+          28
+        ],
+        "at": [
+          29,
+          61
+        ],
+        "the": [
+          30,
+          46,
+          76
+        ],
+        "Technion,": [
+          31
+        ],
+        "Israel.": [
+          32
+        ],
+        "The": [
+          33
+        ],
+        "program": [
+          35
+        ],
+        "an": [
+          37,
+          41
+        ],
+        "essential": [
+          38
+        ],
+        "part": [
+          39
+        ],
+        "of": [
+          40,
+          54,
+          63
+        ],
+        "ongoing": [
+          42
+        ],
+        "effort": [
+          43
+        ],
+        "undertaken": [
+          44
+        ],
+        "POSICOSS": [
+          47
+        ],
+        "project": [
+          48
+        ],
+        "(improved": [
+          49
+        ],
+        "postbuckling": [
+          50
+        ],
+        "simulation": [
+          51
+        ],
+        "for": [
+          52
+        ],
+        "design": [
+          53,
+          62
+        ],
+        "fibre": [
+          55
+        ],
+        "stiffened": [
+          57
+        ],
+        "fuselage": [
+          58
+        ],
+        "structures)": [
+          59
+        ],
+        "aiming": [
+          60
+        ],
+        "low": [
+          64,
+          66
+        ],
+        "cost,": [
+          65
+        ],
+        "weight": [
+          67
+        ],
+        "airborne": [
+          68
+        ],
+        "structures": [
+          69
+        ],
+        "that": [
+          70
+        ],
+        "initiated": [
+          72
+        ],
+        "supported": [
+          74
+        ],
+        "Fifth": [
+          77
+        ],
+        "European": [
+          78
+        ],
+        "Initiative": [
+          79
+        ],
+        "Program.": [
+          80
+        ]
+      },
+      "counts_by_year": [
+        {
+          "year": 2025,
+          "cited_by_count": 2
+        },
+        {
+          "year": 2024,
+          "cited_by_count": 1
+        },
+        {
+          "year": 2023,
+          "cited_by_count": 1
+        },
+        {
+          "year": 2022,
+          "cited_by_count": 5
+        },
+        {
+          "year": 2021,
+          "cited_by_count": 2
+        },
+        {
+          "year": 2020,
+          "cited_by_count": 1
+        },
+        {
+          "year": 2019,
+          "cited_by_count": 2
+        },
+        {
+          "year": 2018,
+          "cited_by_count": 2
+        },
+        {
+          "year": 2017,
+          "cited_by_count": 1
+        },
+        {
+          "year": 2016,
+          "cited_by_count": 1
+        },
+        {
+          "year": 2015,
+          "cited_by_count": 3
+        }
+      ],
+      "updated_date": "2025-11-06T03:46:38.306776",
+      "created_date": "2025-10-10T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W602359550",
+      "doi": "https://doi.org/10.1002/9780470549087",
+      "title": "Guide to Stability Design Criteria for Metal Structures",
+      "display_name": "Guide to Stability Design Criteria for Metal Structures",
+      "relevance_score": 340.01465,
+      "publication_year": 2010,
+      "publication_date": "2010-01-22",
+      "ids": {
+        "openalex": "https://openalex.org/W602359550",
+        "doi": "https://doi.org/10.1002/9780470549087",
+        "mag": "602359550"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "doi:10.1002/9780470549087",
+        "is_oa": false,
+        "landing_page_url": "https://doi.org/10.1002/9780470549087",
+        "pdf_url": null,
+        "source": null,
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": null,
+        "raw_type": "edited-book"
+      },
+      "type": "book",
+      "indexed_in": [
+        "crossref"
+      ],
+      "open_access": {
+        "is_oa": false,
+        "oa_status": "closed",
+        "oa_url": null,
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [],
+      "institutions": [],
+      "countries_distinct_count": 0,
+      "institutions_distinct_count": 0,
+      "corresponding_author_ids": [],
+      "corresponding_institution_ids": [],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": 32.7119,
+      "has_fulltext": false,
+      "cited_by_count": 874,
+      "citation_normalized_percentile": {
+        "value": 1.0,
+        "is_in_top_1_percent": true,
+        "is_in_top_10_percent": true
+      },
+      "cited_by_percentile_year": {
+        "min": 99,
+        "max": 100
+      },
+      "biblio": {
+        "volume": null,
+        "issue": null,
+        "first_page": null,
+        "last_page": null
+      },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T10713",
+        "display_name": "Structural Load-Bearing Analysis",
+        "score": 0.9067000150680542,
+        "subfield": {
+          "id": "https://openalex.org/subfields/2205",
+          "display_name": "Civil and Structural Engineering"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/22",
+          "display_name": "Engineering"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T10713",
+          "display_name": "Structural Load-Bearing Analysis",
+          "score": 0.9067000150680542,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/stability",
+          "display_name": "Stability (learning theory)",
+          "score": 0.6211477518081665
+        },
+        {
+          "id": "https://openalex.org/keywords/computer-science",
+          "display_name": "Computer science",
+          "score": 0.4017292857170105
+        },
+        {
+          "id": "https://openalex.org/keywords/machine-learning",
+          "display_name": "Machine learning",
+          "score": 0.07244598865509033
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C112972136",
+          "wikidata": "https://www.wikidata.org/wiki/Q7595718",
+          "display_name": "Stability (learning theory)",
+          "level": 2,
+          "score": 0.6211477518081665
+        },
+        {
+          "id": "https://openalex.org/C41008148",
+          "wikidata": "https://www.wikidata.org/wiki/Q21198",
+          "display_name": "Computer science",
+          "level": 0,
+          "score": 0.4017292857170105
+        },
+        {
+          "id": "https://openalex.org/C119857082",
+          "wikidata": "https://www.wikidata.org/wiki/Q2539",
+          "display_name": "Machine learning",
+          "level": 1,
+          "score": 0.07244598865509033
+        }
+      ],
+      "mesh": [],
+      "locations_count": 1,
+      "locations": [
+        {
+          "id": "doi:10.1002/9780470549087",
+          "is_oa": false,
+          "landing_page_url": "https://doi.org/10.1002/9780470549087",
+          "pdf_url": null,
+          "source": null,
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": null,
+          "raw_type": "edited-book"
+        }
+      ],
+      "best_oa_location": null,
+      "sustainable_development_goals": [
+        {
+          "score": 0.4300000071525574,
+          "id": "https://metadata.un.org/sdg/11",
+          "display_name": "Sustainable cities and communities"
+        }
+      ],
+      "awards": [],
+      "funders": [],
+      "has_content": {
+        "grobid_xml": false,
+        "pdf": false
+      },
+      "content_urls": null,
+      "referenced_works_count": 0,
+      "referenced_works": [],
+      "related_works": [
+        "https://openalex.org/W2899084033",
+        "https://openalex.org/W2748952813",
+        "https://openalex.org/W2390279801",
+        "https://openalex.org/W2358668433",
+        "https://openalex.org/W2376932109",
+        "https://openalex.org/W2382290278",
+        "https://openalex.org/W2350741829",
+        "https://openalex.org/W2130043461",
+        "https://openalex.org/W2530322880",
+        "https://openalex.org/W1596801655"
+      ],
+      "abstract_inverted_index": {
+        "PREFACE.": [
+          0
+        ],
+        "NOTATION": [
+          1
+        ],
+        "AND": [
+          2,
+          406,
+          621,
+          793
+        ],
+        "ABBREVIATIONS.": [
+          3
+        ],
+        "CHAPTER": [
+          4,
+          48,
+          61,
+          106,
+          146,
+          198,
+          277,
+          338,
+          369,
+          402,
+          453,
+          526,
+          575,
+          617,
+          668,
+          720,
+          757,
+          788,
+          822,
+          846
+        ],
+        "1": [
+          5
+        ],
+        "INTRODUCTION.": [
+          6
+        ],
+        "1.1": [
+          7
+        ],
+        "From": [
+          8
+        ],
+        "the": [
+          9,
+          13,
+          21,
+          37,
+          40,
+          44,
+          481,
+          508,
+          680,
+          898,
+          930
+        ],
+        "Metal": [
+          10,
+          934
+        ],
+        "Column": [
+          11,
+          69,
+          555,
+          649,
+          889
+        ],
+        "to": [
+          12,
+          654,
+          695,
+          701
+        ],
+        "Structural": [
+          14,
+          27,
+          441,
+          602,
+          607,
+          611,
+          747
+        ],
+        "System.": [
+          15
+        ],
+        "1.2": [
+          16
+        ],
+        "Scope": [
+          17
+        ],
+        "and": [
+          18,
+          122,
+          130,
+          172,
+          241,
+          266,
+          314,
+          382,
+          435,
+          443,
+          447,
+          465,
+          494,
+          538,
+          569,
+          659,
+          663,
+          700,
+          749,
+          775,
+          818,
+          834,
+          959
+        ],
+        "Summary": [
+          19
+        ],
+        "of": [
+          20,
+          26,
+          43,
+          73,
+          77,
+          115,
+          124,
+          132,
+          137,
+          161,
+          218,
+          235,
+          254,
+          285,
+          289,
+          295,
+          302,
+          307,
+          318,
+          322,
+          331,
+          345,
+          389,
+          394,
+          418,
+          463,
+          498,
+          511,
+          627,
+          638,
+          661,
+          679,
+          685,
+          697,
+          728,
+          742,
+          765,
+          770,
+          783,
+          901,
+          933,
+          942,
+          981
+        ],
+        "Guide.": [
+          22,
+          46
+        ],
+        "1.3": [
+          23
+        ],
+        "Mechanical": [
+          24
+        ],
+        "Properties": [
+          25
+        ],
+        "Metals.": [
+          28,
+          902
+        ],
+        "1.4": [
+          29
+        ],
+        "Definitions.": [
+          30,
+          539
+        ],
+        "1.5": [
+          31
+        ],
+        "Postbuckling": [
+          32
+        ],
+        "Behavior.": [
+          33,
+          629,
+          732
+        ],
+        "1.6": [
+          34
+        ],
+        "Credits": [
+          35
+        ],
+        "for": [
+          36,
+          83,
+          190,
+          213,
+          424,
+          445,
+          476,
+          487,
+          543,
+          551,
+          777,
+          832,
+          917,
+          929,
+          961,
+          963,
+          984
+        ],
+        "Chapters": [
+          38
+        ],
+        "in": [
+          39,
+          480,
+          491,
+          519,
+          523
+        ],
+        "Sixth": [
+          41
+        ],
+        "Edition": [
+          42
+        ],
+        "SSRC": [
+          45
+        ],
+        "References.": [
+          47,
+          60,
+          105,
+          145,
+          197,
+          276,
+          337,
+          368,
+          401,
+          452,
+          525,
+          574,
+          616,
+          667,
+          719,
+          756,
+          787,
+          821,
+          845,
+          865,
+          988
+        ],
+        "2": [
+          49
+        ],
+        "STABILITY": [
+          50,
+          455,
+          824,
+          848,
+          879,
+          992
+        ],
+        "THEORY.": [
+          51
+        ],
+        "2.1": [
+          52
+        ],
+        "Introduction.": [
+          53,
+          67,
+          110,
+          150,
+          203,
+          282,
+          342,
+          376,
+          410,
+          460,
+          530,
+          581,
+          624,
+          676,
+          725,
+          761,
+          797,
+          829,
+          856
+        ],
+        "2.2": [
+          54
+        ],
+        "Bifurcation": [
+          55
+        ],
+        "Buckling.": [
+          56,
+          59,
+          356,
+          615,
+          650
+        ],
+        "2.3": [
+          57
+        ],
+        "Limit-Load": [
+          58
+        ],
+        "3": [
+          62
+        ],
+        "CENTRALLY": [
+          63
+        ],
+        "LOADED": [
+          64
+        ],
+        "COLUMNS.": [
+          65
+        ],
+        "3.1": [
+          66
+        ],
+        "3.2": [
+          68
+        ],
+        "Strength.": [
+          70,
+          351,
+          426
+        ],
+        "3.3": [
+          71
+        ],
+        "Influence": [
+          72,
+          76,
+          317
+        ],
+        "Imperfections.": [
+          74
+        ],
+        "3.4": [
+          75
+        ],
+        "End": [
+          78,
+          250
+        ],
+        "Restraint.": [
+          79
+        ],
+        "3.5": [
+          80
+        ],
+        "Strength": [
+          81,
+          123,
+          131,
+          217,
+          234,
+          294,
+          301,
+          306,
+          321,
+          344,
+          417,
+          510,
+          594,
+          658,
+          782
+        ],
+        "Criteria": [
+          82,
+          486
+        ],
+        "Steel": [
+          84,
+          91,
+          228,
+          606,
+          784
+        ],
+        "Columns.": [
+          85,
+          88,
+          92,
+          95,
+          98,
+          101,
+          552,
+          666,
+          921
+        ],
+        "3.6": [
+          86
+        ],
+        "Aluminum": [
+          87,
+          610
+        ],
+        "3.7": [
+          89
+        ],
+        "Stainless": [
+          90,
+          605
+        ],
+        "3.8": [
+          93
+        ],
+        "Tapered": [
+          94
+        ],
+        "3.9": [
+          96
+        ],
+        "Built-Up": [
+          97
+        ],
+        "3.10": [
+          99
+        ],
+        "Stepped": [
+          100
+        ],
+        "3.11": [
+          102
+        ],
+        "Guyed": [
+          103,
+          717
+        ],
+        "Towers.": [
+          104,
+          718
+        ],
+        "4": [
+          107
+        ],
+        "PLATES.": [
+          108
+        ],
+        "4.1": [
+          109
+        ],
+        "4.2": [
+          111
+        ],
+        "Elastic": [
+          112,
+          152
+        ],
+        "Local": [
+          113,
+          833
+        ],
+        "Buckling": [
+          114,
+          136,
+          209,
+          288,
+          568,
+          628,
+          678,
+          689,
+          863
+        ],
+        "Flat": [
+          116,
+          125
+        ],
+        "Plates.": [
+          117,
+          126,
+          134,
+          139
+        ],
+        "4.3": [
+          118
+        ],
+        "Inelastic": [
+          119,
+          191
+        ],
+        "Buckling,": [
+          120,
+          128,
+          154
+        ],
+        "Postbuckling,": [
+          121,
+          129
+        ],
+        "4.4": [
+          127
+        ],
+        "Stiffened": [
+          133
+        ],
+        "4.5": [
+          135
+        ],
+        "Orthotropic": [
+          138
+        ],
+        "4.6": [
+          140
+        ],
+        "Interaction": [
+          141
+        ],
+        "between": [
+          142,
+          433
+        ],
+        "Plate": [
+          143,
+          219,
+          229,
+          236,
+          244,
+          709
+        ],
+        "Elements.": [
+          144
+        ],
+        "5": [
+          147
+        ],
+        "BEAMS.": [
+          148
+        ],
+        "5.1": [
+          149
+        ],
+        "5.2": [
+          151
+        ],
+        "Lateral-Torsional": [
+          153,
+          355
+        ],
+        "Prismatic": [
+          155,
+          164
+        ],
+        "I-Section": [
+          156,
+          165,
+          175,
+          180
+        ],
+        "Members.": [
+          157,
+          166,
+          176,
+          181,
+          471,
+          515,
+          608,
+          612
+        ],
+        "5.3": [
+          158
+        ],
+        "Fundamental": [
+          159
+        ],
+        "Comparison": [
+          160
+        ],
+        "Design": [
+          162,
+          189,
+          253,
+          264,
+          438,
+          485,
+          497,
+          599,
+          706,
+          807,
+          810,
+          816,
+          831,
+          932
+        ],
+        "Standards,": [
+          163
+        ],
+        "5.4": [
+          167
+        ],
+        "Stepped,": [
+          168
+        ],
+        "Variable": [
+          169
+        ],
+        "Web": [
+          170,
+          208
+        ],
+        "Depth": [
+          171
+        ],
+        "Other": [
+          173,
+          185,
+          422
+        ],
+        "Nonprismatic": [
+          174
+        ],
+        "5.5": [
+          177
+        ],
+        "Continuous-Span": [
+          178
+        ],
+        "Composite": [
+          179,
+          419,
+          446
+        ],
+        "5.6": [
+          182
+        ],
+        "Beams": [
+          183,
+          699
+        ],
+        "with": [
+          184,
+          223,
+          246,
+          270,
+          711
+        ],
+        "Cross-Sectional": [
+          186,
+          416,
+          425
+        ],
+        "Types.": [
+          187
+        ],
+        "5.7": [
+          188
+        ],
+        "Deformation": [
+          192
+        ],
+        "Capacity.": [
+          193
+        ],
+        "5.8": [
+          194
+        ],
+        "Concluding": [
+          195,
+          399,
+          505,
+          754
+        ],
+        "Remarks.": [
+          196,
+          400,
+          755
+        ],
+        "6": [
+          199
+        ],
+        "PLATE": [
+          200
+        ],
+        "GIRDERS.": [
+          201,
+          280,
+          374
+        ],
+        "6.1": [
+          202
+        ],
+        "6.2": [
+          204
+        ],
+        "Preliminary": [
+          205
+        ],
+        "Sizing.": [
+          206
+        ],
+        "6.3": [
+          207
+        ],
+        "as": [
+          210
+        ],
+        "a": [
+          211
+        ],
+        "Basis": [
+          212
+        ],
+        "Design.": [
+          214,
+          286,
+          591,
+          596,
+          987
+        ],
+        "6.4": [
+          215
+        ],
+        "Shear": [
+          216,
+          230,
+          300
+        ],
+        "Girders.": [
+          220,
+          237,
+          297,
+          304,
+          324,
+          397
+        ],
+        "6.5": [
+          221
+        ],
+        "Girders": [
+          222,
+          245,
+          269,
+          309
+        ],
+        "No": [
+          224
+        ],
+        "Intermediate": [
+          225
+        ],
+        "Stiffeners.": [
+          226,
+          248,
+          255
+        ],
+        "6.6": [
+          227
+        ],
+        "Walls.": [
+          231
+        ],
+        "6.7": [
+          232
+        ],
+        "Bending": [
+          233,
+          240,
+          293,
+          696
+        ],
+        "6.8": [
+          238
+        ],
+        "Combined": [
+          239,
+          311,
+          655
+        ],
+        "Shear.": [
+          242,
+          315
+        ],
+        "6.9": [
+          243
+        ],
+        "Longitudinal": [
+          247
+        ],
+        "6.10": [
+          249
+        ],
+        "Panels.": [
+          251
+        ],
+        "6.11": [
+          252
+        ],
+        "6.12": [
+          256
+        ],
+        "Panels": [
+          257
+        ],
+        "under": [
+          258,
+          310
+        ],
+        "Edge": [
+          259
+        ],
+        "Loading.": [
+          260
+        ],
+        "6.13": [
+          261
+        ],
+        "Fatigue.": [
+          262
+        ],
+        "6.14": [
+          263
+        ],
+        "Principles": [
+          265,
+          928
+        ],
+        "Philosophies.": [
+          267
+        ],
+        "6.15": [
+          268
+        ],
+        "Corrugated": [
+          271
+        ],
+        "Webs.": [
+          272
+        ],
+        "6.16": [
+          273
+        ],
+        "Research": [
+          274,
+          335,
+          413,
+          819
+        ],
+        "Needs.": [
+          275,
+          336,
+          820
+        ],
+        "7": [
+          278
+        ],
+        "BOX": [
+          279
+        ],
+        "7.1": [
+          281
+        ],
+        "7.2": [
+          283
+        ],
+        "Bases": [
+          284
+        ],
+        "7.3": [
+          287
+        ],
+        "Wide": [
+          290
+        ],
+        "Flanges.": [
+          291
+        ],
+        "7.4": [
+          292
+        ],
+        "Box": [
+          296,
+          303,
+          308,
+          323,
+          396
+        ],
+        "7.5": [
+          298
+        ],
+        "Nominal": [
+          299
+        ],
+        "7.6": [
+          305
+        ],
+        "Bending,": [
+          312
+        ],
+        "Compression,": [
+          313
+        ],
+        "7.7": [
+          316
+        ],
+        "Torsion": [
+          319
+        ],
+        "on": [
+          320,
+          507,
+          563,
+          648,
+          688,
+          897
+        ],
+        "7.8": [
+          325
+        ],
+        "Diaphragms.": [
+          326
+        ],
+        "7.9": [
+          327
+        ],
+        "Top-Flange": [
+          328
+        ],
+        "Lateral": [
+          329
+        ],
+        "Bracing": [
+          330,
+          549,
+          778
+        ],
+        "Quasi-Closed": [
+          332
+        ],
+        "Sections.": [
+          333,
+          420
+        ],
+        "7.10": [
+          334
+        ],
+        "8": [
+          339
+        ],
+        "BEAM-COLUMNS.": [
+          340
+        ],
+        "8.1": [
+          341
+        ],
+        "8.2": [
+          343
+        ],
+        "Beam-Columns.": [
+          346
+        ],
+        "8.3": [
+          347
+        ],
+        "Uniaxial": [
+          348,
+          353
+        ],
+        "Bending:": [
+          349,
+          354
+        ],
+        "In-Plane": [
+          350,
+          763
+        ],
+        "8.4": [
+          352
+        ],
+        "8.5": [
+          357
+        ],
+        "Equivalent": [
+          358
+        ],
+        "Uniform": [
+          359
+        ],
+        "Moment": [
+          360
+        ],
+        "Factor.": [
+          361
+        ],
+        "8.6": [
+          362
+        ],
+        "Biaxial": [
+          363
+        ],
+        "Bending.": [
+          364
+        ],
+        "8.7": [
+          365
+        ],
+        "Special": [
+          366
+        ],
+        "Topics.": [
+          367
+        ],
+        "9": [
+          370
+        ],
+        "HORIZONTALLY": [
+          371
+        ],
+        "CURVED": [
+          372,
+          791
+        ],
+        "STEEL": [
+          373
+        ],
+        "9.1": [
+          375
+        ],
+        "9.2": [
+          377
+        ],
+        "Historical": [
+          378
+        ],
+        "Review.": [
+          379
+        ],
+        "9.3": [
+          380
+        ],
+        "Fabrication": [
+          381
+        ],
+        "Construction.": [
+          383
+        ],
+        "9.4": [
+          384
+        ],
+        "Analysis": [
+          385
+        ],
+        "Methods.": [
+          386
+        ],
+        "9.5": [
+          387
+        ],
+        "Stability": [
+          388,
+          393,
+          584,
+          735,
+          764,
+          769,
+          840,
+          931
+        ],
+        "Curved": [
+          390,
+          395
+        ],
+        "I-Girders.": [
+          391
+        ],
+        "9.6": [
+          392
+        ],
+        "9.7": [
+          398
+        ],
+        "10": [
+          403
+        ],
+        "COMPOSITE": [
+          404
+        ],
+        "COLUMNS": [
+          405
+        ],
+        "STRUCTURAL": [
+          407,
+          871,
+          878,
+          991
+        ],
+        "SYSTEMS.": [
+          408
+        ],
+        "10.1": [
+          409
+        ],
+        "10.2": [
+          411
+        ],
+        "U.S.-Japan": [
+          412
+        ],
+        "Program.": [
+          414
+        ],
+        "10.3": [
+          415
+        ],
+        "10.4": [
+          421
+        ],
+        "Considerations": [
+          423
+        ],
+        "10.5": [
+          427
+        ],
+        "Length": [
+          428
+        ],
+        "Effects.": [
+          429
+        ],
+        "10.6": [
+          430
+        ],
+        "Force": [
+          431
+        ],
+        "Transfer": [
+          432
+        ],
+        "Concrete": [
+          434
+        ],
+        "Steel.": [
+          436
+        ],
+        "10.7": [
+          437
+        ],
+        "Approaches.": [
+          439
+        ],
+        "10.8": [
+          440
+        ],
+        "Systems": [
+          442,
+          550
+        ],
+        "Connections": [
+          444
+        ],
+        "Hybrid": [
+          448
+        ],
+        "Structures.": [
+          449,
+          935
+        ],
+        "10.9": [
+          450
+        ],
+        "Summary.": [
+          451
+        ],
+        "11": [
+          454
+        ],
+        "OF": [
+          456,
+          877
+        ],
+        "ANGLE": [
+          457
+        ],
+        "MEMBERS.": [
+          458
+        ],
+        "11.1": [
+          459
+        ],
+        "11.2": [
+          461
+        ],
+        "Review": [
+          462
+        ],
+        "Experimental": [
+          464
+        ],
+        "Analytical": [
+          466
+        ],
+        "Research.": [
+          467
+        ],
+        "11.3": [
+          468
+        ],
+        "Single-Angle": [
+          469,
+          478,
+          514
+        ],
+        "Compression": [
+          470,
+          681,
+          714,
+          899
+        ],
+        "11.4": [
+          472
+        ],
+        "Current": [
+          473,
+          743
+        ],
+        "Industry": [
+          474
+        ],
+        "Practice": [
+          475
+        ],
+        "Hot-Rolled": [
+          477,
+          488
+        ],
+        "Members": [
+          479
+        ],
+        "United": [
+          482
+        ],
+        "States.": [
+          483
+        ],
+        "11.5": [
+          484
+        ],
+        "Angle": [
+          489
+        ],
+        "Columns": [
+          490,
+          544,
+          561
+        ],
+        "Europe,": [
+          492
+        ],
+        "Australia,": [
+          493
+        ],
+        "Japan.": [
+          495
+        ],
+        "11.6": [
+          496
+        ],
+        "Axially": [
+          499
+        ],
+        "Loaded": [
+          500,
+          513,
+          920
+        ],
+        "Cold-Formed": [
+          501
+        ],
+        "Single": [
+          502
+        ],
+        "Angles.": [
+          503
+        ],
+        "11.7": [
+          504
+        ],
+        "Remarks": [
+          506
+        ],
+        "Compressive": [
+          509
+        ],
+        "Eccentrically": [
+          512
+        ],
+        "11.8": [
+          516
+        ],
+        "Multiple": [
+          517
+        ],
+        "Angles": [
+          518,
+          522
+        ],
+        "Compression.": [
+          520
+        ],
+        "11.9": [
+          521
+        ],
+        "Flexure.": [
+          524
+        ],
+        "12": [
+          527
+        ],
+        "BRACING.": [
+          528
+        ],
+        "12.1": [
+          529
+        ],
+        "12.2": [
+          531
+        ],
+        "Background.": [
+          532
+        ],
+        "12.3": [
+          533
+        ],
+        "Safety": [
+          534
+        ],
+        "Factors,": [
+          535,
+          537
+        ],
+        "phi": [
+          536
+        ],
+        "12.4": [
+          540
+        ],
+        "Relative": [
+          541
+        ],
+        "Braces": [
+          542
+        ],
+        "or": [
+          545,
+          632,
+          643
+        ],
+        "Frames.": [
+          546
+        ],
+        "12.5": [
+          547
+        ],
+        "Discrete": [
+          548
+        ],
+        "12.6": [
+          553
+        ],
+        "Continuous": [
+          554
+        ],
+        "Bracing.": [
+          556,
+          570,
+          573
+        ],
+        "12.7": [
+          557
+        ],
+        "Lean-on": [
+          558
+        ],
+        "Systems.": [
+          559,
+          779
+        ],
+        "12.8": [
+          560
+        ],
+        "Braced": [
+          562,
+          713,
+          773
+        ],
+        "One": [
+          564
+        ],
+        "Flange.": [
+          565,
+          715
+        ],
+        "12.9": [
+          566
+        ],
+        "Beam": [
+          567,
+          572
+        ],
+        "12.10": [
+          571
+        ],
+        "13": [
+          576
+        ],
+        "THIN-WALLED": [
+          577
+        ],
+        "METAL": [
+          578
+        ],
+        "CONSTRUCTION.": [
+          579
+        ],
+        "13.1": [
+          580
+        ],
+        "13.2": [
+          582
+        ],
+        "Member": [
+          583,
+          590,
+          595,
+          835
+        ],
+        "Modes": [
+          585
+        ],
+        "(Elastic).": [
+          586
+        ],
+        "13.3": [
+          587
+        ],
+        "Effective": [
+          588
+        ],
+        "Width": [
+          589
+        ],
+        "13.4": [
+          592
+        ],
+        "Direct": [
+          593
+        ],
+        "13.5": [
+          597
+        ],
+        "Additional": [
+          598
+        ],
+        "Considerations.": [
+          600
+        ],
+        "13.6": [
+          601
+        ],
+        "Assemblies.": [
+          603
+        ],
+        "13.7": [
+          604
+        ],
+        "13.8": [
+          609
+        ],
+        "13.9": [
+          613
+        ],
+        "Torsional": [
+          614
+        ],
+        "14": [
+          618
+        ],
+        "CIRCULAR": [
+          619
+        ],
+        "TUBES": [
+          620
+        ],
+        "SHELLS.": [
+          622
+        ],
+        "14.1": [
+          623
+        ],
+        "14.2": [
+          625
+        ],
+        "Description": [
+          626
+        ],
+        "14.3": [
+          630
+        ],
+        "Unstiffened": [
+          631
+        ],
+        "Heavy-Ring-Stiffened": [
+          633
+        ],
+        "Cylinders.": [
+          634,
+          640,
+          645
+        ],
+        "14.4": [
+          635
+        ],
+        "General": [
+          636,
+          927
+        ],
+        "Instability": [
+          637
+        ],
+        "Ring-Stiffened": [
+          639
+        ],
+        "14.5": [
+          641
+        ],
+        "Stringer-": [
+          642
+        ],
+        "Ring-and-Stringer-Stiffened": [
+          644
+        ],
+        "14.6": [
+          646
+        ],
+        "Effects": [
+          647
+        ],
+        "14.7": [
+          651
+        ],
+        "Cylinders": [
+          652
+        ],
+        "Subjected": [
+          653
+        ],
+        "Loadings.": [
+          656
+        ],
+        "14.8": [
+          657
+        ],
+        "Behavior": [
+          660
+        ],
+        "Damaged": [
+          662
+        ],
+        "Repaired": [
+          664
+        ],
+        "Tubular": [
+          665
+        ],
+        "15": [
+          669
+        ],
+        "MEMBERS": [
+          670
+        ],
+        "WITH": [
+          671
+        ],
+        "ELASTIC": [
+          672
+        ],
+        "LATERAL": [
+          673
+        ],
+        "RESTRAINTS.": [
+          674
+        ],
+        "15.1": [
+          675
+        ],
+        "15.2": [
+          677
+        ],
+        "Chord.": [
+          682
+        ],
+        "15.3": [
+          683
+        ],
+        "Effect": [
+          684
+        ],
+        "Secondary": [
+          686
+        ],
+        "Factors": [
+          687
+        ],
+        "Load.": [
+          690
+        ],
+        "15.4": [
+          691
+        ],
+        "Top-Chord": [
+          692
+        ],
+        "Stresses": [
+          693
+        ],
+        "due": [
+          694
+        ],
+        "Floor": [
+          698
+        ],
+        "Initial": [
+          702
+        ],
+        "Chord": [
+          703
+        ],
+        "Eccentricities.": [
+          704
+        ],
+        "15.5": [
+          705
+        ],
+        "Example.": [
+          707
+        ],
+        "15.6": [
+          708
+        ],
+        "Girder": [
+          710
+        ],
+        "Elastically": [
+          712
+        ],
+        "15.7": [
+          716
+        ],
+        "16": [
+          721
+        ],
+        "FRAME": [
+          722
+        ],
+        "STABILITY.": [
+          723,
+          872
+        ],
+        "16.1": [
+          724
+        ],
+        "16.2": [
+          726
+        ],
+        "Methods": [
+          727,
+          958
+        ],
+        "Analysis.": [
+          729,
+          739,
+          859,
+          864
+        ],
+        "16.3": [
+          730
+        ],
+        "Frame": [
+          731,
+          734
+        ],
+        "16.4": [
+          733
+        ],
+        "Assessment": [
+          736
+        ],
+        "Using": [
+          737
+        ],
+        "Second-Order": [
+          738
+        ],
+        "16.5": [
+          740
+        ],
+        "Overview": [
+          741
+        ],
+        "Code": [
+          744
+        ],
+        "Provisions.": [
+          745
+        ],
+        "16.6": [
+          746
+        ],
+        "Integrity": [
+          748
+        ],
+        "Disproportionate": [
+          750
+        ],
+        "Collapse": [
+          751
+        ],
+        "Resistance.": [
+          752
+        ],
+        "16.7": [
+          753
+        ],
+        "17": [
+          758
+        ],
+        "ARCHES.": [
+          759
+        ],
+        "17.1": [
+          760
+        ],
+        "17.2": [
+          762
+        ],
+        "Arches.": [
+          766,
+          771
+        ],
+        "17.3": [
+          767
+        ],
+        "Out-of-Plane": [
+          768
+        ],
+        "17.4": [
+          772
+        ],
+        "Arches": [
+          774
+        ],
+        "Requirements": [
+          776
+        ],
+        "17.5": [
+          780
+        ],
+        "Ultimate": [
+          781
+        ],
+        "Arch": [
+          785
+        ],
+        "Bridges.": [
+          786
+        ],
+        "18": [
+          789
+        ],
+        "DOUBLY": [
+          790
+        ],
+        "SHELLS": [
+          792
+        ],
+        "SHELL-LIKE": [
+          794
+        ],
+        "STRUCTURES.": [
+          795
+        ],
+        "18.1": [
+          796
+        ],
+        "18.2": [
+          798
+        ],
+        "The": [
+          799,
+          887
+        ],
+        "Basic": [
+          800,
+          888
+        ],
+        "Problem.": [
+          801
+        ],
+        "18.3": [
+          802
+        ],
+        "Finite": [
+          803
+        ],
+        "Element": [
+          804
+        ],
+        "Method.": [
+          805
+        ],
+        "18.4": [
+          806
+        ],
+        "Codes.": [
+          808
+        ],
+        "18.5": [
+          809
+        ],
+        "Aids.": [
+          811
+        ],
+        "18.6": [
+          812
+        ],
+        "Reticulated": [
+          813
+        ],
+        "Shells.": [
+          814
+        ],
+        "18.7": [
+          815
+        ],
+        "Trends": [
+          817
+        ],
+        "19": [
+          823
+        ],
+        "UNDER": [
+          825
+        ],
+        "SEISMIC": [
+          826
+        ],
+        "LOADING.": [
+          827
+        ],
+        "19.1": [
+          828
+        ],
+        "19.2": [
+          830
+        ],
+        "Stability.": [
+          836
+        ],
+        "19.3": [
+          837
+        ],
+        "Global": [
+          838
+        ],
+        "System": [
+          839
+        ],
+        "(": [
+          841
+        ],
+        "P": [
+          842
+        ],
+        "-DELTA": [
+          843
+        ],
+        "Effects).": [
+          844
+        ],
+        "20": [
+          847
+        ],
+        "ANALYSIS": [
+          849
+        ],
+        "BY": [
+          850
+        ],
+        "THE": [
+          851
+        ],
+        "FINITE": [
+          852
+        ],
+        "ELEMENT": [
+          853
+        ],
+        "METHOD.": [
+          854
+        ],
+        "20.1": [
+          855
+        ],
+        "20.2": [
+          857
+        ],
+        "Nonlinear": [
+          858
+        ],
+        "20.3": [
+          860
+        ],
+        "Linearized": [
+          861
+        ],
+        "Eigenvalue": [
+          862
+        ],
+        "APPENDIX": [
+          866,
+          873,
+          989
+        ],
+        "A": [
+          867
+        ],
+        "GENERAL": [
+          868
+        ],
+        "REFERENCES": [
+          869
+        ],
+        "ON": [
+          870
+        ],
+        "B": [
+          874
+        ],
+        "TECHNICAL": [
+          875
+        ],
+        "MEMORANDA": [
+          876
+        ],
+        "RESEARCH": [
+          880,
+          993
+        ],
+        "COUNCIL.": [
+          881,
+          994
+        ],
+        "B.1": [
+          882
+        ],
+        "Technical": [
+          883,
+          892,
+          904,
+          912,
+          923,
+          937,
+          946,
+          953,
+          968,
+          975
+        ],
+        "Memorandum": [
+          884,
+          893,
+          905,
+          913,
+          924,
+          938,
+          947,
+          954,
+          969,
+          976
+        ],
+        "No.": [
+          885,
+          894,
+          906,
+          914,
+          925,
+          939,
+          948,
+          955,
+          970,
+          977
+        ],
+        "1:": [
+          886
+        ],
+        "Formula.": [
+          890
+        ],
+        "B.2": [
+          891
+        ],
+        "2:": [
+          895
+        ],
+        "Notes": [
+          896
+        ],
+        "Testing": [
+          900,
+          918
+        ],
+        "B.3": [
+          903
+        ],
+        "3:": [
+          907
+        ],
+        "Stub-Column": [
+          908
+        ],
+        "Test": [
+          909,
+          982
+        ],
+        "Procedure.": [
+          910
+        ],
+        "B.4": [
+          911
+        ],
+        "4:": [
+          915
+        ],
+        "Procedure": [
+          916
+        ],
+        "Centrally": [
+          919
+        ],
+        "B.5": [
+          922
+        ],
+        "5:": [
+          926
+        ],
+        "B.6": [
+          936
+        ],
+        "6:": [
+          940
+        ],
+        "Determination": [
+          941
+        ],
+        "Residual": [
+          943
+        ],
+        "Stresses.": [
+          944
+        ],
+        "B.7": [
+          945
+        ],
+        "7:": [
+          949
+        ],
+        "Tension": [
+          950
+        ],
+        "Testing.": [
+          951,
+          973
+        ],
+        "B.8": [
+          952
+        ],
+        "8:": [
+          956
+        ],
+        "Standard": [
+          957
+        ],
+        "Definitions": [
+          960
+        ],
+        "Tests": [
+          962
+        ],
+        "Static": [
+          964
+        ],
+        "Yield": [
+          965
+        ],
+        "Stress.": [
+          966
+        ],
+        "B.9": [
+          967
+        ],
+        "9:": [
+          971
+        ],
+        "Flexural": [
+          972
+        ],
+        "B.10": [
+          974
+        ],
+        "10:": [
+          978
+        ],
+        "Statistical": [
+          979
+        ],
+        "Evaluation": [
+          980
+        ],
+        "Data": [
+          983
+        ],
+        "Limit": [
+          985
+        ],
+        "States": [
+          986
+        ],
+        "C": [
+          990
+        ],
+        "NAME": [
+          995
+        ],
+        "INDEX.": [
+          996,
+          998
+        ],
+        "SUBJECT": [
+          997
+        ]
+      },
+      "counts_by_year": [
+        {
+          "year": 2026,
+          "cited_by_count": 11
+        },
+        {
+          "year": 2025,
+          "cited_by_count": 58
+        },
+        {
+          "year": 2024,
+          "cited_by_count": 73
+        },
+        {
+          "year": 2023,
+          "cited_by_count": 75
+        },
+        {
+          "year": 2022,
+          "cited_by_count": 78
+        },
+        {
+          "year": 2021,
+          "cited_by_count": 67
+        },
+        {
+          "year": 2020,
+          "cited_by_count": 71
+        },
+        {
+          "year": 2019,
+          "cited_by_count": 70
+        },
+        {
+          "year": 2018,
+          "cited_by_count": 51
+        },
+        {
+          "year": 2017,
+          "cited_by_count": 40
+        },
+        {
+          "year": 2016,
+          "cited_by_count": 39
+        },
+        {
+          "year": 2015,
+          "cited_by_count": 35
+        },
+        {
+          "year": 2014,
+          "cited_by_count": 41
+        },
+        {
+          "year": 2013,
+          "cited_by_count": 31
+        },
+        {
+          "year": 2012,
+          "cited_by_count": 26
+        }
+      ],
+      "updated_date": "2026-04-02T15:55:50.835912",
+      "created_date": "2016-06-24T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W2089738334",
+      "doi": "https://doi.org/10.2514/2.7436",
+      "title": "Buckling and Postbuckling Behavior of Stiffened Composite Panels Loaded in Compression",
+      "display_name": "Buckling and Postbuckling Behavior of Stiffened Composite Panels Loaded in Compression",
+      "relevance_score": 328.63223,
+      "publication_year": 1997,
+      "publication_date": "1997-01-01",
+      "ids": {
+        "openalex": "https://openalex.org/W2089738334",
+        "doi": "https://doi.org/10.2514/2.7436",
+        "mag": "2089738334"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "doi:10.2514/2.7436",
+        "is_oa": false,
+        "landing_page_url": "https://doi.org/10.2514/2.7436",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S53336109",
+          "display_name": "AIAA Journal",
+          "issn_l": "0001-1452",
+          "issn": [
+            "0001-1452",
+            "1081-0102",
+            "1533-385X"
+          ],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": true,
+          "host_organization": "https://openalex.org/P4310315709",
+          "host_organization_name": "American Institute of Aeronautics and Astronautics",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310315709"
+          ],
+          "host_organization_lineage_names": [
+            "American Institute of Aeronautics and Astronautics"
+          ],
+          "type": "journal"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "AIAA Journal",
+        "raw_type": "journal-article"
+      },
+      "type": "article",
+      "indexed_in": [
+        "crossref"
+      ],
+      "open_access": {
+        "is_oa": false,
+        "oa_status": "closed",
+        "oa_url": null,
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5109202568",
+            "display_name": "IC Lee",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157485424",
+              "display_name": "Korea Advanced Institute of Science and Technology",
+              "ror": "https://ror.org/05apxxy63",
+              "country_code": "KR",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157485424"
+              ]
+            }
+          ],
+          "countries": [
+            "KR"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "I. C. Lee",
+          "raw_affiliation_strings": [
+            "Korea Advanced Institute of Science and Technology, Taejon 305-701, Korea",
+            "Korea Advanced Institute of Science and Technology, Taejon, 305-701, Korea"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Korea Advanced Institute of Science and Technology, Taejon 305-701, Korea",
+              "institution_ids": [
+                "https://openalex.org/I157485424"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Korea Advanced Institute of Science and Technology, Taejon, 305-701, Korea",
+              "institution_ids": [
+                "https://openalex.org/I157485424"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5035737340",
+            "display_name": "Chun‐Gon Kim",
+            "orcid": "https://orcid.org/0000-0002-8250-4792"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157485424",
+              "display_name": "Korea Advanced Institute of Science and Technology",
+              "ror": "https://ror.org/05apxxy63",
+              "country_code": "KR",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157485424"
+              ]
+            }
+          ],
+          "countries": [
+            "KR"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "C. G. Kim",
+          "raw_affiliation_strings": [
+            "Korea Advanced Institute of Science and Technology, Taejon 305-701, Korea",
+            "Korea Advanced Institute of Science and Technology, Taejon, 305-701, Korea"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Korea Advanced Institute of Science and Technology, Taejon 305-701, Korea",
+              "institution_ids": [
+                "https://openalex.org/I157485424"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Korea Advanced Institute of Science and Technology, Taejon, 305-701, Korea",
+              "institution_ids": [
+                "https://openalex.org/I157485424"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "last",
+          "author": {
+            "id": "https://openalex.org/A5044755505",
+            "display_name": "C. S. Hong",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157485424",
+              "display_name": "Korea Advanced Institute of Science and Technology",
+              "ror": "https://ror.org/05apxxy63",
+              "country_code": "KR",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157485424"
+              ]
+            }
+          ],
+          "countries": [
+            "KR"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "C. S. Hong",
+          "raw_affiliation_strings": [
+            "Korea Advanced Institute of Science and Technology, Taejon 305-701, Korea",
+            "Korea Advanced Institute of Science and Technology, Taejon, 305-701, Korea"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Korea Advanced Institute of Science and Technology, Taejon 305-701, Korea",
+              "institution_ids": [
+                "https://openalex.org/I157485424"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Korea Advanced Institute of Science and Technology, Taejon, 305-701, Korea",
+              "institution_ids": [
+                "https://openalex.org/I157485424"
+              ]
+            }
+          ]
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 1,
+      "institutions_distinct_count": 3,
+      "corresponding_author_ids": [
+        "https://openalex.org/A5109202568"
+      ],
+      "corresponding_institution_ids": [
+        "https://openalex.org/I157485424"
+      ],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": 0.7047,
+      "has_fulltext": false,
+      "cited_by_count": 5,
+      "citation_normalized_percentile": {
+        "value": 0.70438739,
+        "is_in_top_1_percent": false,
+        "is_in_top_10_percent": false
+      },
+      "cited_by_percentile_year": {
+        "min": 89,
+        "max": 96
+      },
+      "biblio": {
+        "volume": "35",
+        "issue": "1",
+        "first_page": "202",
+        "last_page": "204"
+      },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T10221",
+        "display_name": "Composite Structure Analysis and Optimization",
+        "score": 0.9998000264167786,
+        "subfield": {
+          "id": "https://openalex.org/subfields/2211",
+          "display_name": "Mechanics of Materials"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/22",
+          "display_name": "Engineering"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T10221",
+          "display_name": "Composite Structure Analysis and Optimization",
+          "score": 0.9998000264167786,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T10713",
+          "display_name": "Structural Load-Bearing Analysis",
+          "score": 0.9995999932289124,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T10219",
+          "display_name": "Mechanical Behavior of Composites",
+          "score": 0.9980999827384949,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/buckling",
+          "display_name": "Buckling",
+          "score": 0.8335210084915161
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-number",
+          "display_name": "Composite number",
+          "score": 0.7179054021835327
+        },
+        {
+          "id": "https://openalex.org/keywords/structural-engineering",
+          "display_name": "Structural engineering",
+          "score": 0.6452430486679077
+        },
+        {
+          "id": "https://openalex.org/keywords/compression",
+          "display_name": "Compression (physics)",
+          "score": 0.5638196468353271
+        },
+        {
+          "id": "https://openalex.org/keywords/materials-science",
+          "display_name": "Materials science",
+          "score": 0.5500001311302185
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-material",
+          "display_name": "Composite material",
+          "score": 0.36770743131637573
+        },
+        {
+          "id": "https://openalex.org/keywords/engineering",
+          "display_name": "Engineering",
+          "score": 0.2633090615272522
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C85476182",
+          "wikidata": "https://www.wikidata.org/wiki/Q693104",
+          "display_name": "Buckling",
+          "level": 2,
+          "score": 0.8335210084915161
+        },
+        {
+          "id": "https://openalex.org/C104779481",
+          "wikidata": "https://www.wikidata.org/wiki/Q50707",
+          "display_name": "Composite number",
+          "level": 2,
+          "score": 0.7179054021835327
+        },
+        {
+          "id": "https://openalex.org/C66938386",
+          "wikidata": "https://www.wikidata.org/wiki/Q633538",
+          "display_name": "Structural engineering",
+          "level": 1,
+          "score": 0.6452430486679077
+        },
+        {
+          "id": "https://openalex.org/C180016635",
+          "wikidata": "https://www.wikidata.org/wiki/Q2712821",
+          "display_name": "Compression (physics)",
+          "level": 2,
+          "score": 0.5638196468353271
+        },
+        {
+          "id": "https://openalex.org/C192562407",
+          "wikidata": "https://www.wikidata.org/wiki/Q228736",
+          "display_name": "Materials science",
+          "level": 0,
+          "score": 0.5500001311302185
+        },
+        {
+          "id": "https://openalex.org/C159985019",
+          "wikidata": "https://www.wikidata.org/wiki/Q181790",
+          "display_name": "Composite material",
+          "level": 1,
+          "score": 0.36770743131637573
+        },
+        {
+          "id": "https://openalex.org/C127413603",
+          "wikidata": "https://www.wikidata.org/wiki/Q11023",
+          "display_name": "Engineering",
+          "level": 0,
+          "score": 0.2633090615272522
+        }
+      ],
+      "mesh": [],
+      "locations_count": 1,
+      "locations": [
+        {
+          "id": "doi:10.2514/2.7436",
+          "is_oa": false,
+          "landing_page_url": "https://doi.org/10.2514/2.7436",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S53336109",
+            "display_name": "AIAA Journal",
+            "issn_l": "0001-1452",
+            "issn": [
+              "0001-1452",
+              "1081-0102",
+              "1533-385X"
+            ],
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": true,
+            "host_organization": "https://openalex.org/P4310315709",
+            "host_organization_name": "American Institute of Aeronautics and Astronautics",
+            "host_organization_lineage": [
+              "https://openalex.org/P4310315709"
+            ],
+            "host_organization_lineage_names": [
+              "American Institute of Aeronautics and Astronautics"
+            ],
+            "type": "journal"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "AIAA Journal",
+          "raw_type": "journal-article"
+        }
+      ],
+      "best_oa_location": null,
+      "sustainable_development_goals": [
+        {
+          "score": 0.6200000047683716,
+          "id": "https://metadata.un.org/sdg/11",
+          "display_name": "Sustainable cities and communities"
+        }
+      ],
+      "awards": [],
+      "funders": [],
+      "has_content": {
+        "grobid_xml": false,
+        "pdf": false
+      },
+      "content_urls": null,
+      "referenced_works_count": 6,
+      "referenced_works": [
+        "https://openalex.org/W176930721",
+        "https://openalex.org/W1970968032",
+        "https://openalex.org/W2065481625",
+        "https://openalex.org/W2067363196",
+        "https://openalex.org/W2067813486",
+        "https://openalex.org/W4292139105"
+      ],
+      "related_works": [
+        "https://openalex.org/W946793292",
+        "https://openalex.org/W2941013975",
+        "https://openalex.org/W2790729869",
+        "https://openalex.org/W194827383",
+        "https://openalex.org/W2004808456",
+        "https://openalex.org/W1994943997",
+        "https://openalex.org/W3034644892",
+        "https://openalex.org/W1994142029",
+        "https://openalex.org/W2182921589",
+        "https://openalex.org/W2888968085"
+      ],
+      "abstract_inverted_index": {
+        "A": [
+          0
+        ],
+        "modified": [
+          1
+        ],
+        "arc": [
+          2
+        ],
+        "length": [
+          3
+        ],
+        "method": [
+          4
+        ],
+        "combined": [
+          5
+        ],
+        "with": [
+          6
+        ],
+        "the": [
+          7,
+          14,
+          38,
+          45,
+          49,
+          56,
+          60,
+          64
+        ],
+        "progressive": [
+          8
+        ],
+        "failure": [
+          9
+        ],
+        "model": [
+          10
+        ],
+        "was": [
+          11,
+          23,
+          40
+        ],
+        "used": [
+          12
+        ],
+        "in": [
+          13
+        ],
+        "nonlinear": [
+          15
+        ],
+        "finite": [
+          16,
+          20
+        ],
+        "element": [
+          17,
+          21
+        ],
+        "method.": [
+          18
+        ],
+        "The": [
+          19,
+          42
+        ],
+        "program": [
+          22
+        ],
+        "applied": [
+          24
+        ],
+        "to": [
+          25
+        ],
+        "stiffened": [
+          26,
+          65
+        ],
+        "composite": [
+          27
+        ],
+        "panels": [
+          28,
+          39
+        ],
+        "under": [
+          29
+        ],
+        "axial": [
+          30
+        ],
+        "compression,": [
+          31
+        ],
+        "and": [
+          32,
+          34,
+          44
+        ],
+        "buckling": [
+          33
+        ],
+        "postbuckling": [
+          35
+        ],
+        "behavior": [
+          36
+        ],
+        "of": [
+          37,
+          48,
+          51,
+          59
+        ],
+        "characterized.": [
+          41
+        ],
+        "web": [
+          43
+        ],
+        "lower": [
+          46
+        ],
+        "part": [
+          47
+        ],
+        "cap": [
+          50
+        ],
+        "stiffener": [
+          52
+        ],
+        "were": [
+          53
+        ],
+        "favricated": [
+          54
+        ],
+        "by": [
+          55
+        ],
+        "continuous": [
+          57
+        ],
+        "plies": [
+          58
+        ],
+        "skin": [
+          61
+        ],
+        "for": [
+          62
+        ],
+        "cocuring": [
+          63
+        ],
+        "panel": [
+          66
+        ]
+      },
+      "counts_by_year": [
+        {
+          "year": 2021,
+          "cited_by_count": 1
+        },
+        {
+          "year": 2014,
+          "cited_by_count": 2
+        }
+      ],
+      "updated_date": "2025-11-06T03:46:38.306776",
+      "created_date": "2025-10-10T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W2317472115",
+      "doi": "https://doi.org/10.2514/6.1992-2285",
+      "title": "Buckling, postbuckling and failure behavior of composite-stiffened panels under axial compression",
+      "display_name": "Buckling, postbuckling and failure behavior of composite-stiffened panels under axial compression",
+      "relevance_score": 242.31355,
+      "publication_year": 1992,
+      "publication_date": "1992-04-13",
+      "ids": {
+        "openalex": "https://openalex.org/W2317472115",
+        "doi": "https://doi.org/10.2514/6.1992-2285",
+        "mag": "2317472115"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "doi:10.2514/6.1992-2285",
+        "is_oa": false,
+        "landing_page_url": "https://doi.org/10.2514/6.1992-2285",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S4306499237",
+          "display_name": "33rd Structures, Structural Dynamics and Materials Conference",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "host_organization": null,
+          "host_organization_name": null,
+          "host_organization_lineage": [],
+          "host_organization_lineage_names": [],
+          "type": "conference"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "33rd Structures, Structural Dynamics and Materials Conference",
+        "raw_type": "proceedings-article"
+      },
+      "type": "article",
+      "indexed_in": [
+        "crossref"
+      ],
+      "open_access": {
+        "is_oa": false,
+        "oa_status": "closed",
+        "oa_url": null,
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5038831726",
+            "display_name": "Shanzhen Fan",
+            "orcid": "https://orcid.org/0000-0003-4238-7568"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I4387152784",
+              "display_name": "Chinese Aeronautical Establishment",
+              "ror": "https://ror.org/01qwh7a74",
+              "country_code": null,
+              "type": "funder",
+              "lineage": [
+                "https://openalex.org/I4387152784"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "S. FAN",
+          "raw_affiliation_strings": [
+            "Chinese Aeronautical Establishment, People's Republic of China"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Chinese Aeronautical Establishment, People's Republic of China",
+              "institution_ids": [
+                "https://openalex.org/I4387152784"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5113452711",
+            "display_name": "Bernd Kroeplin",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I100066346",
+              "display_name": "University of Stuttgart",
+              "ror": "https://ror.org/04vnq7t77",
+              "country_code": "DE",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I100066346"
+              ]
+            }
+          ],
+          "countries": [
+            "DE"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "B. KROEPLIN",
+          "raw_affiliation_strings": [
+            "Stuttgart, Universitaet, Federal Republic of Germany"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Stuttgart, Universitaet, Federal Republic of Germany",
+              "institution_ids": [
+                "https://openalex.org/I100066346"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "last",
+          "author": {
+            "id": "https://openalex.org/A5004607078",
+            "display_name": "B. Geier",
+            "orcid": null
+          },
+          "institutions": [],
+          "countries": [],
+          "is_corresponding": false,
+          "raw_author_name": "B. GEIER",
+          "raw_affiliation_strings": [
+            "DLR, Institut fuer Strukturmechanik, Brunswick, Federal Republic of Germany"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "DLR, Institut fuer Strukturmechanik, Brunswick, Federal Republic of Germany",
+              "institution_ids": []
+            }
+          ]
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 1,
+      "institutions_distinct_count": 3,
+      "corresponding_author_ids": [
+        "https://openalex.org/A5038831726"
+      ],
+      "corresponding_institution_ids": [
+        "https://openalex.org/I4387152784"
+      ],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": 2.2405,
+      "has_fulltext": false,
+      "cited_by_count": 5,
+      "citation_normalized_percentile": {
+        "value": 0.84514436,
+        "is_in_top_1_percent": false,
+        "is_in_top_10_percent": false
+      },
+      "cited_by_percentile_year": {
+        "min": 90,
+        "max": 95
+      },
+      "biblio": {
+        "volume": null,
+        "issue": null,
+        "first_page": null,
+        "last_page": null
+      },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T10221",
+        "display_name": "Composite Structure Analysis and Optimization",
+        "score": 0.9998999834060669,
+        "subfield": {
+          "id": "https://openalex.org/subfields/2211",
+          "display_name": "Mechanics of Materials"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/22",
+          "display_name": "Engineering"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T10221",
+          "display_name": "Composite Structure Analysis and Optimization",
+          "score": 0.9998999834060669,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T10713",
+          "display_name": "Structural Load-Bearing Analysis",
+          "score": 0.9973999857902527,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T12907",
+          "display_name": "Mechanical Engineering and Vibrations Research",
+          "score": 0.9868000149726868,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2210",
+            "display_name": "Mechanical Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/buckling",
+          "display_name": "Buckling",
+          "score": 0.8526153564453125
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-number",
+          "display_name": "Composite number",
+          "score": 0.7104334831237793
+        },
+        {
+          "id": "https://openalex.org/keywords/structural-engineering",
+          "display_name": "Structural engineering",
+          "score": 0.6810609102249146
+        },
+        {
+          "id": "https://openalex.org/keywords/compression",
+          "display_name": "Compression (physics)",
+          "score": 0.5310676097869873
+        },
+        {
+          "id": "https://openalex.org/keywords/materials-science",
+          "display_name": "Materials science",
+          "score": 0.5261221528053284
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-material",
+          "display_name": "Composite material",
+          "score": 0.4770081043243408
+        },
+        {
+          "id": "https://openalex.org/keywords/engineering",
+          "display_name": "Engineering",
+          "score": 0.21439269185066223
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C85476182",
+          "wikidata": "https://www.wikidata.org/wiki/Q693104",
+          "display_name": "Buckling",
+          "level": 2,
+          "score": 0.8526153564453125
+        },
+        {
+          "id": "https://openalex.org/C104779481",
+          "wikidata": "https://www.wikidata.org/wiki/Q50707",
+          "display_name": "Composite number",
+          "level": 2,
+          "score": 0.7104334831237793
+        },
+        {
+          "id": "https://openalex.org/C66938386",
+          "wikidata": "https://www.wikidata.org/wiki/Q633538",
+          "display_name": "Structural engineering",
+          "level": 1,
+          "score": 0.6810609102249146
+        },
+        {
+          "id": "https://openalex.org/C180016635",
+          "wikidata": "https://www.wikidata.org/wiki/Q2712821",
+          "display_name": "Compression (physics)",
+          "level": 2,
+          "score": 0.5310676097869873
+        },
+        {
+          "id": "https://openalex.org/C192562407",
+          "wikidata": "https://www.wikidata.org/wiki/Q228736",
+          "display_name": "Materials science",
+          "level": 0,
+          "score": 0.5261221528053284
+        },
+        {
+          "id": "https://openalex.org/C159985019",
+          "wikidata": "https://www.wikidata.org/wiki/Q181790",
+          "display_name": "Composite material",
+          "level": 1,
+          "score": 0.4770081043243408
+        },
+        {
+          "id": "https://openalex.org/C127413603",
+          "wikidata": "https://www.wikidata.org/wiki/Q11023",
+          "display_name": "Engineering",
+          "level": 0,
+          "score": 0.21439269185066223
+        }
+      ],
+      "mesh": [],
+      "locations_count": 1,
+      "locations": [
+        {
+          "id": "doi:10.2514/6.1992-2285",
+          "is_oa": false,
+          "landing_page_url": "https://doi.org/10.2514/6.1992-2285",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S4306499237",
+            "display_name": "33rd Structures, Structural Dynamics and Materials Conference",
+            "issn_l": null,
+            "issn": null,
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": null,
+            "host_organization_name": null,
+            "host_organization_lineage": [],
+            "host_organization_lineage_names": [],
+            "type": "conference"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "33rd Structures, Structural Dynamics and Materials Conference",
+          "raw_type": "proceedings-article"
+        }
+      ],
+      "best_oa_location": null,
+      "sustainable_development_goals": [],
+      "awards": [],
+      "funders": [],
+      "has_content": {
+        "grobid_xml": false,
+        "pdf": false
+      },
+      "content_urls": null,
+      "referenced_works_count": 30,
+      "referenced_works": [
+        "https://openalex.org/W26536564",
+        "https://openalex.org/W103793123",
+        "https://openalex.org/W105645302",
+        "https://openalex.org/W160480676",
+        "https://openalex.org/W192028857",
+        "https://openalex.org/W565302935",
+        "https://openalex.org/W1576820371",
+        "https://openalex.org/W1963966586",
+        "https://openalex.org/W1966937464",
+        "https://openalex.org/W1995312413",
+        "https://openalex.org/W1997856925",
+        "https://openalex.org/W2000618755",
+        "https://openalex.org/W2019224223",
+        "https://openalex.org/W2028304313",
+        "https://openalex.org/W2030754343",
+        "https://openalex.org/W2031897283",
+        "https://openalex.org/W2037187291",
+        "https://openalex.org/W2040101509",
+        "https://openalex.org/W2053274125",
+        "https://openalex.org/W2065985517",
+        "https://openalex.org/W2067363196",
+        "https://openalex.org/W2109911863",
+        "https://openalex.org/W2132266683",
+        "https://openalex.org/W2148915918",
+        "https://openalex.org/W2316297231",
+        "https://openalex.org/W2513264479",
+        "https://openalex.org/W2802040225",
+        "https://openalex.org/W2904307698",
+        "https://openalex.org/W4232251761",
+        "https://openalex.org/W4403689548"
+      ],
+      "related_works": [
+        "https://openalex.org/W946793292",
+        "https://openalex.org/W2941013975",
+        "https://openalex.org/W2790729869",
+        "https://openalex.org/W194827383",
+        "https://openalex.org/W2004808456",
+        "https://openalex.org/W1994943997",
+        "https://openalex.org/W3034644892",
+        "https://openalex.org/W1994142029",
+        "https://openalex.org/W2182921589",
+        "https://openalex.org/W2888968085"
+      ],
+      "abstract_inverted_index": {
+        "For": [
+          0
+        ],
+        "stiffened": [
+          1,
+          72,
+          88,
+          188,
+          202
+        ],
+        "composite": [
+          2
+        ],
+        "panels,": [
+          3,
+          73,
+          78
+        ],
+        "the": [
+          4,
+          7,
+          52,
+          57,
+          65,
+          86,
+          98,
+          124,
+          148,
+          160,
+          170,
+          187
+        ],
+        "calculation": [
+          5,
+          19,
+          25
+        ],
+        "of": [
+          6,
+          71,
+          134,
+          162,
+          169,
+          186,
+          201
+        ],
+        "postbuckling": [
+          8,
+          58,
+          117,
+          132
+        ],
+        "strength": [
+          9
+        ],
+        "is": [
+          10,
+          20,
+          62,
+          181,
+          193
+        ],
+        "a": [
+          11,
+          36,
+          114,
+          120
+        ],
+        "rather": [
+          12
+        ],
+        "difficult": [
+          13
+        ],
+        "problem.": [
+          14
+        ],
+        "The": [
+          15,
+          44,
+          60,
+          82,
+          90,
+          103,
+          128,
+          167,
+          183
+        ],
+        "nonlinear": [
+          16
+        ],
+        "stepwise": [
+          17
+        ],
+        "equilibrium": [
+          18,
+          54
+        ],
+        "accompanied": [
+          21
+        ],
+        "by": [
+          22
+        ],
+        "an": [
+          23
+        ],
+        "eigenvalue": [
+          24
+        ],
+        "in": [
+          26,
+          34,
+          110
+        ],
+        "order": [
+          27
+        ],
+        "to": [
+          28,
+          100,
+          195
+        ],
+        "find": [
+          29
+        ],
+        "bifurcations": [
+          30
+        ],
+        "or": [
+          31
+        ],
+        "sensitive": [
+          32
+        ],
+        "regions,": [
+          33
+        ],
+        "which": [
+          35
+        ],
+        "snap": [
+          37
+        ],
+        "towards": [
+          38
+        ],
+        "another": [
+          39
+        ],
+        "buckling": [
+          40,
+          126,
+          185
+        ],
+        "mode": [
+          41,
+          200
+        ],
+        "may": [
+          42
+        ],
+        "occur.": [
+          43
+        ],
+        "corresponding": [
+          45
+        ],
+        "eigenmode": [
+          46
+        ],
+        "will": [
+          47
+        ],
+        "be": [
+          48,
+          101,
+          196
+        ],
+        "used": [
+          49,
+          109
+        ],
+        "for": [
+          50
+        ],
+        "finding": [
+          51
+        ],
+        "new": [
+          53
+        ],
+        "point": [
+          55
+        ],
+        "on": [
+          56,
+          154
+        ],
+        "branch.": [
+          59
+        ],
+        "solution": [
+          61
+        ],
+        "improved": [
+          63
+        ],
+        "using": [
+          64
+        ],
+        "normal": [
+          66
+        ],
+        "Newton-Raphson": [
+          67
+        ],
+        "method.": [
+          68
+        ],
+        "Two": [
+          69
+        ],
+        "series": [
+          70
+        ],
+        "beam-stiffened": [
+          74,
+          83
+        ],
+        "panels": [
+          75,
+          84,
+          105,
+          189
+        ],
+        "and": [
+          76,
+          96,
+          131,
+          143,
+          179
+        ],
+        "bladestiffened": [
+          77
+        ],
+        "have": [
+          79
+        ],
+        "been": [
+          80
+        ],
+        "calculated.": [
+          81
+        ],
+        "are": [
+          85,
+          106
+        ],
+        "simplest": [
+          87
+        ],
+        "panels.": [
+          89,
+          203
+        ],
+        "load-displacement": [
+          91
+        ],
+        "curve": [
+          92
+        ],
+        "shows": [
+          93,
+          159
+        ],
+        "reasonable": [
+          94
+        ],
+        "results": [
+          95,
+          172
+        ],
+        "proves": [
+          97
+        ],
+        "method": [
+          99
+        ],
+        "working.": [
+          102
+        ],
+        "blade-stiffened": [
+          104
+        ],
+        "more": [
+          107,
+          115
+        ],
+        "frequently": [
+          108
+        ],
+        "practice.": [
+          111
+        ],
+        "It": [
+          112,
+          158
+        ],
+        "exhibits": [
+          113
+        ],
+        "distinct": [
+          116
+        ],
+        "behavior": [
+          118
+        ],
+        "with": [
+          119,
+          139,
+          173,
+          190
+        ],
+        "sudden": [
+          121
+        ],
+        "drop": [
+          122
+        ],
+        "after": [
+          123
+        ],
+        "global": [
+          125,
+          184
+        ],
+        "load.": [
+          127
+        ],
+        "whole": [
+          129
+        ],
+        "pre-": [
+          130
+        ],
+        "analysis": [
+          133
+        ],
+        "long": [
+          135,
+          145,
+          149
+        ],
+        "narrow": [
+          136
+        ],
+        "unstiffened": [
+          137
+        ],
+        "plates": [
+          138
+        ],
+        "three": [
+          140
+        ],
+        "edges": [
+          141
+        ],
+        "supported": [
+          142,
+          150
+        ],
+        "one": [
+          144,
+          197
+        ],
+        "edge": [
+          146,
+          151
+        ],
+        "free,": [
+          147
+        ],
+        "being": [
+          152
+        ],
+        "free": [
+          153
+        ],
+        "midsurface,": [
+          155
+        ],
+        "was": [
+          156
+        ],
+        "investigated.": [
+          157
+        ],
+        "properties": [
+          161
+        ],
+        "blade": [
+          163
+        ],
+        "stiffeners": [
+          164
+        ],
+        "very": [
+          165
+        ],
+        "well.": [
+          166
+        ],
+        "comparison": [
+          168
+        ],
+        "computational": [
+          171
+        ],
+        "typical": [
+          174
+        ],
+        "tests": [
+          175
+        ],
+        "from": [
+          176
+        ],
+        "CAE,": [
+          177
+        ],
+        "NLR": [
+          178
+        ],
+        "NASA": [
+          180
+        ],
+        "presented.": [
+          182
+        ],
+        "buckled": [
+          191
+        ],
+        "skin": [
+          192
+        ],
+        "supposed": [
+          194
+        ],
+        "importent": [
+          198
+        ],
+        "failure": [
+          199
+        ]
+      },
+      "counts_by_year": [
+        {
+          "year": 2025,
+          "cited_by_count": 1
+        },
+        {
+          "year": 2024,
+          "cited_by_count": 1
+        }
+      ],
+      "updated_date": "2025-11-06T03:46:38.306776",
+      "created_date": "2025-10-10T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W1994181563",
+      "doi": "https://doi.org/10.1016/0010-4361(95)91382-f",
+      "title": "Buckling and postbuckling of composite structures",
+      "display_name": "Buckling and postbuckling of composite structures",
+      "relevance_score": 225.98465,
+      "publication_year": 1995,
+      "publication_date": "1995-03-01",
+      "ids": {
+        "openalex": "https://openalex.org/W1994181563",
+        "doi": "https://doi.org/10.1016/0010-4361(95)91382-f",
+        "mag": "1994181563"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "doi:10.1016/0010-4361(95)91382-f",
+        "is_oa": false,
+        "landing_page_url": "https://doi.org/10.1016/0010-4361(95)91382-f",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S39416717",
+          "display_name": "Composites",
+          "issn_l": "0010-4361",
+          "issn": [
+            "0010-4361",
+            "1878-7134"
+          ],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "host_organization": "https://openalex.org/P4310320990",
+          "host_organization_name": "Elsevier BV",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310320990"
+          ],
+          "host_organization_lineage_names": [
+            "Elsevier BV"
+          ],
+          "type": "journal"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Composites",
+        "raw_type": "journal-article"
+      },
+      "type": "article",
+      "indexed_in": [
+        "crossref"
+      ],
+      "open_access": {
+        "is_oa": false,
+        "oa_status": "closed",
+        "oa_url": null,
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5063366746",
+            "display_name": "K.A. Stevens",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I47508984",
+              "display_name": "Imperial College London",
+              "ror": "https://ror.org/041kmwe10",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I47508984"
+              ]
+            }
+          ],
+          "countries": [
+            "GB"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "K.A. Stevens",
+          "raw_affiliation_strings": [
+            "Department of Aeronautics, Imperial College of Science, Technology and Medicine, Prince Consort Road, London SW7 2BY, UK",
+            "Department of Aeronautics, Imperial College of Science Technology & Medicine, Prince Consort Road, London. SW7 2BY, UK"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Aeronautics, Imperial College of Science, Technology and Medicine, Prince Consort Road, London SW7 2BY, UK",
+              "institution_ids": [
+                "https://openalex.org/I47508984"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Department of Aeronautics, Imperial College of Science Technology & Medicine, Prince Consort Road, London. SW7 2BY, UK",
+              "institution_ids": [
+                "https://openalex.org/I47508984"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5004777179",
+            "display_name": "Riccardo Ricci",
+            "orcid": "https://orcid.org/0000-0002-2128-7456"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I47508984",
+              "display_name": "Imperial College London",
+              "ror": "https://ror.org/041kmwe10",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I47508984"
+              ]
+            }
+          ],
+          "countries": [
+            "GB"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "R. Ricci",
+          "raw_affiliation_strings": [
+            "Department of Aeronautics, Imperial College of Science, Technology and Medicine, Prince Consort Road, London SW7 2BY, UK",
+            "Department of Aeronautics, Imperial College of Science Technology & Medicine, Prince Consort Road, London. SW7 2BY, UK"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Aeronautics, Imperial College of Science, Technology and Medicine, Prince Consort Road, London SW7 2BY, UK",
+              "institution_ids": [
+                "https://openalex.org/I47508984"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Department of Aeronautics, Imperial College of Science Technology & Medicine, Prince Consort Road, London. SW7 2BY, UK",
+              "institution_ids": [
+                "https://openalex.org/I47508984"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "last",
+          "author": {
+            "id": "https://openalex.org/A5111976712",
+            "display_name": "G. A. O. Davies",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I47508984",
+              "display_name": "Imperial College London",
+              "ror": "https://ror.org/041kmwe10",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I47508984"
+              ]
+            }
+          ],
+          "countries": [
+            "GB"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "G.A.O. Davies",
+          "raw_affiliation_strings": [
+            "Department of Aeronautics, Imperial College of Science, Technology and Medicine, Prince Consort Road, London SW7 2BY, UK",
+            "Department of Aeronautics, Imperial College of Science Technology & Medicine, Prince Consort Road, London. SW7 2BY, UK"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Aeronautics, Imperial College of Science, Technology and Medicine, Prince Consort Road, London SW7 2BY, UK",
+              "institution_ids": [
+                "https://openalex.org/I47508984"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Department of Aeronautics, Imperial College of Science Technology & Medicine, Prince Consort Road, London. SW7 2BY, UK",
+              "institution_ids": [
+                "https://openalex.org/I47508984"
+              ]
+            }
+          ]
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 1,
+      "institutions_distinct_count": 3,
+      "corresponding_author_ids": [
+        "https://openalex.org/A5063366746"
+      ],
+      "corresponding_institution_ids": [
+        "https://openalex.org/I47508984"
+      ],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": 7.0805,
+      "has_fulltext": false,
+      "cited_by_count": 129,
+      "citation_normalized_percentile": {
+        "value": 0.9735768,
+        "is_in_top_1_percent": false,
+        "is_in_top_10_percent": true
+      },
+      "cited_by_percentile_year": {
+        "min": 94,
+        "max": 99
+      },
+      "biblio": {
+        "volume": "26",
+        "issue": "3",
+        "first_page": "189",
+        "last_page": "199"
+      },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T10219",
+        "display_name": "Mechanical Behavior of Composites",
+        "score": 0.9994999766349792,
+        "subfield": {
+          "id": "https://openalex.org/subfields/2211",
+          "display_name": "Mechanics of Materials"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/22",
+          "display_name": "Engineering"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T10219",
+          "display_name": "Mechanical Behavior of Composites",
+          "score": 0.9994999766349792,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T10221",
+          "display_name": "Composite Structure Analysis and Optimization",
+          "score": 0.9977999925613403,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T11870",
+          "display_name": "Structural Analysis and Optimization",
+          "score": 0.996999979019165,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/buckling",
+          "display_name": "Buckling",
+          "score": 0.8996355533599854
+        },
+        {
+          "id": "https://openalex.org/keywords/materials-science",
+          "display_name": "Materials science",
+          "score": 0.8177277445793152
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-number",
+          "display_name": "Composite number",
+          "score": 0.6968825459480286
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-material",
+          "display_name": "Composite material",
+          "score": 0.6423937082290649
+        },
+        {
+          "id": "https://openalex.org/keywords/finite-element-method",
+          "display_name": "Finite element method",
+          "score": 0.6045874357223511
+        },
+        {
+          "id": "https://openalex.org/keywords/structural-engineering",
+          "display_name": "Structural engineering",
+          "score": 0.5874166488647461
+        },
+        {
+          "id": "https://openalex.org/keywords/explosive-material",
+          "display_name": "Explosive material",
+          "score": 0.5834274888038635
+        },
+        {
+          "id": "https://openalex.org/keywords/compression",
+          "display_name": "Compression (physics)",
+          "score": 0.4682304263114929
+        },
+        {
+          "id": "https://openalex.org/keywords/critical-load",
+          "display_name": "Critical load",
+          "score": 0.43443483114242554
+        },
+        {
+          "id": "https://openalex.org/keywords/engineering",
+          "display_name": "Engineering",
+          "score": 0.08040854334831238
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C85476182",
+          "wikidata": "https://www.wikidata.org/wiki/Q693104",
+          "display_name": "Buckling",
+          "level": 2,
+          "score": 0.8996355533599854
+        },
+        {
+          "id": "https://openalex.org/C192562407",
+          "wikidata": "https://www.wikidata.org/wiki/Q228736",
+          "display_name": "Materials science",
+          "level": 0,
+          "score": 0.8177277445793152
+        },
+        {
+          "id": "https://openalex.org/C104779481",
+          "wikidata": "https://www.wikidata.org/wiki/Q50707",
+          "display_name": "Composite number",
+          "level": 2,
+          "score": 0.6968825459480286
+        },
+        {
+          "id": "https://openalex.org/C159985019",
+          "wikidata": "https://www.wikidata.org/wiki/Q181790",
+          "display_name": "Composite material",
+          "level": 1,
+          "score": 0.6423937082290649
+        },
+        {
+          "id": "https://openalex.org/C135628077",
+          "wikidata": "https://www.wikidata.org/wiki/Q220184",
+          "display_name": "Finite element method",
+          "level": 2,
+          "score": 0.6045874357223511
+        },
+        {
+          "id": "https://openalex.org/C66938386",
+          "wikidata": "https://www.wikidata.org/wiki/Q633538",
+          "display_name": "Structural engineering",
+          "level": 1,
+          "score": 0.5874166488647461
+        },
+        {
+          "id": "https://openalex.org/C154238967",
+          "wikidata": "https://www.wikidata.org/wiki/Q12870",
+          "display_name": "Explosive material",
+          "level": 2,
+          "score": 0.5834274888038635
+        },
+        {
+          "id": "https://openalex.org/C180016635",
+          "wikidata": "https://www.wikidata.org/wiki/Q2712821",
+          "display_name": "Compression (physics)",
+          "level": 2,
+          "score": 0.4682304263114929
+        },
+        {
+          "id": "https://openalex.org/C2777457327",
+          "wikidata": "https://www.wikidata.org/wiki/Q11254316",
+          "display_name": "Critical load",
+          "level": 3,
+          "score": 0.43443483114242554
+        },
+        {
+          "id": "https://openalex.org/C127413603",
+          "wikidata": "https://www.wikidata.org/wiki/Q11023",
+          "display_name": "Engineering",
+          "level": 0,
+          "score": 0.08040854334831238
+        },
+        {
+          "id": "https://openalex.org/C178790620",
+          "wikidata": "https://www.wikidata.org/wiki/Q11351",
+          "display_name": "Organic chemistry",
+          "level": 1,
+          "score": 0.0
+        },
+        {
+          "id": "https://openalex.org/C185592680",
+          "wikidata": "https://www.wikidata.org/wiki/Q2329",
+          "display_name": "Chemistry",
+          "level": 0,
+          "score": 0.0
+        }
+      ],
+      "mesh": [],
+      "locations_count": 1,
+      "locations": [
+        {
+          "id": "doi:10.1016/0010-4361(95)91382-f",
+          "is_oa": false,
+          "landing_page_url": "https://doi.org/10.1016/0010-4361(95)91382-f",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S39416717",
+            "display_name": "Composites",
+            "issn_l": "0010-4361",
+            "issn": [
+              "0010-4361",
+              "1878-7134"
+            ],
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": "https://openalex.org/P4310320990",
+            "host_organization_name": "Elsevier BV",
+            "host_organization_lineage": [
+              "https://openalex.org/P4310320990"
+            ],
+            "host_organization_lineage_names": [
+              "Elsevier BV"
+            ],
+            "type": "journal"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "Composites",
+          "raw_type": "journal-article"
+        }
+      ],
+      "best_oa_location": null,
+      "sustainable_development_goals": [],
+      "awards": [],
+      "funders": [],
+      "has_content": {
+        "grobid_xml": false,
+        "pdf": false
+      },
+      "content_urls": null,
+      "referenced_works_count": 5,
+      "referenced_works": [
+        "https://openalex.org/W1986486132",
+        "https://openalex.org/W2067363196",
+        "https://openalex.org/W2102163281",
+        "https://openalex.org/W2132266683",
+        "https://openalex.org/W2149045623"
+      ],
+      "related_works": [
+        "https://openalex.org/W2562321665",
+        "https://openalex.org/W3116977977",
+        "https://openalex.org/W2351272910",
+        "https://openalex.org/W2376181582",
+        "https://openalex.org/W2351257627",
+        "https://openalex.org/W4233985451",
+        "https://openalex.org/W2368732852",
+        "https://openalex.org/W2032851527",
+        "https://openalex.org/W1891537875",
+        "https://openalex.org/W2385377520"
+      ],
+      "abstract_inverted_index": null,
+      "counts_by_year": [
+        {
+          "year": 2025,
+          "cited_by_count": 2
+        },
+        {
+          "year": 2024,
+          "cited_by_count": 4
+        },
+        {
+          "year": 2023,
+          "cited_by_count": 2
+        },
+        {
+          "year": 2022,
+          "cited_by_count": 3
+        },
+        {
+          "year": 2021,
+          "cited_by_count": 7
+        },
+        {
+          "year": 2020,
+          "cited_by_count": 6
+        },
+        {
+          "year": 2019,
+          "cited_by_count": 3
+        },
+        {
+          "year": 2018,
+          "cited_by_count": 2
+        },
+        {
+          "year": 2017,
+          "cited_by_count": 5
+        },
+        {
+          "year": 2016,
+          "cited_by_count": 3
+        },
+        {
+          "year": 2015,
+          "cited_by_count": 8
+        },
+        {
+          "year": 2014,
+          "cited_by_count": 2
+        },
+        {
+          "year": 2013,
+          "cited_by_count": 2
+        },
+        {
+          "year": 2012,
+          "cited_by_count": 3
+        }
+      ],
+      "updated_date": "2025-11-06T03:46:38.306776",
+      "created_date": "2025-10-10T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W3024829286",
+      "doi": null,
+      "title": "Buckling and postbuckling analysis of stiffened composite panels in axial compression",
+      "display_name": "Buckling and postbuckling analysis of stiffened composite panels in axial compression",
+      "relevance_score": 164.46918,
+      "publication_year": 1999,
+      "publication_date": "1999-01-01",
+      "ids": {
+        "openalex": "https://openalex.org/W3024829286",
+        "mag": "3024829286"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "mag:3024829286",
+        "is_oa": false,
+        "landing_page_url": "https://ui.adsabs.harvard.edu/abs/1999PhDT.......203P/abstract",
+        "pdf_url": null,
+        "source": null,
+        "license": null,
+        "license_id": null,
+        "version": null,
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": null,
+        "raw_type": null
+      },
+      "type": "article",
+      "indexed_in": [],
+      "open_access": {
+        "is_oa": false,
+        "oa_status": "closed",
+        "oa_url": null,
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5076602406",
+            "display_name": "Oung Park",
+            "orcid": null
+          },
+          "institutions": [],
+          "countries": [],
+          "is_corresponding": true,
+          "raw_author_name": "Oung Park",
+          "raw_affiliation_strings": [],
+          "affiliations": []
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 0,
+      "institutions_distinct_count": 1,
+      "corresponding_author_ids": [
+        "https://openalex.org/A5076602406"
+      ],
+      "corresponding_institution_ids": [],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": 0.0,
+      "has_fulltext": false,
+      "cited_by_count": 1,
+      "citation_normalized_percentile": {
+        "value": 0.46378225,
+        "is_in_top_1_percent": false,
+        "is_in_top_10_percent": false
+      },
+      "cited_by_percentile_year": {
+        "min": 90,
+        "max": 94
+      },
+      "biblio": {
+        "volume": null,
+        "issue": null,
+        "first_page": null,
+        "last_page": null
+      },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T10221",
+        "display_name": "Composite Structure Analysis and Optimization",
+        "score": 0.9965999722480774,
+        "subfield": {
+          "id": "https://openalex.org/subfields/2211",
+          "display_name": "Mechanics of Materials"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/22",
+          "display_name": "Engineering"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T10221",
+          "display_name": "Composite Structure Analysis and Optimization",
+          "score": 0.9965999722480774,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T12897",
+          "display_name": "Structural Analysis of Composite Materials",
+          "score": 0.9909999966621399,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2210",
+            "display_name": "Mechanical Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T10713",
+          "display_name": "Structural Load-Bearing Analysis",
+          "score": 0.9902999997138977,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/buckling",
+          "display_name": "Buckling",
+          "score": 0.8753217458724976
+        },
+        {
+          "id": "https://openalex.org/keywords/structural-engineering",
+          "display_name": "Structural engineering",
+          "score": 0.6434988379478455
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-number",
+          "display_name": "Composite number",
+          "score": 0.6379420757293701
+        },
+        {
+          "id": "https://openalex.org/keywords/compression",
+          "display_name": "Compression (physics)",
+          "score": 0.5289300084114075
+        },
+        {
+          "id": "https://openalex.org/keywords/buckle",
+          "display_name": "Buckle",
+          "score": 0.44198840856552124
+        },
+        {
+          "id": "https://openalex.org/keywords/engineering",
+          "display_name": "Engineering",
+          "score": 0.33958977460861206
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-material",
+          "display_name": "Composite material",
+          "score": 0.32359427213668823
+        },
+        {
+          "id": "https://openalex.org/keywords/materials-science",
+          "display_name": "Materials science",
+          "score": 0.3146655857563019
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C85476182",
+          "wikidata": "https://www.wikidata.org/wiki/Q693104",
+          "display_name": "Buckling",
+          "level": 2,
+          "score": 0.8753217458724976
+        },
+        {
+          "id": "https://openalex.org/C66938386",
+          "wikidata": "https://www.wikidata.org/wiki/Q633538",
+          "display_name": "Structural engineering",
+          "level": 1,
+          "score": 0.6434988379478455
+        },
+        {
+          "id": "https://openalex.org/C104779481",
+          "wikidata": "https://www.wikidata.org/wiki/Q50707",
+          "display_name": "Composite number",
+          "level": 2,
+          "score": 0.6379420757293701
+        },
+        {
+          "id": "https://openalex.org/C180016635",
+          "wikidata": "https://www.wikidata.org/wiki/Q2712821",
+          "display_name": "Compression (physics)",
+          "level": 2,
+          "score": 0.5289300084114075
+        },
+        {
+          "id": "https://openalex.org/C2778374714",
+          "wikidata": "https://www.wikidata.org/wiki/Q1135567",
+          "display_name": "Buckle",
+          "level": 2,
+          "score": 0.44198840856552124
+        },
+        {
+          "id": "https://openalex.org/C127413603",
+          "wikidata": "https://www.wikidata.org/wiki/Q11023",
+          "display_name": "Engineering",
+          "level": 0,
+          "score": 0.33958977460861206
+        },
+        {
+          "id": "https://openalex.org/C159985019",
+          "wikidata": "https://www.wikidata.org/wiki/Q181790",
+          "display_name": "Composite material",
+          "level": 1,
+          "score": 0.32359427213668823
+        },
+        {
+          "id": "https://openalex.org/C192562407",
+          "wikidata": "https://www.wikidata.org/wiki/Q228736",
+          "display_name": "Materials science",
+          "level": 0,
+          "score": 0.3146655857563019
+        }
+      ],
+      "mesh": [],
+      "locations_count": 1,
+      "locations": [
+        {
+          "id": "mag:3024829286",
+          "is_oa": false,
+          "landing_page_url": "https://ui.adsabs.harvard.edu/abs/1999PhDT.......203P/abstract",
+          "pdf_url": null,
+          "source": null,
+          "license": null,
+          "license_id": null,
+          "version": null,
+          "is_accepted": false,
+          "is_published": null,
+          "raw_source_name": null,
+          "raw_type": null
+        }
+      ],
+      "best_oa_location": null,
+      "sustainable_development_goals": [],
+      "awards": [],
+      "funders": [],
+      "has_content": {
+        "grobid_xml": false,
+        "pdf": false
+      },
+      "content_urls": null,
+      "referenced_works_count": 0,
+      "referenced_works": [],
+      "related_works": [
+        "https://openalex.org/W2327920399",
+        "https://openalex.org/W2483626915",
+        "https://openalex.org/W2485863238",
+        "https://openalex.org/W922052461",
+        "https://openalex.org/W2592137741",
+        "https://openalex.org/W869203039",
+        "https://openalex.org/W2591673715",
+        "https://openalex.org/W2326469648",
+        "https://openalex.org/W2587009481",
+        "https://openalex.org/W3210254276",
+        "https://openalex.org/W2889972201",
+        "https://openalex.org/W3095444771",
+        "https://openalex.org/W3176860956",
+        "https://openalex.org/W2021334470",
+        "https://openalex.org/W2638806286",
+        "https://openalex.org/W2894953273",
+        "https://openalex.org/W2328686652",
+        "https://openalex.org/W127453798",
+        "https://openalex.org/W3178125208",
+        "https://openalex.org/W2328212970"
+      ],
+      "abstract_inverted_index": null,
+      "counts_by_year": [
+        {
+          "year": 2024,
+          "cited_by_count": 1
+        }
+      ],
+      "updated_date": "2025-11-06T04:12:42.849631",
+      "created_date": "2025-10-10T00:00:00"
+    }
+  ],
+  "group_by": []
+}

@@ -136,6 +136,15 @@ CSDM/
   - `knowledge/literature/raw/`
   - `knowledge/literature/records/`
   - `knowledge/literature/pdfs/`
+  - `knowledge/literature/texts/`
+  - `knowledge/literature/markdown/`
+  - `knowledge/literature/json/`
+  - `knowledge/literature/images/`
+  - `knowledge/literature/imports/pdfs/`
+  - `knowledge/literature/imports/texts/`
+  - `knowledge/literature/imports/markdown/`
+  - `knowledge/literature/imports/json/`
+  - `knowledge/literature/imports/images/`
   - `knowledge/literature/manifests/`
 
 ## 5. 主流程如何运行
@@ -340,10 +349,17 @@ GUI 主控制器负责：
 - 拉取 works 搜索结果
 - 重建 abstract
 - 规范化记录字段
-- 切分 title + abstract 片段
+- 可选下载开放获取 PDF
+- 可导入已授权下载到本地的 PDF
+- 可选用 PyMuPDF 解析 PDF 文字层
+- 可选用 MinerU 解析 Markdown、JSON 和图片
+- 可选用 Nougat 解析公式密集型论文 Markdown
+- 切分 title + abstract 或全文片段
 - 写入 `knowledge/literature/records/`
 - 构建 `csdm_literature_corpus`
 - 写 `knowledge/literature/manifests/latest_ingest.json`
+
+学校账号和机构订阅不在代码中自动登录。推荐工作流是：先用学校权限在浏览器或图书馆工具中下载授权 PDF，再通过 `scripts/ingest_literature.py --import-pdf-dir ... --parse-pdfs --parse-backend mineru --ocr` 导入。导入结果写入 `knowledge/literature/imports/`，与自动开放获取下载目录分开。
 
 ### 8.4 `core/literature_corpus.py`
 
@@ -517,6 +533,30 @@ D:/anaconda3/envs/GPT/python.exe scripts/migrate_contracts.py --retrain-surrogat
 
 ```powershell
 D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --seed --query-group composite_basics --max-results 20
+```
+
+下载 OpenAlex 标注的开放获取 PDF 并解析：
+
+```powershell
+D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --seed --query-group buckling_and_panels --max-results 20 --download-oa-pdfs --parse-pdfs
+```
+
+使用 MinerU 重新解析已有 PDF，生成 Markdown / JSON / 图片：
+
+```powershell
+D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --parse-existing-pdfs --parse-backend mineru --ocr --force-pdfs
+```
+
+使用 Nougat 重新解析公式密集或扫描型论文：
+
+```powershell
+D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --parse-existing-pdfs --parse-backend nougat --force-pdfs
+```
+
+导入学校账号已授权下载到本地的 PDF：
+
+```powershell
+D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --import-pdf-dir D:/Project/VS_Code/CSDM/reference/authorized_pdfs --parse-pdfs --parse-backend mineru --ocr
 ```
 
 ### 12.8 文献索引重建

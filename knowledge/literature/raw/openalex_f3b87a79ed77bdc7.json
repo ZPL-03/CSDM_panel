@@ -1,0 +1,6034 @@
+{
+  "meta": {
+    "count": 2645,
+    "db_response_time_ms": 198,
+    "page": 1,
+    "per_page": 5,
+    "groups_count": null,
+    "cost_usd": 0.001
+  },
+  "results": [
+    {
+      "id": "https://openalex.org/W639581896",
+      "doi": null,
+      "title": "Mechanics of laminated composite plates and shells : theory and analysis",
+      "display_name": "Mechanics of laminated composite plates and shells : theory and analysis",
+      "publication_year": 2004,
+      "publication_date": "2004-01-01",
+      "ids": {
+        "openalex": "https://openalex.org/W639581896",
+        "mag": "639581896"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "pmh:oai:aleph.bib-bvb.de:BVB01-026825898",
+        "is_oa": false,
+        "landing_page_url": "https://ebookcentral.proquest.com/lib/munchentech/detail.action?docID=5268440",
+        "pdf_url": null,
+        "source": null,
+        "license": null,
+        "license_id": null,
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": "",
+        "raw_type": "software, multimedia"
+      },
+      "type": "book",
+      "indexed_in": [],
+      "open_access": {
+        "is_oa": false,
+        "oa_status": "closed",
+        "oa_url": null,
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5053596832",
+            "display_name": "J. N. Reddy",
+            "orcid": "https://orcid.org/0000-0002-9739-1639"
+          },
+          "institutions": [],
+          "countries": [],
+          "is_corresponding": true,
+          "raw_author_name": "J. N. Reddy",
+          "raw_affiliation_strings": [],
+          "raw_orcid": "https://orcid.org/0000-0002-9739-1639",
+          "affiliations": []
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 0,
+      "institutions_distinct_count": 1,
+      "corresponding_author_ids": [
+        "https://openalex.org/A5053596832"
+      ],
+      "corresponding_institution_ids": [],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": 22.4283,
+      "has_fulltext": false,
+      "cited_by_count": 4655,
+      "citation_normalized_percentile": {
+        "value": 0.99555556,
+        "is_in_top_1_percent": true,
+        "is_in_top_10_percent": true
+      },
+      "cited_by_percentile_year": {
+        "min": 99,
+        "max": 100
+      },
+      "biblio": {
+        "volume": null,
+        "issue": null,
+        "first_page": null,
+        "last_page": null
+      },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T10221",
+        "display_name": "Composite Structure Analysis and Optimization",
+        "score": 0.9943000078201294,
+        "subfield": {
+          "id": "https://openalex.org/subfields/2211",
+          "display_name": "Mechanics of Materials"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/22",
+          "display_name": "Engineering"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T10221",
+          "display_name": "Composite Structure Analysis and Optimization",
+          "score": 0.9943000078201294,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T11870",
+          "display_name": "Structural Analysis and Optimization",
+          "score": 0.9843999743461609,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T11115",
+          "display_name": "Topology Optimization in Engineering",
+          "score": 0.9610000252723694,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/antisymmetric-relation",
+          "display_name": "Antisymmetric relation",
+          "score": 0.8205517530441284
+        },
+        {
+          "id": "https://openalex.org/keywords/orthotropic-material",
+          "display_name": "Orthotropic material",
+          "score": 0.6784932017326355
+        },
+        {
+          "id": "https://openalex.org/keywords/plate-theory",
+          "display_name": "Plate theory",
+          "score": 0.6704517006874084
+        },
+        {
+          "id": "https://openalex.org/keywords/bending-of-plates",
+          "display_name": "Bending of plates",
+          "score": 0.5404378771781921
+        },
+        {
+          "id": "https://openalex.org/keywords/boundary-value-problem",
+          "display_name": "Boundary value problem",
+          "score": 0.524594247341156
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-laminates",
+          "display_name": "Composite laminates",
+          "score": 0.5228878855705261
+        },
+        {
+          "id": "https://openalex.org/keywords/virtual-work",
+          "display_name": "Virtual work",
+          "score": 0.5137184858322144
+        },
+        {
+          "id": "https://openalex.org/keywords/structural-engineering",
+          "display_name": "Structural engineering",
+          "score": 0.47728148102760315
+        },
+        {
+          "id": "https://openalex.org/keywords/buckling",
+          "display_name": "Buckling",
+          "score": 0.458365261554718
+        },
+        {
+          "id": "https://openalex.org/keywords/materials-science",
+          "display_name": "Materials science",
+          "score": 0.4354103207588196
+        },
+        {
+          "id": "https://openalex.org/keywords/constitutive-equation",
+          "display_name": "Constitutive equation",
+          "score": 0.42628616094589233
+        },
+        {
+          "id": "https://openalex.org/keywords/bending",
+          "display_name": "Bending",
+          "score": 0.42617303133010864
+        },
+        {
+          "id": "https://openalex.org/keywords/vibration",
+          "display_name": "Vibration",
+          "score": 0.4220956265926361
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-material",
+          "display_name": "Composite material",
+          "score": 0.33848893642425537
+        },
+        {
+          "id": "https://openalex.org/keywords/mathematics",
+          "display_name": "Mathematics",
+          "score": 0.3283155560493469
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-number",
+          "display_name": "Composite number",
+          "score": 0.30258065462112427
+        },
+        {
+          "id": "https://openalex.org/keywords/finite-element-method",
+          "display_name": "Finite element method",
+          "score": 0.2898416221141815
+        },
+        {
+          "id": "https://openalex.org/keywords/mathematical-analysis",
+          "display_name": "Mathematical analysis",
+          "score": 0.26131364703178406
+        },
+        {
+          "id": "https://openalex.org/keywords/physics",
+          "display_name": "Physics",
+          "score": 0.2483178675174713
+        },
+        {
+          "id": "https://openalex.org/keywords/engineering",
+          "display_name": "Engineering",
+          "score": 0.2386014759540558
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C152401794",
+          "wikidata": "https://www.wikidata.org/wiki/Q583760",
+          "display_name": "Antisymmetric relation",
+          "level": 2,
+          "score": 0.8205517530441284
+        },
+        {
+          "id": "https://openalex.org/C131336679",
+          "wikidata": "https://www.wikidata.org/wiki/Q901006",
+          "display_name": "Orthotropic material",
+          "level": 3,
+          "score": 0.6784932017326355
+        },
+        {
+          "id": "https://openalex.org/C16826683",
+          "wikidata": "https://www.wikidata.org/wiki/Q2098720",
+          "display_name": "Plate theory",
+          "level": 3,
+          "score": 0.6704517006874084
+        },
+        {
+          "id": "https://openalex.org/C108489624",
+          "wikidata": "https://www.wikidata.org/wiki/Q17004830",
+          "display_name": "Bending of plates",
+          "level": 3,
+          "score": 0.5404378771781921
+        },
+        {
+          "id": "https://openalex.org/C182310444",
+          "wikidata": "https://www.wikidata.org/wiki/Q1332643",
+          "display_name": "Boundary value problem",
+          "level": 2,
+          "score": 0.524594247341156
+        },
+        {
+          "id": "https://openalex.org/C145922259",
+          "wikidata": "https://www.wikidata.org/wiki/Q5156763",
+          "display_name": "Composite laminates",
+          "level": 3,
+          "score": 0.5228878855705261
+        },
+        {
+          "id": "https://openalex.org/C136560751",
+          "wikidata": "https://www.wikidata.org/wiki/Q1144923",
+          "display_name": "Virtual work",
+          "level": 3,
+          "score": 0.5137184858322144
+        },
+        {
+          "id": "https://openalex.org/C66938386",
+          "wikidata": "https://www.wikidata.org/wiki/Q633538",
+          "display_name": "Structural engineering",
+          "level": 1,
+          "score": 0.47728148102760315
+        },
+        {
+          "id": "https://openalex.org/C85476182",
+          "wikidata": "https://www.wikidata.org/wiki/Q693104",
+          "display_name": "Buckling",
+          "level": 2,
+          "score": 0.458365261554718
+        },
+        {
+          "id": "https://openalex.org/C192562407",
+          "wikidata": "https://www.wikidata.org/wiki/Q228736",
+          "display_name": "Materials science",
+          "level": 0,
+          "score": 0.4354103207588196
+        },
+        {
+          "id": "https://openalex.org/C202973686",
+          "wikidata": "https://www.wikidata.org/wiki/Q1937401",
+          "display_name": "Constitutive equation",
+          "level": 3,
+          "score": 0.42628616094589233
+        },
+        {
+          "id": "https://openalex.org/C87210426",
+          "wikidata": "https://www.wikidata.org/wiki/Q1072476",
+          "display_name": "Bending",
+          "level": 2,
+          "score": 0.42617303133010864
+        },
+        {
+          "id": "https://openalex.org/C198394728",
+          "wikidata": "https://www.wikidata.org/wiki/Q3695508",
+          "display_name": "Vibration",
+          "level": 2,
+          "score": 0.4220956265926361
+        },
+        {
+          "id": "https://openalex.org/C159985019",
+          "wikidata": "https://www.wikidata.org/wiki/Q181790",
+          "display_name": "Composite material",
+          "level": 1,
+          "score": 0.33848893642425537
+        },
+        {
+          "id": "https://openalex.org/C33923547",
+          "wikidata": "https://www.wikidata.org/wiki/Q395",
+          "display_name": "Mathematics",
+          "level": 0,
+          "score": 0.3283155560493469
+        },
+        {
+          "id": "https://openalex.org/C104779481",
+          "wikidata": "https://www.wikidata.org/wiki/Q50707",
+          "display_name": "Composite number",
+          "level": 2,
+          "score": 0.30258065462112427
+        },
+        {
+          "id": "https://openalex.org/C135628077",
+          "wikidata": "https://www.wikidata.org/wiki/Q220184",
+          "display_name": "Finite element method",
+          "level": 2,
+          "score": 0.2898416221141815
+        },
+        {
+          "id": "https://openalex.org/C134306372",
+          "wikidata": "https://www.wikidata.org/wiki/Q7754",
+          "display_name": "Mathematical analysis",
+          "level": 1,
+          "score": 0.26131364703178406
+        },
+        {
+          "id": "https://openalex.org/C121332964",
+          "wikidata": "https://www.wikidata.org/wiki/Q413",
+          "display_name": "Physics",
+          "level": 0,
+          "score": 0.2483178675174713
+        },
+        {
+          "id": "https://openalex.org/C127413603",
+          "wikidata": "https://www.wikidata.org/wiki/Q11023",
+          "display_name": "Engineering",
+          "level": 0,
+          "score": 0.2386014759540558
+        },
+        {
+          "id": "https://openalex.org/C37914503",
+          "wikidata": "https://www.wikidata.org/wiki/Q156495",
+          "display_name": "Mathematical physics",
+          "level": 1,
+          "score": 0.0
+        },
+        {
+          "id": "https://openalex.org/C62520636",
+          "wikidata": "https://www.wikidata.org/wiki/Q944",
+          "display_name": "Quantum mechanics",
+          "level": 1,
+          "score": 0.0
+        }
+      ],
+      "mesh": [],
+      "locations_count": 2,
+      "locations": [
+        {
+          "id": "pmh:oai:aleph.bib-bvb.de:BVB01-026825898",
+          "is_oa": false,
+          "landing_page_url": "https://ebookcentral.proquest.com/lib/munchentech/detail.action?docID=5268440",
+          "pdf_url": null,
+          "source": null,
+          "license": null,
+          "license_id": null,
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": "",
+          "raw_type": "software, multimedia"
+        },
+        {
+          "id": "mag:639581896",
+          "is_oa": false,
+          "landing_page_url": "http://ci.nii.ac.jp/ncid/BA65749394",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S4306463075",
+            "display_name": "CRC Press eBooks",
+            "issn_l": null,
+            "issn": null,
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": "https://openalex.org/P4310320449",
+            "host_organization_name": "Informa",
+            "host_organization_lineage": [
+              "https://openalex.org/P4310320449"
+            ],
+            "host_organization_lineage_names": [
+              "Informa"
+            ],
+            "type": "ebook platform"
+          },
+          "license": null,
+          "license_id": null,
+          "version": null,
+          "is_accepted": false,
+          "is_published": null,
+          "raw_source_name": "CRC Press eBooks",
+          "raw_type": null
+        }
+      ],
+      "best_oa_location": null,
+      "sustainable_development_goals": [],
+      "awards": [],
+      "funders": [],
+      "has_content": {
+        "grobid_xml": false,
+        "pdf": false
+      },
+      "content_urls": null,
+      "referenced_works_count": 0,
+      "referenced_works": [],
+      "related_works": [
+        "https://openalex.org/W599916913",
+        "https://openalex.org/W2889004626",
+        "https://openalex.org/W250797561",
+        "https://openalex.org/W2266285536",
+        "https://openalex.org/W2261621682",
+        "https://openalex.org/W2076220025",
+        "https://openalex.org/W2064267196",
+        "https://openalex.org/W2058820159",
+        "https://openalex.org/W2057604217",
+        "https://openalex.org/W2055436628",
+        "https://openalex.org/W2032779577",
+        "https://openalex.org/W2016667548",
+        "https://openalex.org/W2007622730",
+        "https://openalex.org/W2000425991",
+        "https://openalex.org/W1992366723",
+        "https://openalex.org/W1968399029",
+        "https://openalex.org/W1794873020",
+        "https://openalex.org/W1581091516",
+        "https://openalex.org/W1573186872",
+        "https://openalex.org/W1533058090"
+      ],
+      "abstract_inverted_index": {
+        "Equations": [
+          0,
+          15,
+          34,
+          185,
+          275,
+          404
+        ],
+        "of": [
+          1,
+          16,
+          35,
+          39,
+          51,
+          58,
+          79,
+          85,
+          91,
+          111,
+          119,
+          125,
+          134,
+          142,
+          150,
+          158,
+          165,
+          178,
+          188,
+          199,
+          205,
+          213,
+          222,
+          263,
+          270,
+          277,
+          283,
+          293,
+          302,
+          311,
+          320,
+          325,
+          347,
+          355,
+          368,
+          376,
+          396,
+          402,
+          405,
+          407,
+          411,
+          422,
+          437
+        ],
+        "Anisotropic": [
+          2,
+          17
+        ],
+        "Elasticity,": [
+          3
+        ],
+        "Virtual": [
+          4,
+          19
+        ],
+        "Work": [
+          5,
+          20
+        ],
+        "Principles,": [
+          6
+        ],
+        "and": [
+          7,
+          31,
+          41,
+          48,
+          163,
+          268,
+          281,
+          296,
+          328,
+          341,
+          365,
+          380,
+          416
+        ],
+        "Variational": [
+          8,
+          22
+        ],
+        "Methods": [
+          9,
+          23
+        ],
+        "Fiber-Reinforced": [
+          10
+        ],
+        "Composite": [
+          11,
+          27,
+          53,
+          81,
+          294,
+          326,
+          369,
+          378
+        ],
+        "Materials": [
+          12,
+          28
+        ],
+        "Mathematical": [
+          13
+        ],
+        "Preliminaries": [
+          14
+        ],
+        "Entropy": [
+          18
+        ],
+        "Principles": [
+          21
+        ],
+        "Summary": [
+          24,
+          219,
+          266,
+          322
+        ],
+        "Introduction": [
+          25,
+          55,
+          83,
+          117,
+          228,
+          273,
+          298,
+          330,
+          382,
+          420
+        ],
+        "to": [
+          26,
+          432
+        ],
+        "Basic": [
+          29
+        ],
+        "Concepts": [
+          30
+        ],
+        "Terminology": [
+          32
+        ],
+        "Constitutive": [
+          33,
+          45
+        ],
+        "a": [
+          36
+        ],
+        "Lamina": [
+          37
+        ],
+        "Transformation": [
+          38
+        ],
+        "Stresses": [
+          40
+        ],
+        "Strains": [
+          42
+        ],
+        "Plan": [
+          43
+        ],
+        "Stress": [
+          44
+        ],
+        "Relations": [
+          46
+        ],
+        "Classical": [
+          47,
+          63,
+          304,
+          331
+        ],
+        "First-Order": [
+          49,
+          68,
+          334
+        ],
+        "Theories": [
+          50,
+          61
+        ],
+        "Laminated": [
+          52,
+          59,
+          64,
+          69,
+          80,
+          86,
+          92,
+          180,
+          224,
+          233,
+          239,
+          264,
+          271,
+          285,
+          356,
+          377
+        ],
+        "Plates": [
+          54,
+          82,
+          123,
+          126,
+          136,
+          145,
+          152,
+          161,
+          166,
+          181,
+          225,
+          234,
+          240,
+          265,
+          295,
+          327,
+          348,
+          351,
+          379,
+          403
+        ],
+        "An": [
+          56
+        ],
+        "Overview": [
+          57
+        ],
+        "Plate": [
+          60,
+          65,
+          70,
+          305,
+          314,
+          332,
+          337,
+          385
+        ],
+        "The": [
+          62,
+          67,
+          209,
+          391
+        ],
+        "Theory": [
+          66,
+          71,
+          267,
+          276,
+          306,
+          315,
+          333,
+          338,
+          358,
+          375,
+          386,
+          410,
+          415,
+          424,
+          436
+        ],
+        "Laminate": [
+          72,
+          388
+        ],
+        "Stiffnesses": [
+          73
+        ],
+        "for": [
+          74,
+          193
+        ],
+        "Selected": [
+          75
+        ],
+        "Laminates": [
+          76,
+          114,
+          202,
+          208,
+          216,
+          243,
+          252,
+          398
+        ],
+        "One-Dimensional": [
+          77
+        ],
+        "Analysis": [
+          78,
+          84,
+          90,
+          110,
+          174,
+          212,
+          218,
+          269,
+          292,
+          319,
+          324
+        ],
+        "Beams": [
+          87,
+          93,
+          107
+        ],
+        "Using": [
+          88,
+          94,
+          98,
+          102,
+          115,
+          182,
+          226
+        ],
+        "CLPT": [
+          89,
+          99,
+          116,
+          183
+        ],
+        "FSDT": [
+          95,
+          103,
+          227
+        ],
+        "Cylindrical": [
+          96,
+          100,
+          287,
+          438
+        ],
+        "Bending": [
+          97,
+          101,
+          118,
+          124,
+          133
+        ],
+        "Vibration": [
+          104,
+          157,
+          164,
+          261,
+          280
+        ],
+        "Suppression": [
+          105
+        ],
+        "in": [
+          106,
+          186,
+          371
+        ],
+        "Closing": [
+          108
+        ],
+        "Remarks": [
+          109
+        ],
+        "Specially": [
+          112
+        ],
+        "Orthotropic": [
+          113
+        ],
+        "Simply": [
+          120,
+          131,
+          143,
+          159,
+          171,
+          229,
+          235,
+          248,
+          257
+        ],
+        "Supported": [
+          121,
+          132,
+          144,
+          160,
+          172,
+          230,
+          236,
+          249,
+          258
+        ],
+        "Rectangular": [
+          122,
+          135,
+          151,
+          179,
+          223
+        ],
+        "with": [
+          127,
+          137,
+          167,
+          244,
+          253
+        ],
+        "Two": [
+          128,
+          168,
+          245,
+          254
+        ],
+        "Opposite": [
+          129,
+          246,
+          255
+        ],
+        "Edges": [
+          130,
+          170,
+          247,
+          256
+        ],
+        "Various": [
+          138
+        ],
+        "Boundary": [
+          139,
+          191
+        ],
+        "Conditions": [
+          140,
+          192
+        ],
+        "Buckling": [
+          141,
+          149,
+          162,
+          282
+        ],
+        "Under": [
+          146,
+          153
+        ],
+        "Compressive": [
+          147
+        ],
+        "Loads": [
+          148
+        ],
+        "In-Plane": [
+          154
+        ],
+        "Shear": [
+          155,
+          312,
+          335
+        ],
+        "Load": [
+          156
+        ],
+        "Parallel": [
+          169
+        ],
+        "Transient": [
+          173,
+          217,
+          259
+        ],
+        "Closure": [
+          175,
+          373,
+          440
+        ],
+        "Analytical": [
+          176,
+          220
+        ],
+        "Solutions": [
+          177,
+          196,
+          198,
+          204,
+          211,
+          221,
+          260,
+          393,
+          395
+        ],
+        "Governing": [
+          184,
+          274
+        ],
+        "Terms": [
+          187
+        ],
+        "Displacements": [
+          189
+        ],
+        "Admissible": [
+          190
+        ],
+        "the": [
+          194,
+          303,
+          342,
+          408,
+          423
+        ],
+        "Navier": [
+          195,
+          197,
+          203,
+          392
+        ],
+        "Antisymmetric": [
+          200,
+          206,
+          231,
+          237,
+          241,
+          250
+        ],
+        "Cross-Ply": [
+          201,
+          232,
+          242,
+          284,
+          397
+        ],
+        "Angle-Ply": [
+          207,
+          238,
+          251
+        ],
+        "Levy": [
+          210,
+          394
+        ],
+        "Midplane": [
+          214
+        ],
+        "Symmetric": [
+          215
+        ],
+        "Control": [
+          262
+        ],
+        "Shells": [
+          272,
+          288,
+          297,
+          321,
+          329,
+          381,
+          413
+        ],
+        "Doubly-Curved": [
+          278,
+          412
+        ],
+        "Shell": [
+          279,
+          357,
+          360,
+          439
+        ],
+        "Circular": [
+          286
+        ],
+        "Linear": [
+          289
+        ],
+        "Finite": [
+          290,
+          299,
+          308,
+          317,
+          352,
+          361,
+          399,
+          425
+        ],
+        "Element": [
+          291,
+          300,
+          309,
+          318,
+          353,
+          362,
+          400,
+          426
+        ],
+        "Models": [
+          301,
+          310,
+          354
+        ],
+        "(CLPT)": [
+          307
+        ],
+        "Deformation": [
+          313,
+          336
+        ],
+        "(FSDT)": [
+          316
+        ],
+        "Nonlinear": [
+          323
+        ],
+        "Time": [
+          339
+        ],
+        "Approximation": [
+          340
+        ],
+        "Newton-Raphson": [
+          343
+        ],
+        "Method": [
+          344
+        ],
+        "Numerical": [
+          345
+        ],
+        "Examples": [
+          346
+        ],
+        "Functionally": [
+          349
+        ],
+        "Graded": [
+          350
+        ],
+        "Continuum": [
+          359
+        ],
+        "Postbuckling": [
+          363
+        ],
+        "Response": [
+          364
+        ],
+        "Progressive": [
+          366
+        ],
+        "Failure": [
+          367
+        ],
+        "Panels": [
+          370
+        ],
+        "Compression": [
+          372
+        ],
+        "Third-Order": [
+          374,
+          384,
+          409
+        ],
+        "A": [
+          383
+        ],
+        "Higher-Order": [
+          387
+        ],
+        "Stiffness": [
+          389
+        ],
+        "Characteristics": [
+          390
+        ],
+        "Model": [
+          401,
+          419,
+          427
+        ],
+        "Motion": [
+          406
+        ],
+        "Layerwise": [
+          414,
+          435
+        ],
+        "Variable": [
+          417,
+          428
+        ],
+        "Kinematic": [
+          418,
+          429
+        ],
+        "Development": [
+          421
+        ],
+        "Formulations": [
+          430
+        ],
+        "Application": [
+          431
+        ],
+        "Adaptive": [
+          433
+        ],
+        "Structures": [
+          434
+        ],
+        "Subject": [
+          441
+        ],
+        "Index": [
+          442
+        ]
+      },
+      "counts_by_year": [
+        {
+          "year": 2025,
+          "cited_by_count": 165
+        },
+        {
+          "year": 2024,
+          "cited_by_count": 221
+        },
+        {
+          "year": 2023,
+          "cited_by_count": 222
+        },
+        {
+          "year": 2022,
+          "cited_by_count": 263
+        },
+        {
+          "year": 2021,
+          "cited_by_count": 329
+        },
+        {
+          "year": 2020,
+          "cited_by_count": 400
+        },
+        {
+          "year": 2019,
+          "cited_by_count": 280
+        },
+        {
+          "year": 2018,
+          "cited_by_count": 313
+        },
+        {
+          "year": 2017,
+          "cited_by_count": 319
+        },
+        {
+          "year": 2016,
+          "cited_by_count": 325
+        },
+        {
+          "year": 2015,
+          "cited_by_count": 297
+        },
+        {
+          "year": 2014,
+          "cited_by_count": 281
+        },
+        {
+          "year": 2013,
+          "cited_by_count": 275
+        },
+        {
+          "year": 2012,
+          "cited_by_count": 212
+        }
+      ],
+      "updated_date": "2025-10-10T17:16:08.811792",
+      "created_date": "2025-10-10T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W2103979104",
+      "doi": "https://doi.org/10.1073/pnas.1515602112",
+      "title": "A mechanically driven form of Kirigami as a route to 3D mesostructures in micro/nanomembranes",
+      "display_name": "A mechanically driven form of Kirigami as a route to 3D mesostructures in micro/nanomembranes",
+      "publication_year": 2015,
+      "publication_date": "2015-09-08",
+      "ids": {
+        "openalex": "https://openalex.org/W2103979104",
+        "doi": "https://doi.org/10.1073/pnas.1515602112",
+        "mag": "2103979104",
+        "pmid": "https://pubmed.ncbi.nlm.nih.gov/26372959"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "doi:10.1073/pnas.1515602112",
+        "is_oa": false,
+        "landing_page_url": "https://doi.org/10.1073/pnas.1515602112",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S125754415",
+          "display_name": "Proceedings of the National Academy of Sciences",
+          "issn_l": "0027-8424",
+          "issn": [
+            "0027-8424",
+            "1091-6490"
+          ],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": true,
+          "host_organization": "https://openalex.org/P4310320052",
+          "host_organization_name": "National Academy of Sciences",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310320052"
+          ],
+          "host_organization_lineage_names": [
+            "National Academy of Sciences"
+          ],
+          "type": "journal"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Proceedings of the National Academy of Sciences",
+        "raw_type": "journal-article"
+      },
+      "type": "article",
+      "indexed_in": [
+        "crossref",
+        "pubmed"
+      ],
+      "open_access": {
+        "is_oa": true,
+        "oa_status": "green",
+        "oa_url": "https://www.osti.gov/servlets/purl/1348412",
+        "any_repository_has_fulltext": true
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5100683233",
+            "display_name": "Yihui Zhang",
+            "orcid": "https://orcid.org/0000-0003-0885-2067"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I99065089",
+              "display_name": "Tsinghua University",
+              "ror": "https://ror.org/03cve4549",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I99065089"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "Yihui Zhang",
+          "raw_affiliation_strings": [
+            "Center for Mechanics and Materials, Applied Mechanics Laboratory (AML), Department of Engineering Mechanics, Tsinghua University, Beijing 100084, People’s Republic of China;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Center for Mechanics and Materials, Applied Mechanics Laboratory (AML), Department of Engineering Mechanics, Tsinghua University, Beijing 100084, People’s Republic of China;",
+              "institution_ids": [
+                "https://openalex.org/I99065089"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5036017595",
+            "display_name": "Zheng Yan",
+            "orcid": "https://orcid.org/0000-0001-5968-0934"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Zheng Yan",
+          "raw_affiliation_strings": [
+            "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5054799101",
+            "display_name": "Kewang Nan",
+            "orcid": "https://orcid.org/0000-0002-2745-0656"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Kewang Nan",
+          "raw_affiliation_strings": [
+            "Department of Mechanical Science and Engineering, University of Illinois at Urbana–Champaign, Urbana, IL 61801;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Mechanical Science and Engineering, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5045883416",
+            "display_name": "Dongqing Xiao",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Dongqing Xiao",
+          "raw_affiliation_strings": [
+            "Department of Chemistry, University of Illinois at Urbana–Champaign, Urbana, IL 61801;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Chemistry, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5100366648",
+            "display_name": "Yuhao Liu",
+            "orcid": "https://orcid.org/0000-0002-2442-5690"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Yuhao Liu",
+          "raw_affiliation_strings": [
+            "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5016446650",
+            "display_name": "Haiwen Luan",
+            "orcid": "https://orcid.org/0000-0003-0722-1108"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I111979921",
+              "display_name": "Northwestern University",
+              "ror": "https://ror.org/000e0be47",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I111979921"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Haiwen Luan",
+          "raw_affiliation_strings": [
+            "Departments of Civil and Environmental Engineering and Mechanical Engineering, Center for Engineering and Health, and Skin Disease Research Center, Northwestern University, Evanston, IL 60208;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Departments of Civil and Environmental Engineering and Mechanical Engineering, Center for Engineering and Health, and Skin Disease Research Center, Northwestern University, Evanston, IL 60208;",
+              "institution_ids": [
+                "https://openalex.org/I111979921"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5048813984",
+            "display_name": "Haoran Fu",
+            "orcid": "https://orcid.org/0000-0002-5400-3042"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I111979921",
+              "display_name": "Northwestern University",
+              "ror": "https://ror.org/000e0be47",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I111979921"
+              ]
+            },
+            {
+              "id": "https://openalex.org/I76130692",
+              "display_name": "Zhejiang University",
+              "ror": "https://ror.org/00a2xv884",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I76130692"
+              ]
+            }
+          ],
+          "countries": [
+            "CN",
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Haoran Fu",
+          "raw_affiliation_strings": [
+            "Department of Civil Engineering and Architecture, Zhejiang University, Hangzhou 310058, People’s Republic of China;",
+            "Departments of Civil and Environmental Engineering and Mechanical Engineering, Center for Engineering and Health, and Skin Disease Research Center, Northwestern University, Evanston, IL 60208;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Civil Engineering and Architecture, Zhejiang University, Hangzhou 310058, People’s Republic of China;",
+              "institution_ids": [
+                "https://openalex.org/I76130692"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Departments of Civil and Environmental Engineering and Mechanical Engineering, Center for Engineering and Health, and Skin Disease Research Center, Northwestern University, Evanston, IL 60208;",
+              "institution_ids": [
+                "https://openalex.org/I111979921"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5073801838",
+            "display_name": "Xizhu Wang",
+            "orcid": "https://orcid.org/0000-0001-8857-7717"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Xizhu Wang",
+          "raw_affiliation_strings": [
+            "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5101498839",
+            "display_name": "Qinglin Yang",
+            "orcid": "https://orcid.org/0000-0002-0244-9376"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Qinglin Yang",
+          "raw_affiliation_strings": [
+            "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5101409916",
+            "display_name": "Jiechen Wang",
+            "orcid": "https://orcid.org/0000-0003-2234-8297"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Jiechen Wang",
+          "raw_affiliation_strings": [
+            "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+            "Department of Mechanical Science and Engineering, University of Illinois at Urbana–Champaign, Urbana, IL 61801;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Department of Mechanical Science and Engineering, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5008569682",
+            "display_name": "Wen Ren",
+            "orcid": "https://orcid.org/0000-0002-8712-190X"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Wen Ren",
+          "raw_affiliation_strings": [
+            "Department of Chemical and Biomolecular Engineering, University of Illinois at Urbana–Champaign, Urbana, IL 61801;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Chemical and Biomolecular Engineering, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5058178161",
+            "display_name": "Hongzhi Si",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Hongzhi Si",
+          "raw_affiliation_strings": [
+            "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5115602473",
+            "display_name": "Fei Liu",
+            "orcid": "https://orcid.org/0000-0001-8181-7730"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I99065089",
+              "display_name": "Tsinghua University",
+              "ror": "https://ror.org/03cve4549",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I99065089"
+              ]
+            }
+          ],
+          "countries": [
+            "CN"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Fei Liu",
+          "raw_affiliation_strings": [
+            "Center for Mechanics and Materials, Applied Mechanics Laboratory (AML), Department of Engineering Mechanics, Tsinghua University, Beijing 100084, People’s Republic of China;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Center for Mechanics and Materials, Applied Mechanics Laboratory (AML), Department of Engineering Mechanics, Tsinghua University, Beijing 100084, People’s Republic of China;",
+              "institution_ids": [
+                "https://openalex.org/I99065089"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5084698422",
+            "display_name": "Lihen Yang",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Lihen Yang",
+          "raw_affiliation_strings": [
+            "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5100725628",
+            "display_name": "Hejun Li",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Hejun Li",
+          "raw_affiliation_strings": [
+            "Department of Chemical and Biomolecular Engineering, University of Illinois at Urbana–Champaign, Urbana, IL 61801;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Chemical and Biomolecular Engineering, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5118983671",
+            "display_name": "Juntong Wang",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Juntong Wang",
+          "raw_affiliation_strings": [
+            "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+            "Department of Mechanical Science and Engineering, University of Illinois at Urbana–Champaign, Urbana, IL 61801;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Department of Mechanical Science and Engineering, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5063433229",
+            "display_name": "Xuelin Guo",
+            "orcid": "https://orcid.org/0000-0002-2334-5015"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Xuelin Guo",
+          "raw_affiliation_strings": [
+            "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5107312537",
+            "display_name": "Hongying Luo",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I111979921",
+              "display_name": "Northwestern University",
+              "ror": "https://ror.org/000e0be47",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I111979921"
+              ]
+            },
+            {
+              "id": "https://openalex.org/I116953780",
+              "display_name": "Tongji University",
+              "ror": "https://ror.org/03rc6as71",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I116953780"
+              ]
+            }
+          ],
+          "countries": [
+            "CN",
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Hongying Luo",
+          "raw_affiliation_strings": [
+            "Departments of Civil and Environmental Engineering and Mechanical Engineering, Center for Engineering and Health, and Skin Disease Research Center, Northwestern University, Evanston, IL 60208;",
+            "Institute of Applied Mechanics, School of Aerospace Engineering and Applied Mechanics, Tongji University, Shanghai 200092, People’s Republic of China;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Departments of Civil and Environmental Engineering and Mechanical Engineering, Center for Engineering and Health, and Skin Disease Research Center, Northwestern University, Evanston, IL 60208;",
+              "institution_ids": [
+                "https://openalex.org/I111979921"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Institute of Applied Mechanics, School of Aerospace Engineering and Applied Mechanics, Tongji University, Shanghai 200092, People’s Republic of China;",
+              "institution_ids": [
+                "https://openalex.org/I116953780"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5060822951",
+            "display_name": "Liang Wang",
+            "orcid": "https://orcid.org/0000-0002-2408-788X"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I76130692",
+              "display_name": "Zhejiang University",
+              "ror": "https://ror.org/00a2xv884",
+              "country_code": "CN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I76130692"
+              ]
+            },
+            {
+              "id": "https://openalex.org/I111979921",
+              "display_name": "Northwestern University",
+              "ror": "https://ror.org/000e0be47",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I111979921"
+              ]
+            }
+          ],
+          "countries": [
+            "CN",
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Liang Wang",
+          "raw_affiliation_strings": [
+            "Departments of Civil and Environmental Engineering and Mechanical Engineering, Center for Engineering and Health, and Skin Disease Research Center, Northwestern University, Evanston, IL 60208;",
+            "Institute of Chemical Machinery and Process Equipment, Department of Chemical and Biological Engineering, Zhejiang University, Hangzhou 310027, People’s Republic of China;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Departments of Civil and Environmental Engineering and Mechanical Engineering, Center for Engineering and Health, and Skin Disease Research Center, Northwestern University, Evanston, IL 60208;",
+              "institution_ids": [
+                "https://openalex.org/I111979921"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Institute of Chemical Machinery and Process Equipment, Department of Chemical and Biological Engineering, Zhejiang University, Hangzhou 310027, People’s Republic of China;",
+              "institution_ids": [
+                "https://openalex.org/I76130692"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5011255000",
+            "display_name": "Yonggang Huang",
+            "orcid": "https://orcid.org/0000-0002-0483-8359"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I111979921",
+              "display_name": "Northwestern University",
+              "ror": "https://ror.org/000e0be47",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I111979921"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Yonggang Huang",
+          "raw_affiliation_strings": [
+            "Departments of Civil and Environmental Engineering and Mechanical Engineering, Center for Engineering and Health, and Skin Disease Research Center, Northwestern University, Evanston, IL 60208;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Departments of Civil and Environmental Engineering and Mechanical Engineering, Center for Engineering and Health, and Skin Disease Research Center, Northwestern University, Evanston, IL 60208;",
+              "institution_ids": [
+                "https://openalex.org/I111979921"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "last",
+          "author": {
+            "id": "https://openalex.org/A5045551635",
+            "display_name": "John A. Rogers",
+            "orcid": "https://orcid.org/0000-0002-2980-3961"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I157725225",
+              "display_name": "University of Illinois Urbana-Champaign",
+              "ror": "https://ror.org/047426m28",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "John A. Rogers",
+          "raw_affiliation_strings": [
+            "Department of Chemistry, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+            "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+            "Department of Materials Science and Engineering, Beckman Institute for Advanced Science and Technology, University of Illinois at Urbana–Champaign, Urbana, IL 61801"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Chemistry, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Department of Materials Science and Engineering and Frederick Seitz Materials Research Laboratory, University of Illinois at Urbana–Champaign, Urbana, IL 61801;",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Department of Materials Science and Engineering, Beckman Institute for Advanced Science and Technology, University of Illinois at Urbana–Champaign, Urbana, IL 61801",
+              "institution_ids": [
+                "https://openalex.org/I157725225"
+              ]
+            }
+          ]
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 2,
+      "institutions_distinct_count": 21,
+      "corresponding_author_ids": [
+        "https://openalex.org/A5100683233"
+      ],
+      "corresponding_institution_ids": [
+        "https://openalex.org/I99065089"
+      ],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": 44.0605,
+      "has_fulltext": true,
+      "cited_by_count": 530,
+      "citation_normalized_percentile": {
+        "value": 0.99941234,
+        "is_in_top_1_percent": true,
+        "is_in_top_10_percent": true
+      },
+      "cited_by_percentile_year": {
+        "min": 96,
+        "max": 100
+      },
+      "biblio": {
+        "volume": "112",
+        "issue": "38",
+        "first_page": "11757",
+        "last_page": "11764"
+      },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T11737",
+        "display_name": "Advanced Materials and Mechanics",
+        "score": 1.0,
+        "subfield": {
+          "id": "https://openalex.org/subfields/2210",
+          "display_name": "Mechanical Engineering"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/22",
+          "display_name": "Engineering"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T11737",
+          "display_name": "Advanced Materials and Mechanics",
+          "score": 1.0,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2210",
+            "display_name": "Mechanical Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T10338",
+          "display_name": "Advanced Sensor and Energy Harvesting Materials",
+          "score": 0.9994999766349792,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2204",
+            "display_name": "Biomedical Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T12784",
+          "display_name": "Modular Robots and Swarm Intelligence",
+          "score": 0.9986000061035156,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2210",
+            "display_name": "Mechanical Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/materials-science",
+          "display_name": "Materials science",
+          "score": 0.726103663444519
+        },
+        {
+          "id": "https://openalex.org/keywords/nanotechnology",
+          "display_name": "Nanotechnology",
+          "score": 0.677503764629364
+        },
+        {
+          "id": "https://openalex.org/keywords/silicon",
+          "display_name": "Silicon",
+          "score": 0.5139512419700623
+        },
+        {
+          "id": "https://openalex.org/keywords/nanostructure",
+          "display_name": "Nanostructure",
+          "score": 0.49661165475845337
+        },
+        {
+          "id": "https://openalex.org/keywords/optoelectronics",
+          "display_name": "Optoelectronics",
+          "score": 0.12658196687698364
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C192562407",
+          "wikidata": "https://www.wikidata.org/wiki/Q228736",
+          "display_name": "Materials science",
+          "level": 0,
+          "score": 0.726103663444519
+        },
+        {
+          "id": "https://openalex.org/C171250308",
+          "wikidata": "https://www.wikidata.org/wiki/Q11468",
+          "display_name": "Nanotechnology",
+          "level": 1,
+          "score": 0.677503764629364
+        },
+        {
+          "id": "https://openalex.org/C544956773",
+          "wikidata": "https://www.wikidata.org/wiki/Q670",
+          "display_name": "Silicon",
+          "level": 2,
+          "score": 0.5139512419700623
+        },
+        {
+          "id": "https://openalex.org/C186187911",
+          "wikidata": "https://www.wikidata.org/wiki/Q1093894",
+          "display_name": "Nanostructure",
+          "level": 2,
+          "score": 0.49661165475845337
+        },
+        {
+          "id": "https://openalex.org/C49040817",
+          "wikidata": "https://www.wikidata.org/wiki/Q193091",
+          "display_name": "Optoelectronics",
+          "level": 1,
+          "score": 0.12658196687698364
+        }
+      ],
+      "mesh": [],
+      "locations_count": 4,
+      "locations": [
+        {
+          "id": "doi:10.1073/pnas.1515602112",
+          "is_oa": false,
+          "landing_page_url": "https://doi.org/10.1073/pnas.1515602112",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S125754415",
+            "display_name": "Proceedings of the National Academy of Sciences",
+            "issn_l": "0027-8424",
+            "issn": [
+              "0027-8424",
+              "1091-6490"
+            ],
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": true,
+            "host_organization": "https://openalex.org/P4310320052",
+            "host_organization_name": "National Academy of Sciences",
+            "host_organization_lineage": [
+              "https://openalex.org/P4310320052"
+            ],
+            "host_organization_lineage_names": [
+              "National Academy of Sciences"
+            ],
+            "type": "journal"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "Proceedings of the National Academy of Sciences",
+          "raw_type": "journal-article"
+        },
+        {
+          "id": "pmid:26372959",
+          "is_oa": false,
+          "landing_page_url": "https://pubmed.ncbi.nlm.nih.gov/26372959",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S4306525036",
+            "display_name": "PubMed",
+            "issn_l": null,
+            "issn": null,
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": "https://openalex.org/I1299303238",
+            "host_organization_name": "National Institutes of Health",
+            "host_organization_lineage": [
+              "https://openalex.org/I1299303238"
+            ],
+            "host_organization_lineage_names": [],
+            "type": "repository"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "Proceedings of the National Academy of Sciences of the United States of America",
+          "raw_type": null
+        },
+        {
+          "id": "pmh:oai:osti.gov:1348412",
+          "is_oa": true,
+          "landing_page_url": "https://www.osti.gov/biblio/1348412",
+          "pdf_url": "https://www.osti.gov/servlets/purl/1348412",
+          "source": {
+            "id": "https://openalex.org/S4306402487",
+            "display_name": "OSTI OAI (U.S. Department of Energy Office of Scientific and Technical Information)",
+            "issn_l": null,
+            "issn": null,
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": "https://openalex.org/I139351228",
+            "host_organization_name": "Office of Scientific and Technical Information",
+            "host_organization_lineage": [
+              "https://openalex.org/I139351228"
+            ],
+            "host_organization_lineage_names": [],
+            "type": "repository"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": null,
+          "raw_type": null
+        },
+        {
+          "id": "pmh:oai:europepmc.org:3765986",
+          "is_oa": false,
+          "landing_page_url": "https://www.ncbi.nlm.nih.gov/pmc/articles/4586832",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S4306400806",
+            "display_name": "Europe PMC (PubMed Central)",
+            "issn_l": null,
+            "issn": null,
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": "https://openalex.org/I1303153112",
+            "host_organization_name": "European Bioinformatics Institute",
+            "host_organization_lineage": [
+              "https://openalex.org/I1303153112"
+            ],
+            "host_organization_lineage_names": [],
+            "type": "repository"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": null,
+          "raw_type": "Text"
+        }
+      ],
+      "best_oa_location": {
+        "id": "pmh:oai:osti.gov:1348412",
+        "is_oa": true,
+        "landing_page_url": "https://www.osti.gov/biblio/1348412",
+        "pdf_url": "https://www.osti.gov/servlets/purl/1348412",
+        "source": {
+          "id": "https://openalex.org/S4306402487",
+          "display_name": "OSTI OAI (U.S. Department of Energy Office of Scientific and Technical Information)",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "host_organization": "https://openalex.org/I139351228",
+          "host_organization_name": "Office of Scientific and Technical Information",
+          "host_organization_lineage": [
+            "https://openalex.org/I139351228"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": null,
+        "raw_type": null
+      },
+      "sustainable_development_goals": [
+        {
+          "id": "https://metadata.un.org/sdg/11",
+          "display_name": "Sustainable cities and communities",
+          "score": 0.5600000023841858
+        }
+      ],
+      "awards": [
+        {
+          "id": "https://openalex.org/G3695607785",
+          "display_name": null,
+          "funder_award_id": "DE-FG02-07ER46471",
+          "funder_id": "https://openalex.org/F4320306084",
+          "funder_display_name": "U.S. Department of Energy"
+        },
+        {
+          "id": "https://openalex.org/G4423166139",
+          "display_name": null,
+          "funder_award_id": "1400169",
+          "funder_id": "https://openalex.org/F4320306076",
+          "funder_display_name": "National Science Foundation"
+        },
+        {
+          "id": "https://openalex.org/G4425020053",
+          "display_name": null,
+          "funder_award_id": "CMMI-1400169",
+          "funder_id": "https://openalex.org/F4320337367",
+          "funder_display_name": "Division of Materials Research"
+        },
+        {
+          "id": "https://openalex.org/G5211131256",
+          "display_name": null,
+          "funder_award_id": "1400169",
+          "funder_id": "https://openalex.org/F4320337391",
+          "funder_display_name": "Division of Civil, Mechanical and Manufacturing Innovation"
+        },
+        {
+          "id": "https://openalex.org/G5219260752",
+          "display_name": null,
+          "funder_award_id": "DE-FG",
+          "funder_id": "https://openalex.org/F4320306084",
+          "funder_display_name": "U.S. Department of Energy"
+        },
+        {
+          "id": "https://openalex.org/G5410264058",
+          "display_name": null,
+          "funder_award_id": "DE-FG02-07ER46471",
+          "funder_id": "https://openalex.org/F4320306076",
+          "funder_display_name": "National Science Foundation"
+        },
+        {
+          "id": "https://openalex.org/G5648016710",
+          "display_name": null,
+          "funder_award_id": "DE-FG02",
+          "funder_id": "https://openalex.org/F4320337480",
+          "funder_display_name": "Basic Energy Sciences"
+        },
+        {
+          "id": "https://openalex.org/G5954070948",
+          "display_name": null,
+          "funder_award_id": "CMMI-",
+          "funder_id": "https://openalex.org/F4320306076",
+          "funder_display_name": "National Science Foundation"
+        },
+        {
+          "id": "https://openalex.org/G7186324567",
+          "display_name": null,
+          "funder_award_id": "DE-FG02-",
+          "funder_id": "https://openalex.org/F4320306084",
+          "funder_display_name": "U.S. Department of Energy"
+        },
+        {
+          "id": "https://openalex.org/G8271553885",
+          "display_name": null,
+          "funder_award_id": "DE-FG02-07ER46471",
+          "funder_id": "https://openalex.org/F4320332359",
+          "funder_display_name": "Office of Science"
+        },
+        {
+          "id": "https://openalex.org/G8602725065",
+          "display_name": null,
+          "funder_award_id": "CMMI-1400169",
+          "funder_id": "https://openalex.org/F4320306076",
+          "funder_display_name": "National Science Foundation"
+        },
+        {
+          "id": "https://openalex.org/G8684078510",
+          "display_name": null,
+          "funder_award_id": "DE-FG02",
+          "funder_id": "https://openalex.org/F4320306084",
+          "funder_display_name": "U.S. Department of Energy"
+        },
+        {
+          "id": "https://openalex.org/G8734820779",
+          "display_name": null,
+          "funder_award_id": "DE-FG02-07ER46471",
+          "funder_id": "https://openalex.org/F4320337480",
+          "funder_display_name": "Basic Energy Sciences"
+        },
+        {
+          "id": "https://openalex.org/G889805245",
+          "display_name": "PROGRAMMING FUNCTION VIA SOFT MATERIALS",
+          "funder_award_id": "FG02-07ER46471",
+          "funder_id": "https://openalex.org/F4320306084",
+          "funder_display_name": "U.S. Department of Energy"
+        }
+      ],
+      "funders": [
+        {
+          "id": "https://openalex.org/F4320306076",
+          "display_name": "National Science Foundation",
+          "ror": "https://ror.org/021nxhr62"
+        },
+        {
+          "id": "https://openalex.org/F4320306084",
+          "display_name": "U.S. Department of Energy",
+          "ror": "https://ror.org/01bj3aw27"
+        },
+        {
+          "id": "https://openalex.org/F4320332222",
+          "display_name": "University of Illinois at Urbana-Champaign",
+          "ror": "https://ror.org/047426m28"
+        },
+        {
+          "id": "https://openalex.org/F4320332359",
+          "display_name": "Office of Science",
+          "ror": "https://ror.org/00mmn6b08"
+        },
+        {
+          "id": "https://openalex.org/F4320336656",
+          "display_name": "Thousand Young Talents Program of China",
+          "ror": null
+        },
+        {
+          "id": "https://openalex.org/F4320337367",
+          "display_name": "Division of Materials Research",
+          "ror": "https://ror.org/01pc7k308"
+        },
+        {
+          "id": "https://openalex.org/F4320337391",
+          "display_name": "Division of Civil, Mechanical and Manufacturing Innovation",
+          "ror": "https://ror.org/028yd4c30"
+        },
+        {
+          "id": "https://openalex.org/F4320337480",
+          "display_name": "Basic Energy Sciences",
+          "ror": "https://ror.org/05mg91w61"
+        }
+      ],
+      "has_content": {
+        "grobid_xml": false,
+        "pdf": true
+      },
+      "content_urls": {
+        "pdf": "https://content.openalex.org/works/W2103979104.pdf"
+      },
+      "referenced_works_count": 57,
+      "referenced_works": [
+        "https://openalex.org/W1491891466",
+        "https://openalex.org/W1543771085",
+        "https://openalex.org/W1854459117",
+        "https://openalex.org/W1907763559",
+        "https://openalex.org/W1957575796",
+        "https://openalex.org/W1967625444",
+        "https://openalex.org/W1972678682",
+        "https://openalex.org/W1980587781",
+        "https://openalex.org/W1987006239",
+        "https://openalex.org/W1993726971",
+        "https://openalex.org/W2001982059",
+        "https://openalex.org/W2005200966",
+        "https://openalex.org/W2017445739",
+        "https://openalex.org/W2022855675",
+        "https://openalex.org/W2023266752",
+        "https://openalex.org/W2023525997",
+        "https://openalex.org/W2024961805",
+        "https://openalex.org/W2028331022",
+        "https://openalex.org/W2030749064",
+        "https://openalex.org/W2045023774",
+        "https://openalex.org/W2047099464",
+        "https://openalex.org/W2048466622",
+        "https://openalex.org/W2055759847",
+        "https://openalex.org/W2059408377",
+        "https://openalex.org/W2065993008",
+        "https://openalex.org/W2070661459",
+        "https://openalex.org/W2075459747",
+        "https://openalex.org/W2077098498",
+        "https://openalex.org/W2077373941",
+        "https://openalex.org/W2080270235",
+        "https://openalex.org/W2089123823",
+        "https://openalex.org/W2090426702",
+        "https://openalex.org/W2094630803",
+        "https://openalex.org/W2095565863",
+        "https://openalex.org/W2102028242",
+        "https://openalex.org/W2107331541",
+        "https://openalex.org/W2108558598",
+        "https://openalex.org/W2111818326",
+        "https://openalex.org/W2115932255",
+        "https://openalex.org/W2116211331",
+        "https://openalex.org/W2124282138",
+        "https://openalex.org/W2137776731",
+        "https://openalex.org/W2143765114",
+        "https://openalex.org/W2149686169",
+        "https://openalex.org/W2155943302",
+        "https://openalex.org/W2161363692",
+        "https://openalex.org/W2162167164",
+        "https://openalex.org/W2163166270",
+        "https://openalex.org/W2167098132",
+        "https://openalex.org/W2167998160",
+        "https://openalex.org/W2168583511",
+        "https://openalex.org/W2313858506",
+        "https://openalex.org/W2317548879",
+        "https://openalex.org/W2333385969",
+        "https://openalex.org/W3145834777",
+        "https://openalex.org/W4211095184",
+        "https://openalex.org/W4213028169"
+      ],
+      "related_works": [
+        "https://openalex.org/W4246450666",
+        "https://openalex.org/W2898370298",
+        "https://openalex.org/W4388998267",
+        "https://openalex.org/W4390401159",
+        "https://openalex.org/W2744391499",
+        "https://openalex.org/W3120461830",
+        "https://openalex.org/W4230250635",
+        "https://openalex.org/W3041790586",
+        "https://openalex.org/W4389390685",
+        "https://openalex.org/W2188099174"
+      ],
+      "abstract_inverted_index": {
+        "Assembly": [
+          0
+        ],
+        "of": [
+          1,
+          14,
+          25,
+          37,
+          45,
+          48,
+          60,
+          68,
+          88,
+          105,
+          144
+        ],
+        "3D": [
+          2,
+          28,
+          46,
+          108,
+          134
+        ],
+        "micro/nanostructures": [
+          3
+        ],
+        "in": [
+          4,
+          78
+        ],
+        "advanced": [
+          5
+        ],
+        "functional": [
+          6
+        ],
+        "materials": [
+          7,
+          26,
+          50,
+          79
+        ],
+        "has": [
+          8
+        ],
+        "important": [
+          9
+        ],
+        "implications": [
+          10
+        ],
+        "across": [
+          11,
+          71
+        ],
+        "broad": [
+          12,
+          103
+        ],
+        "areas": [
+          13
+        ],
+        "technology.": [
+          15
+        ],
+        "Existing": [
+          16
+        ],
+        "approaches": [
+          17
+        ],
+        "are": [
+          18
+        ],
+        "compatible,": [
+          19
+        ],
+        "however,": [
+          20
+        ],
+        "only": [
+          21
+        ],
+        "with": [
+          22,
+          54,
+          86,
+          118,
+          122
+        ],
+        "narrow": [
+          23
+        ],
+        "classes": [
+          24
+        ],
+        "and/or": [
+          27
+        ],
+        "geometries.": [
+          29
+        ],
+        "This": [
+          30
+        ],
+        "paper": [
+          31
+        ],
+        "introduces": [
+          32
+        ],
+        "ideas": [
+          33
+        ],
+        "for": [
+          34
+        ],
+        "a": [
+          35
+        ],
+        "form": [
+          36
+        ],
+        "Kirigami": [
+          38,
+          146
+        ],
+        "that": [
+          39,
+          91,
+          95,
+          125
+        ],
+        "allows": [
+          40
+        ],
+        "precise,": [
+          41
+        ],
+        "mechanically": [
+          42,
+          135
+        ],
+        "driven": [
+          43
+        ],
+        "assembly": [
+          44
+        ],
+        "mesostructures": [
+          47,
+          110
+        ],
+        "diverse": [
+          49
+        ],
+        "from": [
+          51,
+          74,
+          81,
+          127
+        ],
+        "2D": [
+          52
+        ],
+        "micro/nanomembranes": [
+          53
+        ],
+        "strategically": [
+          55
+        ],
+        "designed": [
+          56
+        ],
+        "geometries": [
+          57
+        ],
+        "and": [
+          58,
+          63,
+          111,
+          120
+        ],
+        "patterns": [
+          59
+        ],
+        "cuts.": [
+          61
+        ],
+        "Theoretical": [
+          62
+        ],
+        "experimental": [
+          64
+        ],
+        "studies": [
+          65
+        ],
+        "demonstrate": [
+          66
+        ],
+        "applicability": [
+          67
+        ],
+        "the": [
+          69
+        ],
+        "methods": [
+          70
+        ],
+        "length": [
+          72
+        ],
+        "scales": [
+          73
+        ],
+        "macro": [
+          75
+        ],
+        "to": [
+          76,
+          84,
+          130
+        ],
+        "nano,": [
+          77
+        ],
+        "ranging": [
+          80
+        ],
+        "monocrystalline": [
+          82
+        ],
+        "silicon": [
+          83,
+          109
+        ],
+        "plastic,": [
+          85
+        ],
+        "levels": [
+          87
+        ],
+        "topographical": [
+          89
+        ],
+        "complexity": [
+          90
+        ],
+        "significantly": [
+          92
+        ],
+        "exceed": [
+          93
+        ],
+        "those": [
+          94
+        ],
+        "can": [
+          96
+        ],
+        "be": [
+          97
+        ],
+        "achieved": [
+          98
+        ],
+        "using": [
+          99
+        ],
+        "other": [
+          100
+        ],
+        "approaches.": [
+          101
+        ],
+        "A": [
+          102,
+          133
+        ],
+        "set": [
+          104
+        ],
+        "examples": [
+          106
+        ],
+        "includes": [
+          107
+        ],
+        "hybrid": [
+          112
+        ],
+        "nanomembrane-nanoribbon": [
+          113
+        ],
+        "systems,": [
+          114
+        ],
+        "including": [
+          115
+        ],
+        "heterogeneous": [
+          116
+        ],
+        "combinations": [
+          117
+        ],
+        "polymers": [
+          119
+        ],
+        "metals,": [
+          121
+        ],
+        "critical": [
+          123
+        ],
+        "dimensions": [
+          124
+        ],
+        "range": [
+          126
+        ],
+        "100": [
+          128
+        ],
+        "nm": [
+          129
+        ],
+        "30": [
+          131
+        ],
+        "mm.": [
+          132
+        ],
+        "tunable": [
+          136
+        ],
+        "optical": [
+          137
+        ],
+        "transmission": [
+          138
+        ],
+        "window": [
+          139
+        ],
+        "provides": [
+          140
+        ],
+        "an": [
+          141
+        ],
+        "application": [
+          142
+        ],
+        "example": [
+          143
+        ],
+        "this": [
+          145
+        ],
+        "process,": [
+          147
+        ],
+        "enabled": [
+          148
+        ],
+        "by": [
+          149
+        ],
+        "theoretically": [
+          150
+        ],
+        "guided": [
+          151
+        ],
+        "design.": [
+          152
+        ]
+      },
+      "counts_by_year": [
+        {
+          "year": 2026,
+          "cited_by_count": 5
+        },
+        {
+          "year": 2025,
+          "cited_by_count": 36
+        },
+        {
+          "year": 2024,
+          "cited_by_count": 50
+        },
+        {
+          "year": 2023,
+          "cited_by_count": 50
+        },
+        {
+          "year": 2022,
+          "cited_by_count": 59
+        },
+        {
+          "year": 2021,
+          "cited_by_count": 70
+        },
+        {
+          "year": 2020,
+          "cited_by_count": 50
+        },
+        {
+          "year": 2019,
+          "cited_by_count": 70
+        },
+        {
+          "year": 2018,
+          "cited_by_count": 53
+        },
+        {
+          "year": 2017,
+          "cited_by_count": 51
+        },
+        {
+          "year": 2016,
+          "cited_by_count": 32
+        },
+        {
+          "year": 2015,
+          "cited_by_count": 3
+        }
+      ],
+      "updated_date": "2026-04-21T08:09:41.155169",
+      "created_date": "2025-10-10T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W2011019069",
+      "doi": "https://doi.org/10.2514/3.10202",
+      "title": "Recent advances in analysis of laminated beams and plates. Part I - Sheareffects and buckling.",
+      "display_name": "Recent advances in analysis of laminated beams and plates. Part I - Sheareffects and buckling.",
+      "publication_year": 1989,
+      "publication_date": "1989-07-01",
+      "ids": {
+        "openalex": "https://openalex.org/W2011019069",
+        "doi": "https://doi.org/10.2514/3.10202",
+        "mag": "2011019069"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "doi:10.2514/3.10202",
+        "is_oa": false,
+        "landing_page_url": "https://doi.org/10.2514/3.10202",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S53336109",
+          "display_name": "AIAA Journal",
+          "issn_l": "0001-1452",
+          "issn": [
+            "0001-1452",
+            "1081-0102",
+            "1533-385X"
+          ],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": true,
+          "host_organization": "https://openalex.org/P4310315709",
+          "host_organization_name": "American Institute of Aeronautics and Astronautics",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310315709"
+          ],
+          "host_organization_lineage_names": [
+            "American Institute of Aeronautics and Astronautics"
+          ],
+          "type": "journal"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "AIAA Journal",
+        "raw_type": "journal-article"
+      },
+      "type": "article",
+      "indexed_in": [
+        "crossref"
+      ],
+      "open_access": {
+        "is_oa": false,
+        "oa_status": "closed",
+        "oa_url": null,
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5051452494",
+            "display_name": "Rakesh K. Kapania",
+            "orcid": "https://orcid.org/0000-0001-7294-4703"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I859038795",
+              "display_name": "Virginia Tech",
+              "ror": "https://ror.org/02smfhw86",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I859038795"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "Rakesh K. Kapania",
+          "raw_affiliation_strings": [
+            "Virginia Polytechnic Institute and State University, Blacksburg, Virginia",
+            "Virginia Polytechnic Institute and State University, Blacksburg, Virginia;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Virginia Polytechnic Institute and State University, Blacksburg, Virginia",
+              "institution_ids": [
+                "https://openalex.org/I859038795"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Virginia Polytechnic Institute and State University, Blacksburg, Virginia;",
+              "institution_ids": [
+                "https://openalex.org/I859038795"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "last",
+          "author": {
+            "id": "https://openalex.org/A5036234107",
+            "display_name": "Stefano Raciti",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I859038795",
+              "display_name": "Virginia Tech",
+              "ror": "https://ror.org/02smfhw86",
+              "country_code": "US",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I859038795"
+              ]
+            }
+          ],
+          "countries": [
+            "US"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Stefano Raciti",
+          "raw_affiliation_strings": [
+            "Virginia Polytechnic Institute and State University, Blacksburg, Virginia",
+            "Virginia Polytechnic Institute and State University, Blacksburg, Virginia;"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Virginia Polytechnic Institute and State University, Blacksburg, Virginia",
+              "institution_ids": [
+                "https://openalex.org/I859038795"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Virginia Polytechnic Institute and State University, Blacksburg, Virginia;",
+              "institution_ids": [
+                "https://openalex.org/I859038795"
+              ]
+            }
+          ]
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 1,
+      "institutions_distinct_count": 2,
+      "corresponding_author_ids": [
+        "https://openalex.org/A5051452494"
+      ],
+      "corresponding_institution_ids": [
+        "https://openalex.org/I859038795"
+      ],
+      "apc_list": null,
+      "apc_paid": null,
+      "fwci": 17.2479,
+      "has_fulltext": false,
+      "cited_by_count": 505,
+      "citation_normalized_percentile": {
+        "value": 0.99607115,
+        "is_in_top_1_percent": true,
+        "is_in_top_10_percent": true
+      },
+      "cited_by_percentile_year": {
+        "min": 98,
+        "max": 100
+      },
+      "biblio": {
+        "volume": "27",
+        "issue": "7",
+        "first_page": "923",
+        "last_page": "935"
+      },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T10221",
+        "display_name": "Composite Structure Analysis and Optimization",
+        "score": 0.9998999834060669,
+        "subfield": {
+          "id": "https://openalex.org/subfields/2211",
+          "display_name": "Mechanics of Materials"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/22",
+          "display_name": "Engineering"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T10221",
+          "display_name": "Composite Structure Analysis and Optimization",
+          "score": 0.9998999834060669,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T10713",
+          "display_name": "Structural Load-Bearing Analysis",
+          "score": 0.998199999332428,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T11870",
+          "display_name": "Structural Analysis and Optimization",
+          "score": 0.9965000152587891,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/buckling",
+          "display_name": "Buckling",
+          "score": 0.8495388031005859
+        },
+        {
+          "id": "https://openalex.org/keywords/structural-engineering",
+          "display_name": "Structural engineering",
+          "score": 0.6367332339286804
+        },
+        {
+          "id": "https://openalex.org/keywords/delamination",
+          "display_name": "Delamination (geology)",
+          "score": 0.5383646488189697
+        },
+        {
+          "id": "https://openalex.org/keywords/materials-science",
+          "display_name": "Materials science",
+          "score": 0.4987907409667969
+        },
+        {
+          "id": "https://openalex.org/keywords/numerical-analysis",
+          "display_name": "Numerical analysis",
+          "score": 0.47354239225387573
+        },
+        {
+          "id": "https://openalex.org/keywords/shear",
+          "display_name": "Shear (geology)",
+          "score": 0.43656668066978455
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-material",
+          "display_name": "Composite material",
+          "score": 0.21814337372779846
+        },
+        {
+          "id": "https://openalex.org/keywords/engineering",
+          "display_name": "Engineering",
+          "score": 0.21498098969459534
+        },
+        {
+          "id": "https://openalex.org/keywords/mathematics",
+          "display_name": "Mathematics",
+          "score": 0.18478873372077942
+        },
+        {
+          "id": "https://openalex.org/keywords/mathematical-analysis",
+          "display_name": "Mathematical analysis",
+          "score": 0.08607268333435059
+        },
+        {
+          "id": "https://openalex.org/keywords/geology",
+          "display_name": "Geology",
+          "score": 0.08298090100288391
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C85476182",
+          "wikidata": "https://www.wikidata.org/wiki/Q693104",
+          "display_name": "Buckling",
+          "level": 2,
+          "score": 0.8495388031005859
+        },
+        {
+          "id": "https://openalex.org/C66938386",
+          "wikidata": "https://www.wikidata.org/wiki/Q633538",
+          "display_name": "Structural engineering",
+          "level": 1,
+          "score": 0.6367332339286804
+        },
+        {
+          "id": "https://openalex.org/C30239060",
+          "wikidata": "https://www.wikidata.org/wiki/Q5253111",
+          "display_name": "Delamination (geology)",
+          "level": 4,
+          "score": 0.5383646488189697
+        },
+        {
+          "id": "https://openalex.org/C192562407",
+          "wikidata": "https://www.wikidata.org/wiki/Q228736",
+          "display_name": "Materials science",
+          "level": 0,
+          "score": 0.4987907409667969
+        },
+        {
+          "id": "https://openalex.org/C48753275",
+          "wikidata": "https://www.wikidata.org/wiki/Q11216",
+          "display_name": "Numerical analysis",
+          "level": 2,
+          "score": 0.47354239225387573
+        },
+        {
+          "id": "https://openalex.org/C96035792",
+          "wikidata": "https://www.wikidata.org/wiki/Q43606218",
+          "display_name": "Shear (geology)",
+          "level": 2,
+          "score": 0.43656668066978455
+        },
+        {
+          "id": "https://openalex.org/C159985019",
+          "wikidata": "https://www.wikidata.org/wiki/Q181790",
+          "display_name": "Composite material",
+          "level": 1,
+          "score": 0.21814337372779846
+        },
+        {
+          "id": "https://openalex.org/C127413603",
+          "wikidata": "https://www.wikidata.org/wiki/Q11023",
+          "display_name": "Engineering",
+          "level": 0,
+          "score": 0.21498098969459534
+        },
+        {
+          "id": "https://openalex.org/C33923547",
+          "wikidata": "https://www.wikidata.org/wiki/Q395",
+          "display_name": "Mathematics",
+          "level": 0,
+          "score": 0.18478873372077942
+        },
+        {
+          "id": "https://openalex.org/C134306372",
+          "wikidata": "https://www.wikidata.org/wiki/Q7754",
+          "display_name": "Mathematical analysis",
+          "level": 1,
+          "score": 0.08607268333435059
+        },
+        {
+          "id": "https://openalex.org/C127313418",
+          "wikidata": "https://www.wikidata.org/wiki/Q1069",
+          "display_name": "Geology",
+          "level": 0,
+          "score": 0.08298090100288391
+        },
+        {
+          "id": "https://openalex.org/C151730666",
+          "wikidata": "https://www.wikidata.org/wiki/Q7205",
+          "display_name": "Paleontology",
+          "level": 1,
+          "score": 0.0
+        },
+        {
+          "id": "https://openalex.org/C77928131",
+          "wikidata": "https://www.wikidata.org/wiki/Q193343",
+          "display_name": "Tectonics",
+          "level": 2,
+          "score": 0.0
+        },
+        {
+          "id": "https://openalex.org/C58097730",
+          "wikidata": "https://www.wikidata.org/wiki/Q176318",
+          "display_name": "Subduction",
+          "level": 3,
+          "score": 0.0
+        }
+      ],
+      "mesh": [],
+      "locations_count": 1,
+      "locations": [
+        {
+          "id": "doi:10.2514/3.10202",
+          "is_oa": false,
+          "landing_page_url": "https://doi.org/10.2514/3.10202",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S53336109",
+            "display_name": "AIAA Journal",
+            "issn_l": "0001-1452",
+            "issn": [
+              "0001-1452",
+              "1081-0102",
+              "1533-385X"
+            ],
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": true,
+            "host_organization": "https://openalex.org/P4310315709",
+            "host_organization_name": "American Institute of Aeronautics and Astronautics",
+            "host_organization_lineage": [
+              "https://openalex.org/P4310315709"
+            ],
+            "host_organization_lineage_names": [
+              "American Institute of Aeronautics and Astronautics"
+            ],
+            "type": "journal"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "AIAA Journal",
+          "raw_type": "journal-article"
+        }
+      ],
+      "best_oa_location": null,
+      "sustainable_development_goals": [
+        {
+          "id": "https://metadata.un.org/sdg/7",
+          "display_name": "Affordable and clean energy",
+          "score": 0.8999999761581421
+        }
+      ],
+      "awards": [],
+      "funders": [],
+      "has_content": {
+        "grobid_xml": false,
+        "pdf": false
+      },
+      "content_urls": null,
+      "referenced_works_count": 139,
+      "referenced_works": [
+        "https://openalex.org/W30297431",
+        "https://openalex.org/W33519685",
+        "https://openalex.org/W104952437",
+        "https://openalex.org/W108214480",
+        "https://openalex.org/W203604854",
+        "https://openalex.org/W216013181",
+        "https://openalex.org/W223434494",
+        "https://openalex.org/W596091465",
+        "https://openalex.org/W776639676",
+        "https://openalex.org/W813524019",
+        "https://openalex.org/W1490343302",
+        "https://openalex.org/W1494832632",
+        "https://openalex.org/W1498537275",
+        "https://openalex.org/W1504543512",
+        "https://openalex.org/W1523511014",
+        "https://openalex.org/W1524447049",
+        "https://openalex.org/W1558600874",
+        "https://openalex.org/W1559253400",
+        "https://openalex.org/W1585322156",
+        "https://openalex.org/W1590865836",
+        "https://openalex.org/W1600724259",
+        "https://openalex.org/W1794873020",
+        "https://openalex.org/W1966470347",
+        "https://openalex.org/W1966846967",
+        "https://openalex.org/W1968691276",
+        "https://openalex.org/W1970532558",
+        "https://openalex.org/W1974687249",
+        "https://openalex.org/W1977812898",
+        "https://openalex.org/W1978548045",
+        "https://openalex.org/W1979475746",
+        "https://openalex.org/W1981323933",
+        "https://openalex.org/W1981464592",
+        "https://openalex.org/W1982206665",
+        "https://openalex.org/W1984648393",
+        "https://openalex.org/W1985279933",
+        "https://openalex.org/W1985591923",
+        "https://openalex.org/W1986486132",
+        "https://openalex.org/W1988134208",
+        "https://openalex.org/W1990603531",
+        "https://openalex.org/W1994244819",
+        "https://openalex.org/W2000211730",
+        "https://openalex.org/W2002482284",
+        "https://openalex.org/W2004176943",
+        "https://openalex.org/W2004517152",
+        "https://openalex.org/W2013065782",
+        "https://openalex.org/W2014402598",
+        "https://openalex.org/W2015197589",
+        "https://openalex.org/W2016676809",
+        "https://openalex.org/W2019126689",
+        "https://openalex.org/W2019359198",
+        "https://openalex.org/W2022498247",
+        "https://openalex.org/W2024916918",
+        "https://openalex.org/W2027763125",
+        "https://openalex.org/W2029542579",
+        "https://openalex.org/W2030439327",
+        "https://openalex.org/W2031790083",
+        "https://openalex.org/W2032134949",
+        "https://openalex.org/W2033810749",
+        "https://openalex.org/W2033816885",
+        "https://openalex.org/W2034238788",
+        "https://openalex.org/W2035384470",
+        "https://openalex.org/W2037667656",
+        "https://openalex.org/W2039510364",
+        "https://openalex.org/W2039604567",
+        "https://openalex.org/W2042126289",
+        "https://openalex.org/W2042352173",
+        "https://openalex.org/W2043217323",
+        "https://openalex.org/W2044880121",
+        "https://openalex.org/W2045383843",
+        "https://openalex.org/W2049022999",
+        "https://openalex.org/W2050073634",
+        "https://openalex.org/W2052119305",
+        "https://openalex.org/W2052183873",
+        "https://openalex.org/W2054664790",
+        "https://openalex.org/W2056674697",
+        "https://openalex.org/W2058816900",
+        "https://openalex.org/W2058820159",
+        "https://openalex.org/W2059174572",
+        "https://openalex.org/W2059405869",
+        "https://openalex.org/W2059720249",
+        "https://openalex.org/W2060028642",
+        "https://openalex.org/W2060741126",
+        "https://openalex.org/W2060791064",
+        "https://openalex.org/W2061329242",
+        "https://openalex.org/W2064267196",
+        "https://openalex.org/W2067363196",
+        "https://openalex.org/W2068230464",
+        "https://openalex.org/W2071066873",
+        "https://openalex.org/W2071393103",
+        "https://openalex.org/W2072009065",
+        "https://openalex.org/W2072023870",
+        "https://openalex.org/W2072948412",
+        "https://openalex.org/W2074035029",
+        "https://openalex.org/W2076280850",
+        "https://openalex.org/W2077635074",
+        "https://openalex.org/W2084223945",
+        "https://openalex.org/W2088035172",
+        "https://openalex.org/W2088242672",
+        "https://openalex.org/W2092383697",
+        "https://openalex.org/W2093361728",
+        "https://openalex.org/W2096234123",
+        "https://openalex.org/W2099933380",
+        "https://openalex.org/W2100118049",
+        "https://openalex.org/W2102588501",
+        "https://openalex.org/W2104299727",
+        "https://openalex.org/W2105716585",
+        "https://openalex.org/W2111771477",
+        "https://openalex.org/W2116497370",
+        "https://openalex.org/W2144305055",
+        "https://openalex.org/W2148915918",
+        "https://openalex.org/W2149045623",
+        "https://openalex.org/W2149977459",
+        "https://openalex.org/W2155299048",
+        "https://openalex.org/W2156479775",
+        "https://openalex.org/W2156895452",
+        "https://openalex.org/W2157248132",
+        "https://openalex.org/W2283121337",
+        "https://openalex.org/W2316342084",
+        "https://openalex.org/W2319710151",
+        "https://openalex.org/W2323036188",
+        "https://openalex.org/W2323211099",
+        "https://openalex.org/W2324576829",
+        "https://openalex.org/W2326749552",
+        "https://openalex.org/W2328982470",
+        "https://openalex.org/W2332277344",
+        "https://openalex.org/W2464548481",
+        "https://openalex.org/W2805206619",
+        "https://openalex.org/W3000805680",
+        "https://openalex.org/W3001033916",
+        "https://openalex.org/W3001325158",
+        "https://openalex.org/W3002036735",
+        "https://openalex.org/W3049038002",
+        "https://openalex.org/W3089373574",
+        "https://openalex.org/W3141903786",
+        "https://openalex.org/W3177212463",
+        "https://openalex.org/W4242863270",
+        "https://openalex.org/W4256651264",
+        "https://openalex.org/W4300063650",
+        "https://openalex.org/W4313338847"
+      ],
+      "related_works": [
+        "https://openalex.org/W946793292",
+        "https://openalex.org/W2941013975",
+        "https://openalex.org/W194827383",
+        "https://openalex.org/W2004808456",
+        "https://openalex.org/W1994943997",
+        "https://openalex.org/W3034644892",
+        "https://openalex.org/W2790729869",
+        "https://openalex.org/W1994142029",
+        "https://openalex.org/W312063856",
+        "https://openalex.org/W2888968085"
+      ],
+      "abstract_inverted_index": {
+        "A": [
+          0,
+          24,
+          60
+        ],
+        "review": [
+          1,
+          61,
+          127
+        ],
+        "of": [
+          2,
+          9,
+          26,
+          44,
+          62,
+          105,
+          128,
+          175,
+          184
+        ],
+        "the": [
+          3,
+          7,
+          46,
+          51,
+          57,
+          63,
+          86,
+          90,
+          94,
+          100,
+          129,
+          133,
+          146
+        ],
+        "recent": [
+          4
+        ],
+        "developments": [
+          5
+        ],
+        "in": [
+          6,
+          56,
+          138
+        ],
+        "analysis": [
+          8
+        ],
+        "laminated": [
+          10,
+          73
+        ],
+        "beams": [
+          11,
+          33,
+          74,
+          139
+        ],
+        "and": [
+          12,
+          20,
+          32,
+          71,
+          75,
+          102,
+          107,
+          122,
+          136,
+          140,
+          154,
+          180
+        ],
+        "plates": [
+          13,
+          31,
+          76,
+          110,
+          141
+        ],
+        "with": [
+          14
+        ],
+        "an": [
+          15
+        ],
+        "emphasis": [
+          16
+        ],
+        "on": [
+          17,
+          99,
+          132,
+          177,
+          181
+        ],
+        "shear": [
+          18
+        ],
+        "effects": [
+          19
+        ],
+        "buckling": [
+          21,
+          101,
+          135
+        ],
+        "is": [
+          22,
+          34,
+          77,
+          142,
+          173
+        ],
+        "presented.": [
+          23
+        ],
+        "discussion": [
+          25
+        ],
+        "various": [
+          27,
+          130
+        ],
+        "shear-deformation": [
+          28
+        ],
+        "theories": [
+          29,
+          38
+        ],
+        "for": [
+          30
+        ],
+        "given.": [
+          35,
+          143
+        ],
+        "The": [
+          36,
+          157
+        ],
+        "available": [
+          37
+        ],
+        "are": [
+          39,
+          111
+        ],
+        "derived": [
+          40,
+          84
+        ],
+        "assuming": [
+          41
+        ],
+        "a": [
+          42,
+          126
+        ],
+        "variation": [
+          43
+        ],
+        "either": [
+          45
+        ],
+        "in-plane": [
+          47
+        ],
+        "displacement": [
+          48,
+          87
+        ],
+        "components": [
+          49,
+          53
+        ],
+        "or": [
+          50,
+          54,
+          89,
+          93,
+          167
+        ],
+        "stress": [
+          52
+        ],
+        "both": [
+          55
+        ],
+        "thickness": [
+          58
+        ],
+        "coordinate.": [
+          59
+        ],
+        "recently": [
+          64
+        ],
+        "developed": [
+          65
+        ],
+        "finite": [
+          66
+        ],
+        "elements": [
+          67,
+          81
+        ],
+        "to": [
+          68
+        ],
+        "analyze": [
+          69
+        ],
+        "thin": [
+          70
+        ],
+        "thick": [
+          72
+        ],
+        "given": [
+          78
+        ],
+        "next.": [
+          79,
+          113
+        ],
+        "These": [
+          80,
+          114
+        ],
+        "have": [
+          82,
+          116,
+          148,
+          161
+        ],
+        "been": [
+          83,
+          117,
+          149,
+          162
+        ],
+        "using": [
+          85,
+          119,
+          151,
+          164,
+          168
+        ],
+        "methods,": [
+          88
+        ],
+        "mixed": [
+          91
+        ],
+        "methods": [
+          92
+        ],
+        "hybrid": [
+          95
+        ],
+        "methods.": [
+          96
+        ],
+        "Recent": [
+          97
+        ],
+        "studies": [
+          98,
+          131,
+          147,
+          176
+        ],
+        "postbuckling": [
+          103
+        ],
+        "behavior": [
+          104
+        ],
+        "perfect": [
+          106
+        ],
+        "geometrically": [
+          108
+        ],
+        "imperfect": [
+          109
+        ],
+        "described": [
+          112
+        ],
+        "behaviors": [
+          115
+        ],
+        "studied": [
+          118
+        ],
+        "analytical,": [
+          120,
+          152
+        ],
+        "numerical,": [
+          121,
+          153
+        ],
+        "experimental": [
+          123,
+          155
+        ],
+        "techniques.": [
+          124,
+          156
+        ],
+        "Finally,": [
+          125
+        ],
+        "delamination": [
+          134
+        ],
+        "growth": [
+          137
+        ],
+        "Once": [
+          144
+        ],
+        "again,": [
+          145
+        ],
+        "conducted": [
+          150
+        ],
+        "energy": [
+          158
+        ],
+        "release": [
+          159
+        ],
+        "rates": [
+          160
+        ],
+        "determined": [
+          163
+        ],
+        "closed-form": [
+          165
+        ],
+        "solutions": [
+          166
+        ],
+        "numerical": [
+          169
+        ],
+        "differentiation.": [
+          170
+        ],
+        "Mention": [
+          171
+        ],
+        "also": [
+          172
+        ],
+        "made": [
+          174
+        ],
+        "multiple": [
+          178
+        ],
+        "delaminations": [
+          179
+        ],
+        "dynamic": [
+          182
+        ],
+        "response": [
+          183
+        ],
+        "composite": [
+          185
+        ],
+        "laminates": [
+          186
+        ],
+        "under": [
+          187
+        ],
+        "impact": [
+          188
+        ],
+        "loads.": [
+          189
+        ]
+      },
+      "counts_by_year": [
+        {
+          "year": 2026,
+          "cited_by_count": 8
+        },
+        {
+          "year": 2025,
+          "cited_by_count": 8
+        },
+        {
+          "year": 2024,
+          "cited_by_count": 7
+        },
+        {
+          "year": 2023,
+          "cited_by_count": 16
+        },
+        {
+          "year": 2022,
+          "cited_by_count": 12
+        },
+        {
+          "year": 2021,
+          "cited_by_count": 17
+        },
+        {
+          "year": 2020,
+          "cited_by_count": 16
+        },
+        {
+          "year": 2019,
+          "cited_by_count": 17
+        },
+        {
+          "year": 2018,
+          "cited_by_count": 24
+        },
+        {
+          "year": 2017,
+          "cited_by_count": 18
+        },
+        {
+          "year": 2016,
+          "cited_by_count": 20
+        },
+        {
+          "year": 2015,
+          "cited_by_count": 21
+        },
+        {
+          "year": 2014,
+          "cited_by_count": 19
+        },
+        {
+          "year": 2013,
+          "cited_by_count": 28
+        },
+        {
+          "year": 2012,
+          "cited_by_count": 20
+        }
+      ],
+      "updated_date": "2026-04-24T08:23:43.765630",
+      "created_date": "2025-10-10T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W2035081075",
+      "doi": "https://doi.org/10.1016/j.compstruct.2008.02.014",
+      "title": "Recent developments in finite element analysis for laminated composite plates",
+      "display_name": "Recent developments in finite element analysis for laminated composite plates",
+      "publication_year": 2008,
+      "publication_date": "2008-02-22",
+      "ids": {
+        "openalex": "https://openalex.org/W2035081075",
+        "doi": "https://doi.org/10.1016/j.compstruct.2008.02.014",
+        "mag": "2035081075"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "doi:10.1016/j.compstruct.2008.02.014",
+        "is_oa": false,
+        "landing_page_url": "https://doi.org/10.1016/j.compstruct.2008.02.014",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S52363224",
+          "display_name": "Composite Structures",
+          "issn_l": "0263-8223",
+          "issn": [
+            "0263-8223",
+            "1879-1085"
+          ],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": true,
+          "host_organization": "https://openalex.org/P4310320990",
+          "host_organization_name": "Elsevier BV",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310320990"
+          ],
+          "host_organization_lineage_names": [
+            "Elsevier BV"
+          ],
+          "type": "journal"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Composite Structures",
+        "raw_type": "journal-article"
+      },
+      "type": "article",
+      "indexed_in": [
+        "crossref"
+      ],
+      "open_access": {
+        "is_oa": false,
+        "oa_status": "closed",
+        "oa_url": null,
+        "any_repository_has_fulltext": false
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5103260977",
+            "display_name": "Y.X. Zhang",
+            "orcid": "https://orcid.org/0000-0003-1912-8277"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I40053085",
+              "display_name": "Australian Defence Force Academy",
+              "ror": "https://ror.org/02j5s7g39",
+              "country_code": "AU",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I31746571",
+                "https://openalex.org/I40053085",
+                "https://openalex.org/I4394709116"
+              ]
+            }
+          ],
+          "countries": [
+            "AU"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "Y.X. Zhang",
+          "raw_affiliation_strings": [
+            "School of Aerospace, Civil and Mechanical Engineering, The University of New South Wales, Australian Defence Force Academy, Northcott Drive, Canberra, ACT 2600, Australia"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "School of Aerospace, Civil and Mechanical Engineering, The University of New South Wales, Australian Defence Force Academy, Northcott Drive, Canberra, ACT 2600, Australia",
+              "institution_ids": [
+                "https://openalex.org/I40053085"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "last",
+          "author": {
+            "id": "https://openalex.org/A5034306085",
+            "display_name": "Chunhui Yang",
+            "orcid": "https://orcid.org/0000-0001-5598-958X"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I149704539",
+              "display_name": "Deakin University",
+              "ror": "https://ror.org/02czsnj07",
+              "country_code": "AU",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I149704539"
+              ]
+            }
+          ],
+          "countries": [
+            "AU"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "C.H. Yang",
+          "raw_affiliation_strings": [
+            "School of Engineering and Information Technology, Deakin University, Waurn Ponds, VIC3217, Australia"
+          ],
+          "affiliations": [
+            {
+              "raw_affiliation_string": "School of Engineering and Information Technology, Deakin University, Waurn Ponds, VIC3217, Australia",
+              "institution_ids": [
+                "https://openalex.org/I149704539"
+              ]
+            }
+          ]
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 1,
+      "institutions_distinct_count": 2,
+      "corresponding_author_ids": [
+        "https://openalex.org/A5103260977"
+      ],
+      "corresponding_institution_ids": [
+        "https://openalex.org/I40053085"
+      ],
+      "apc_list": {
+        "value": 4270,
+        "currency": "USD",
+        "value_usd": 4270
+      },
+      "apc_paid": null,
+      "fwci": 22.6255,
+      "has_fulltext": false,
+      "cited_by_count": 426,
+      "citation_normalized_percentile": {
+        "value": 0.99780249,
+        "is_in_top_1_percent": true,
+        "is_in_top_10_percent": true
+      },
+      "cited_by_percentile_year": {
+        "min": 99,
+        "max": 100
+      },
+      "biblio": {
+        "volume": "88",
+        "issue": "1",
+        "first_page": "147",
+        "last_page": "157"
+      },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T10221",
+        "display_name": "Composite Structure Analysis and Optimization",
+        "score": 0.9998000264167786,
+        "subfield": {
+          "id": "https://openalex.org/subfields/2211",
+          "display_name": "Mechanics of Materials"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/22",
+          "display_name": "Engineering"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T10221",
+          "display_name": "Composite Structure Analysis and Optimization",
+          "score": 0.9998000264167786,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T10713",
+          "display_name": "Structural Load-Bearing Analysis",
+          "score": 0.998199999332428,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T11870",
+          "display_name": "Structural Analysis and Optimization",
+          "score": 0.9968000054359436,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2205",
+            "display_name": "Civil and Structural Engineering"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/finite-element-method",
+          "display_name": "Finite element method",
+          "score": 0.8139938712120056
+        },
+        {
+          "id": "https://openalex.org/keywords/buckling",
+          "display_name": "Buckling",
+          "score": 0.77051842212677
+        },
+        {
+          "id": "https://openalex.org/keywords/structural-engineering",
+          "display_name": "Structural engineering",
+          "score": 0.7256486415863037
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-number",
+          "display_name": "Composite number",
+          "score": 0.6289025545120239
+        },
+        {
+          "id": "https://openalex.org/keywords/vibration",
+          "display_name": "Vibration",
+          "score": 0.5482578277587891
+        },
+        {
+          "id": "https://openalex.org/keywords/nonlinear-system",
+          "display_name": "Nonlinear system",
+          "score": 0.5348846912384033
+        },
+        {
+          "id": "https://openalex.org/keywords/materials-science",
+          "display_name": "Materials science",
+          "score": 0.46523135900497437
+        },
+        {
+          "id": "https://openalex.org/keywords/engineering",
+          "display_name": "Engineering",
+          "score": 0.3299746513366699
+        },
+        {
+          "id": "https://openalex.org/keywords/composite-material",
+          "display_name": "Composite material",
+          "score": 0.31756722927093506
+        },
+        {
+          "id": "https://openalex.org/keywords/physics",
+          "display_name": "Physics",
+          "score": 0.06759753823280334
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C135628077",
+          "wikidata": "https://www.wikidata.org/wiki/Q220184",
+          "display_name": "Finite element method",
+          "level": 2,
+          "score": 0.8139938712120056
+        },
+        {
+          "id": "https://openalex.org/C85476182",
+          "wikidata": "https://www.wikidata.org/wiki/Q693104",
+          "display_name": "Buckling",
+          "level": 2,
+          "score": 0.77051842212677
+        },
+        {
+          "id": "https://openalex.org/C66938386",
+          "wikidata": "https://www.wikidata.org/wiki/Q633538",
+          "display_name": "Structural engineering",
+          "level": 1,
+          "score": 0.7256486415863037
+        },
+        {
+          "id": "https://openalex.org/C104779481",
+          "wikidata": "https://www.wikidata.org/wiki/Q50707",
+          "display_name": "Composite number",
+          "level": 2,
+          "score": 0.6289025545120239
+        },
+        {
+          "id": "https://openalex.org/C198394728",
+          "wikidata": "https://www.wikidata.org/wiki/Q3695508",
+          "display_name": "Vibration",
+          "level": 2,
+          "score": 0.5482578277587891
+        },
+        {
+          "id": "https://openalex.org/C158622935",
+          "wikidata": "https://www.wikidata.org/wiki/Q660848",
+          "display_name": "Nonlinear system",
+          "level": 2,
+          "score": 0.5348846912384033
+        },
+        {
+          "id": "https://openalex.org/C192562407",
+          "wikidata": "https://www.wikidata.org/wiki/Q228736",
+          "display_name": "Materials science",
+          "level": 0,
+          "score": 0.46523135900497437
+        },
+        {
+          "id": "https://openalex.org/C127413603",
+          "wikidata": "https://www.wikidata.org/wiki/Q11023",
+          "display_name": "Engineering",
+          "level": 0,
+          "score": 0.3299746513366699
+        },
+        {
+          "id": "https://openalex.org/C159985019",
+          "wikidata": "https://www.wikidata.org/wiki/Q181790",
+          "display_name": "Composite material",
+          "level": 1,
+          "score": 0.31756722927093506
+        },
+        {
+          "id": "https://openalex.org/C121332964",
+          "wikidata": "https://www.wikidata.org/wiki/Q413",
+          "display_name": "Physics",
+          "level": 0,
+          "score": 0.06759753823280334
+        },
+        {
+          "id": "https://openalex.org/C62520636",
+          "wikidata": "https://www.wikidata.org/wiki/Q944",
+          "display_name": "Quantum mechanics",
+          "level": 1,
+          "score": 0.0
+        }
+      ],
+      "mesh": [],
+      "locations_count": 1,
+      "locations": [
+        {
+          "id": "doi:10.1016/j.compstruct.2008.02.014",
+          "is_oa": false,
+          "landing_page_url": "https://doi.org/10.1016/j.compstruct.2008.02.014",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S52363224",
+            "display_name": "Composite Structures",
+            "issn_l": "0263-8223",
+            "issn": [
+              "0263-8223",
+              "1879-1085"
+            ],
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": true,
+            "host_organization": "https://openalex.org/P4310320990",
+            "host_organization_name": "Elsevier BV",
+            "host_organization_lineage": [
+              "https://openalex.org/P4310320990"
+            ],
+            "host_organization_lineage_names": [
+              "Elsevier BV"
+            ],
+            "type": "journal"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "Composite Structures",
+          "raw_type": "journal-article"
+        }
+      ],
+      "best_oa_location": null,
+      "sustainable_development_goals": [
+        {
+          "id": "https://metadata.un.org/sdg/11",
+          "display_name": "Sustainable cities and communities",
+          "score": 0.5899999737739563
+        }
+      ],
+      "awards": [],
+      "funders": [],
+      "has_content": {
+        "grobid_xml": false,
+        "pdf": false
+      },
+      "content_urls": null,
+      "referenced_works_count": 123,
+      "referenced_works": [
+        "https://openalex.org/W70694722",
+        "https://openalex.org/W130009000",
+        "https://openalex.org/W172023088",
+        "https://openalex.org/W382205184",
+        "https://openalex.org/W993532443",
+        "https://openalex.org/W1782638911",
+        "https://openalex.org/W1965922116",
+        "https://openalex.org/W1966089191",
+        "https://openalex.org/W1967663363",
+        "https://openalex.org/W1969118744",
+        "https://openalex.org/W1970276149",
+        "https://openalex.org/W1970848058",
+        "https://openalex.org/W1971651935",
+        "https://openalex.org/W1973178712",
+        "https://openalex.org/W1973843775",
+        "https://openalex.org/W1975051302",
+        "https://openalex.org/W1975796301",
+        "https://openalex.org/W1976030625",
+        "https://openalex.org/W1977467466",
+        "https://openalex.org/W1979532298",
+        "https://openalex.org/W1981426876",
+        "https://openalex.org/W1982380520",
+        "https://openalex.org/W1987898043",
+        "https://openalex.org/W1988776671",
+        "https://openalex.org/W1989235446",
+        "https://openalex.org/W1990715781",
+        "https://openalex.org/W1991289302",
+        "https://openalex.org/W1992237566",
+        "https://openalex.org/W1996565324",
+        "https://openalex.org/W1998028299",
+        "https://openalex.org/W2000647192",
+        "https://openalex.org/W2000841717",
+        "https://openalex.org/W2001129644",
+        "https://openalex.org/W2001149775",
+        "https://openalex.org/W2004185341",
+        "https://openalex.org/W2004444419",
+        "https://openalex.org/W2007282802",
+        "https://openalex.org/W2007928639",
+        "https://openalex.org/W2008702905",
+        "https://openalex.org/W2008764154",
+        "https://openalex.org/W2009571866",
+        "https://openalex.org/W2010777302",
+        "https://openalex.org/W2012782198",
+        "https://openalex.org/W2014472253",
+        "https://openalex.org/W2015977700",
+        "https://openalex.org/W2018459230",
+        "https://openalex.org/W2021532286",
+        "https://openalex.org/W2024991407",
+        "https://openalex.org/W2025179271",
+        "https://openalex.org/W2026707398",
+        "https://openalex.org/W2030967640",
+        "https://openalex.org/W2033257989",
+        "https://openalex.org/W2036153785",
+        "https://openalex.org/W2037223712",
+        "https://openalex.org/W2038684861",
+        "https://openalex.org/W2038795260",
+        "https://openalex.org/W2040256094",
+        "https://openalex.org/W2041880502",
+        "https://openalex.org/W2044300476",
+        "https://openalex.org/W2044619613",
+        "https://openalex.org/W2045322372",
+        "https://openalex.org/W2046223370",
+        "https://openalex.org/W2047279683",
+        "https://openalex.org/W2050306597",
+        "https://openalex.org/W2050411538",
+        "https://openalex.org/W2051674093",
+        "https://openalex.org/W2057174733",
+        "https://openalex.org/W2057391038",
+        "https://openalex.org/W2059677745",
+        "https://openalex.org/W2060448056",
+        "https://openalex.org/W2062046288",
+        "https://openalex.org/W2063392376",
+        "https://openalex.org/W2063509744",
+        "https://openalex.org/W2065058594",
+        "https://openalex.org/W2065519271",
+        "https://openalex.org/W2066267008",
+        "https://openalex.org/W2066506496",
+        "https://openalex.org/W2066980548",
+        "https://openalex.org/W2067163805",
+        "https://openalex.org/W2067955961",
+        "https://openalex.org/W2068911010",
+        "https://openalex.org/W2069002987",
+        "https://openalex.org/W2069267097",
+        "https://openalex.org/W2070121642",
+        "https://openalex.org/W2071022988",
+        "https://openalex.org/W2074797585",
+        "https://openalex.org/W2076220025",
+        "https://openalex.org/W2077532051",
+        "https://openalex.org/W2077944129",
+        "https://openalex.org/W2080493400",
+        "https://openalex.org/W2080593289",
+        "https://openalex.org/W2081182139",
+        "https://openalex.org/W2081679861",
+        "https://openalex.org/W2082124383",
+        "https://openalex.org/W2083491820",
+        "https://openalex.org/W2085508606",
+        "https://openalex.org/W2086350030",
+        "https://openalex.org/W2089197704",
+        "https://openalex.org/W2089239447",
+        "https://openalex.org/W2090123988",
+        "https://openalex.org/W2090539138",
+        "https://openalex.org/W2092547142",
+        "https://openalex.org/W2108654540",
+        "https://openalex.org/W2113799370",
+        "https://openalex.org/W2119820335",
+        "https://openalex.org/W2137327229",
+        "https://openalex.org/W2144264320",
+        "https://openalex.org/W2144430071",
+        "https://openalex.org/W2146785541",
+        "https://openalex.org/W2153751674",
+        "https://openalex.org/W2160981014",
+        "https://openalex.org/W2164263513",
+        "https://openalex.org/W2172272348",
+        "https://openalex.org/W2254480397",
+        "https://openalex.org/W2324914402",
+        "https://openalex.org/W2599681565",
+        "https://openalex.org/W4285719527",
+        "https://openalex.org/W6602919157",
+        "https://openalex.org/W6626144672",
+        "https://openalex.org/W6652100257",
+        "https://openalex.org/W6691858002",
+        "https://openalex.org/W6735549152",
+        "https://openalex.org/W6912286000"
+      ],
+      "related_works": [
+        "https://openalex.org/W946793292",
+        "https://openalex.org/W2941013975",
+        "https://openalex.org/W2790729869",
+        "https://openalex.org/W194827383",
+        "https://openalex.org/W2004808456",
+        "https://openalex.org/W1994943997",
+        "https://openalex.org/W3034644892",
+        "https://openalex.org/W1994142029",
+        "https://openalex.org/W2182921589",
+        "https://openalex.org/W2033222689"
+      ],
+      "abstract_inverted_index": null,
+      "counts_by_year": [
+        {
+          "year": 2026,
+          "cited_by_count": 6
+        },
+        {
+          "year": 2025,
+          "cited_by_count": 10
+        },
+        {
+          "year": 2024,
+          "cited_by_count": 18
+        },
+        {
+          "year": 2023,
+          "cited_by_count": 24
+        },
+        {
+          "year": 2022,
+          "cited_by_count": 19
+        },
+        {
+          "year": 2021,
+          "cited_by_count": 26
+        },
+        {
+          "year": 2020,
+          "cited_by_count": 31
+        },
+        {
+          "year": 2019,
+          "cited_by_count": 24
+        },
+        {
+          "year": 2018,
+          "cited_by_count": 28
+        },
+        {
+          "year": 2017,
+          "cited_by_count": 28
+        },
+        {
+          "year": 2016,
+          "cited_by_count": 36
+        },
+        {
+          "year": 2015,
+          "cited_by_count": 29
+        },
+        {
+          "year": 2014,
+          "cited_by_count": 43
+        },
+        {
+          "year": 2013,
+          "cited_by_count": 40
+        },
+        {
+          "year": 2012,
+          "cited_by_count": 30
+        }
+      ],
+      "updated_date": "2026-04-18T07:56:08.524223",
+      "created_date": "2025-10-10T00:00:00"
+    },
+    {
+      "id": "https://openalex.org/W2731622532",
+      "doi": "https://doi.org/10.1016/j.compstruct.2017.06.040",
+      "title": "A review of continuum mechanics models for size-dependent analysis of beams and plates",
+      "display_name": "A review of continuum mechanics models for size-dependent analysis of beams and plates",
+      "publication_year": 2017,
+      "publication_date": "2017-06-27",
+      "ids": {
+        "openalex": "https://openalex.org/W2731622532",
+        "doi": "https://doi.org/10.1016/j.compstruct.2017.06.040",
+        "mag": "2731622532"
+      },
+      "language": "en",
+      "primary_location": {
+        "id": "doi:10.1016/j.compstruct.2017.06.040",
+        "is_oa": false,
+        "landing_page_url": "https://doi.org/10.1016/j.compstruct.2017.06.040",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S52363224",
+          "display_name": "Composite Structures",
+          "issn_l": "0263-8223",
+          "issn": [
+            "0263-8223",
+            "1879-1085"
+          ],
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": true,
+          "host_organization": "https://openalex.org/P4310320990",
+          "host_organization_name": "Elsevier BV",
+          "host_organization_lineage": [
+            "https://openalex.org/P4310320990"
+          ],
+          "host_organization_lineage_names": [
+            "Elsevier BV"
+          ],
+          "type": "journal"
+        },
+        "license": null,
+        "license_id": null,
+        "version": "publishedVersion",
+        "is_accepted": true,
+        "is_published": true,
+        "raw_source_name": "Composite Structures",
+        "raw_type": "journal-article"
+      },
+      "type": "review",
+      "indexed_in": [
+        "crossref",
+        "datacite"
+      ],
+      "open_access": {
+        "is_oa": true,
+        "oa_status": "green",
+        "oa_url": "https://figshare.com/articles/journal_contribution/A_review_of_continuum_mechanics_models_for_size-dependent_analysis_of_beams_and_plates/13309268",
+        "any_repository_has_fulltext": true
+      },
+      "authorships": [
+        {
+          "author_position": "first",
+          "author": {
+            "id": "https://openalex.org/A5000488615",
+            "display_name": "Huu‐Tai Thai",
+            "orcid": "https://orcid.org/0000-0002-4461-9548"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I196829312",
+              "display_name": "La Trobe University",
+              "ror": "https://ror.org/01rxfrp27",
+              "country_code": "AU",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I196829312"
+              ]
+            },
+            {
+              "id": "https://openalex.org/I141445968",
+              "display_name": "Ton Duc Thang University",
+              "ror": "https://ror.org/01drq0835",
+              "country_code": "VN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I141445968"
+              ]
+            }
+          ],
+          "countries": [
+            "AU",
+            "VN"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Huu-Tai Thai",
+          "raw_affiliation_strings": [
+            "Division of Construction Computation, Institute for Computational Science, Ton Duc Thang University, Ho Chi Minh City, Viet Nam",
+            "Faculty of Civil Engineering, Ton Duc Thang University, Ho Chi Minh City, Viet Nam",
+            "School of Engineering and Mathematical Sciences, La Trobe University, Bundoora, VIC 3086, Australia"
+          ],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Division of Construction Computation, Institute for Computational Science, Ton Duc Thang University, Ho Chi Minh City, Viet Nam",
+              "institution_ids": [
+                "https://openalex.org/I141445968"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Faculty of Civil Engineering, Ton Duc Thang University, Ho Chi Minh City, Viet Nam",
+              "institution_ids": [
+                "https://openalex.org/I141445968"
+              ]
+            },
+            {
+              "raw_affiliation_string": "School of Engineering and Mathematical Sciences, La Trobe University, Bundoora, VIC 3086, Australia",
+              "institution_ids": [
+                "https://openalex.org/I196829312"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5070205612",
+            "display_name": "Thuc P. Vo",
+            "orcid": "https://orcid.org/0000-0002-7137-4507"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I170238339",
+              "display_name": "Duy Tan University",
+              "ror": "https://ror.org/05ezss144",
+              "country_code": "VN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I170238339"
+              ]
+            },
+            {
+              "id": "https://openalex.org/I32394136",
+              "display_name": "Northumbria University",
+              "ror": "https://ror.org/049e6bc10",
+              "country_code": "GB",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I32394136"
+              ]
+            }
+          ],
+          "countries": [
+            "GB",
+            "VN"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "Thuc P. Vo",
+          "raw_affiliation_strings": [
+            "Duy Tan University, Da Nang, Viet Nam",
+            "Faculty of Engineering and Environment, Northumbria University, Newcastle upon Tyne NE1 8ST, UK"
+          ],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Duy Tan University, Da Nang, Viet Nam",
+              "institution_ids": [
+                "https://openalex.org/I170238339"
+              ]
+            },
+            {
+              "raw_affiliation_string": "Faculty of Engineering and Environment, Northumbria University, Newcastle upon Tyne NE1 8ST, UK",
+              "institution_ids": [
+                "https://openalex.org/I32394136"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "middle",
+          "author": {
+            "id": "https://openalex.org/A5100702854",
+            "display_name": "Trung-Kien Nguyen",
+            "orcid": "https://orcid.org/0000-0002-1215-9348"
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I4210148201",
+              "display_name": "Ho Chi Minh City University of Technology and Education",
+              "ror": "https://ror.org/05hzn5427",
+              "country_code": "VN",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I4210148201"
+              ]
+            }
+          ],
+          "countries": [
+            "VN"
+          ],
+          "is_corresponding": false,
+          "raw_author_name": "Trung-Kien Nguyen",
+          "raw_affiliation_strings": [
+            "Faculty of Civil Engineering, Ho Chi Minh City University of Technology and Education, 1 Vo Van Ngan Street, Thu Duc District, Ho Chi Minh City, Viet Nam"
+          ],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Faculty of Civil Engineering, Ho Chi Minh City University of Technology and Education, 1 Vo Van Ngan Street, Thu Duc District, Ho Chi Minh City, Viet Nam",
+              "institution_ids": [
+                "https://openalex.org/I4210148201"
+              ]
+            }
+          ]
+        },
+        {
+          "author_position": "last",
+          "author": {
+            "id": "https://openalex.org/A5111638072",
+            "display_name": "Seung-Eock Kim",
+            "orcid": null
+          },
+          "institutions": [
+            {
+              "id": "https://openalex.org/I28777354",
+              "display_name": "Sejong University",
+              "ror": "https://ror.org/00aft1q37",
+              "country_code": "KR",
+              "type": "education",
+              "lineage": [
+                "https://openalex.org/I28777354"
+              ]
+            }
+          ],
+          "countries": [
+            "KR"
+          ],
+          "is_corresponding": true,
+          "raw_author_name": "Seung-Eock Kim",
+          "raw_affiliation_strings": [
+            "Department of Civil and Environmental Engineering, Sejong University, 98 Gunja Dong, Gwangjin Ku, Seoul 143-747, Republic of Korea"
+          ],
+          "raw_orcid": null,
+          "affiliations": [
+            {
+              "raw_affiliation_string": "Department of Civil and Environmental Engineering, Sejong University, 98 Gunja Dong, Gwangjin Ku, Seoul 143-747, Republic of Korea",
+              "institution_ids": [
+                "https://openalex.org/I28777354"
+              ]
+            }
+          ]
+        }
+      ],
+      "institutions": [],
+      "countries_distinct_count": 4,
+      "institutions_distinct_count": 4,
+      "corresponding_author_ids": [
+        "https://openalex.org/A5070205612",
+        "https://openalex.org/A5111638072"
+      ],
+      "corresponding_institution_ids": [
+        "https://openalex.org/I170238339",
+        "https://openalex.org/I28777354",
+        "https://openalex.org/I32394136"
+      ],
+      "apc_list": {
+        "value": 4270,
+        "currency": "USD",
+        "value_usd": 4270
+      },
+      "apc_paid": null,
+      "fwci": 15.7171,
+      "has_fulltext": true,
+      "cited_by_count": 385,
+      "citation_normalized_percentile": {
+        "value": 0.99610028,
+        "is_in_top_1_percent": true,
+        "is_in_top_10_percent": true
+      },
+      "cited_by_percentile_year": {
+        "min": 99,
+        "max": 100
+      },
+      "biblio": {
+        "volume": "177",
+        "issue": null,
+        "first_page": "196",
+        "last_page": "219"
+      },
+      "is_retracted": false,
+      "is_paratext": false,
+      "is_xpac": false,
+      "primary_topic": {
+        "id": "https://openalex.org/T11646",
+        "display_name": "Nonlocal and gradient elasticity in micro/nano structures",
+        "score": 1.0,
+        "subfield": {
+          "id": "https://openalex.org/subfields/2505",
+          "display_name": "Materials Chemistry"
+        },
+        "field": {
+          "id": "https://openalex.org/fields/25",
+          "display_name": "Materials Science"
+        },
+        "domain": {
+          "id": "https://openalex.org/domains/3",
+          "display_name": "Physical Sciences"
+        }
+      },
+      "topics": [
+        {
+          "id": "https://openalex.org/T11646",
+          "display_name": "Nonlocal and gradient elasticity in micro/nano structures",
+          "score": 1.0,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2505",
+            "display_name": "Materials Chemistry"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/25",
+            "display_name": "Materials Science"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T10221",
+          "display_name": "Composite Structure Analysis and Optimization",
+          "score": 0.9700999855995178,
+          "subfield": {
+            "id": "https://openalex.org/subfields/2211",
+            "display_name": "Mechanics of Materials"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/22",
+            "display_name": "Engineering"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        },
+        {
+          "id": "https://openalex.org/T11449",
+          "display_name": "Mechanical and Optical Resonators",
+          "score": 0.9646999835968018,
+          "subfield": {
+            "id": "https://openalex.org/subfields/3107",
+            "display_name": "Atomic and Molecular Physics, and Optics"
+          },
+          "field": {
+            "id": "https://openalex.org/fields/31",
+            "display_name": "Physics and Astronomy"
+          },
+          "domain": {
+            "id": "https://openalex.org/domains/3",
+            "display_name": "Physical Sciences"
+          }
+        }
+      ],
+      "keywords": [
+        {
+          "id": "https://openalex.org/keywords/continuum-hypothesis",
+          "display_name": "Continuum hypothesis",
+          "score": 0.5852102041244507
+        },
+        {
+          "id": "https://openalex.org/keywords/continuum-mechanics",
+          "display_name": "Continuum mechanics",
+          "score": 0.5565038323402405
+        },
+        {
+          "id": "https://openalex.org/keywords/length-scale",
+          "display_name": "Length scale",
+          "score": 0.47770383954048157
+        },
+        {
+          "id": "https://openalex.org/keywords/finite-element-method",
+          "display_name": "Finite element method",
+          "score": 0.45850569009780884
+        },
+        {
+          "id": "https://openalex.org/keywords/elasticity",
+          "display_name": "Elasticity (physics)",
+          "score": 0.4251963496208191
+        },
+        {
+          "id": "https://openalex.org/keywords/statistical-physics",
+          "display_name": "Statistical physics",
+          "score": 0.4173199534416199
+        },
+        {
+          "id": "https://openalex.org/keywords/mechanics",
+          "display_name": "Mechanics",
+          "score": 0.36330312490463257
+        },
+        {
+          "id": "https://openalex.org/keywords/classical-mechanics",
+          "display_name": "Classical mechanics",
+          "score": 0.3434985280036926
+        },
+        {
+          "id": "https://openalex.org/keywords/physics",
+          "display_name": "Physics",
+          "score": 0.319439560174942
+        },
+        {
+          "id": "https://openalex.org/keywords/structural-engineering",
+          "display_name": "Structural engineering",
+          "score": 0.3141804337501526
+        },
+        {
+          "id": "https://openalex.org/keywords/engineering",
+          "display_name": "Engineering",
+          "score": 0.22305893898010254
+        }
+      ],
+      "concepts": [
+        {
+          "id": "https://openalex.org/C96488702",
+          "wikidata": "https://www.wikidata.org/wiki/Q208416",
+          "display_name": "Continuum hypothesis",
+          "level": 2,
+          "score": 0.5852102041244507
+        },
+        {
+          "id": "https://openalex.org/C84035572",
+          "wikidata": "https://www.wikidata.org/wiki/Q193463",
+          "display_name": "Continuum mechanics",
+          "level": 2,
+          "score": 0.5565038323402405
+        },
+        {
+          "id": "https://openalex.org/C11135259",
+          "wikidata": "https://www.wikidata.org/wiki/Q2477027",
+          "display_name": "Length scale",
+          "level": 2,
+          "score": 0.47770383954048157
+        },
+        {
+          "id": "https://openalex.org/C135628077",
+          "wikidata": "https://www.wikidata.org/wiki/Q220184",
+          "display_name": "Finite element method",
+          "level": 2,
+          "score": 0.45850569009780884
+        },
+        {
+          "id": "https://openalex.org/C121854251",
+          "wikidata": "https://www.wikidata.org/wiki/Q62932",
+          "display_name": "Elasticity (physics)",
+          "level": 2,
+          "score": 0.4251963496208191
+        },
+        {
+          "id": "https://openalex.org/C121864883",
+          "wikidata": "https://www.wikidata.org/wiki/Q677916",
+          "display_name": "Statistical physics",
+          "level": 1,
+          "score": 0.4173199534416199
+        },
+        {
+          "id": "https://openalex.org/C57879066",
+          "wikidata": "https://www.wikidata.org/wiki/Q41217",
+          "display_name": "Mechanics",
+          "level": 1,
+          "score": 0.36330312490463257
+        },
+        {
+          "id": "https://openalex.org/C74650414",
+          "wikidata": "https://www.wikidata.org/wiki/Q11397",
+          "display_name": "Classical mechanics",
+          "level": 1,
+          "score": 0.3434985280036926
+        },
+        {
+          "id": "https://openalex.org/C121332964",
+          "wikidata": "https://www.wikidata.org/wiki/Q413",
+          "display_name": "Physics",
+          "level": 0,
+          "score": 0.319439560174942
+        },
+        {
+          "id": "https://openalex.org/C66938386",
+          "wikidata": "https://www.wikidata.org/wiki/Q633538",
+          "display_name": "Structural engineering",
+          "level": 1,
+          "score": 0.3141804337501526
+        },
+        {
+          "id": "https://openalex.org/C127413603",
+          "wikidata": "https://www.wikidata.org/wiki/Q11023",
+          "display_name": "Engineering",
+          "level": 0,
+          "score": 0.22305893898010254
+        },
+        {
+          "id": "https://openalex.org/C97355855",
+          "wikidata": "https://www.wikidata.org/wiki/Q11473",
+          "display_name": "Thermodynamics",
+          "level": 1,
+          "score": 0.0
+        }
+      ],
+      "mesh": [],
+      "locations_count": 3,
+      "locations": [
+        {
+          "id": "doi:10.1016/j.compstruct.2017.06.040",
+          "is_oa": false,
+          "landing_page_url": "https://doi.org/10.1016/j.compstruct.2017.06.040",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S52363224",
+            "display_name": "Composite Structures",
+            "issn_l": "0263-8223",
+            "issn": [
+              "0263-8223",
+              "1879-1085"
+            ],
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": true,
+            "host_organization": "https://openalex.org/P4310320990",
+            "host_organization_name": "Elsevier BV",
+            "host_organization_lineage": [
+              "https://openalex.org/P4310320990"
+            ],
+            "host_organization_lineage_names": [
+              "Elsevier BV"
+            ],
+            "type": "journal"
+          },
+          "license": null,
+          "license_id": null,
+          "version": "publishedVersion",
+          "is_accepted": true,
+          "is_published": true,
+          "raw_source_name": "Composite Structures",
+          "raw_type": "journal-article"
+        },
+        {
+          "id": "pmh:oai:figshare.com:article/13309268",
+          "is_oa": true,
+          "landing_page_url": null,
+          "pdf_url": "https://figshare.com/articles/journal_contribution/A_review_of_continuum_mechanics_models_for_size-dependent_analysis_of_beams_and_plates/13309268",
+          "source": {
+            "id": "https://openalex.org/S4377196282",
+            "display_name": "Figshare",
+            "issn_l": null,
+            "issn": null,
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": "https://openalex.org/I4210132348",
+            "host_organization_name": "Figshare (United Kingdom)",
+            "host_organization_lineage": [
+              "https://openalex.org/I4210132348"
+            ],
+            "host_organization_lineage_names": [],
+            "type": "repository"
+          },
+          "license": "cc-by",
+          "license_id": "https://openalex.org/licenses/cc-by",
+          "version": "submittedVersion",
+          "is_accepted": false,
+          "is_published": false,
+          "raw_source_name": "",
+          "raw_type": "Text"
+        },
+        {
+          "id": "doi:10.26181/6001244ecb094",
+          "is_oa": true,
+          "landing_page_url": "https://doi.org/10.26181/6001244ecb094",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S7407052018",
+            "display_name": "La Trobe University",
+            "issn_l": null,
+            "issn": [],
+            "is_oa": false,
+            "is_in_doaj": false,
+            "is_core": false,
+            "host_organization": null,
+            "host_organization_name": null,
+            "host_organization_lineage": [],
+            "host_organization_lineage_names": [],
+            "type": "repository"
+          },
+          "license": "cc-by",
+          "license_id": "https://openalex.org/licenses/cc-by",
+          "version": null,
+          "is_accepted": false,
+          "is_published": null,
+          "raw_source_name": null,
+          "raw_type": "article-journal"
+        }
+      ],
+      "best_oa_location": {
+        "id": "pmh:oai:figshare.com:article/13309268",
+        "is_oa": true,
+        "landing_page_url": null,
+        "pdf_url": "https://figshare.com/articles/journal_contribution/A_review_of_continuum_mechanics_models_for_size-dependent_analysis_of_beams_and_plates/13309268",
+        "source": {
+          "id": "https://openalex.org/S4377196282",
+          "display_name": "Figshare",
+          "issn_l": null,
+          "issn": null,
+          "is_oa": false,
+          "is_in_doaj": false,
+          "is_core": false,
+          "host_organization": "https://openalex.org/I4210132348",
+          "host_organization_name": "Figshare (United Kingdom)",
+          "host_organization_lineage": [
+            "https://openalex.org/I4210132348"
+          ],
+          "host_organization_lineage_names": [],
+          "type": "repository"
+        },
+        "license": "cc-by",
+        "license_id": "https://openalex.org/licenses/cc-by",
+        "version": "submittedVersion",
+        "is_accepted": false,
+        "is_published": false,
+        "raw_source_name": "",
+        "raw_type": "Text"
+      },
+      "sustainable_development_goals": [],
+      "awards": [
+        {
+          "id": "https://openalex.org/G5730784971",
+          "display_name": null,
+          "funder_award_id": "2011-0030847",
+          "funder_id": "https://openalex.org/F4320322120",
+          "funder_display_name": "National Research Foundation of Korea"
+        }
+      ],
+      "funders": [
+        {
+          "id": "https://openalex.org/F4320320577",
+          "display_name": "La Trobe University",
+          "ror": "https://ror.org/01rxfrp27"
+        },
+        {
+          "id": "https://openalex.org/F4320320671",
+          "display_name": "National Research Foundation",
+          "ror": "https://ror.org/05s0g1g46"
+        },
+        {
+          "id": "https://openalex.org/F4320322120",
+          "display_name": "National Research Foundation of Korea",
+          "ror": "https://ror.org/013aysd81"
+        },
+        {
+          "id": "https://openalex.org/F4320335199",
+          "display_name": "Korea Institute of Energy Technology Evaluation and Planning",
+          "ror": "https://ror.org/02zq38y32"
+        }
+      ],
+      "has_content": {
+        "grobid_xml": true,
+        "pdf": true
+      },
+      "content_urls": {
+        "pdf": "https://content.openalex.org/works/W2731622532.pdf",
+        "grobid_xml": "https://content.openalex.org/works/W2731622532.grobid-xml"
+      },
+      "referenced_works_count": 433,
+      "referenced_works": [
+        "https://openalex.org/W250622054",
+        "https://openalex.org/W259813071",
+        "https://openalex.org/W320912747",
+        "https://openalex.org/W566550858",
+        "https://openalex.org/W580986375",
+        "https://openalex.org/W597493179",
+        "https://openalex.org/W604282013",
+        "https://openalex.org/W618817025",
+        "https://openalex.org/W633630275",
+        "https://openalex.org/W652555600",
+        "https://openalex.org/W755296745",
+        "https://openalex.org/W790516823",
+        "https://openalex.org/W795965247",
+        "https://openalex.org/W855248146",
+        "https://openalex.org/W855886047",
+        "https://openalex.org/W1048935086",
+        "https://openalex.org/W1092395535",
+        "https://openalex.org/W1144367541",
+        "https://openalex.org/W1176117884",
+        "https://openalex.org/W1448092547",
+        "https://openalex.org/W1521175922",
+        "https://openalex.org/W1572656155",
+        "https://openalex.org/W1628133698",
+        "https://openalex.org/W1630204457",
+        "https://openalex.org/W1764162527",
+        "https://openalex.org/W1799494809",
+        "https://openalex.org/W1844501693",
+        "https://openalex.org/W1916180225",
+        "https://openalex.org/W1917299572",
+        "https://openalex.org/W1963501305",
+        "https://openalex.org/W1963883188",
+        "https://openalex.org/W1964268590",
+        "https://openalex.org/W1965079265",
+        "https://openalex.org/W1965135771",
+        "https://openalex.org/W1965208281",
+        "https://openalex.org/W1965249396",
+        "https://openalex.org/W1966330485",
+        "https://openalex.org/W1966876645",
+        "https://openalex.org/W1967114866",
+        "https://openalex.org/W1967480107",
+        "https://openalex.org/W1967541374",
+        "https://openalex.org/W1967566941",
+        "https://openalex.org/W1968468668",
+        "https://openalex.org/W1968704860",
+        "https://openalex.org/W1969288928",
+        "https://openalex.org/W1969792059",
+        "https://openalex.org/W1970335941",
+        "https://openalex.org/W1970616553",
+        "https://openalex.org/W1971407214",
+        "https://openalex.org/W1971717868",
+        "https://openalex.org/W1972343628",
+        "https://openalex.org/W1972816980",
+        "https://openalex.org/W1973018528",
+        "https://openalex.org/W1973208771",
+        "https://openalex.org/W1973433254",
+        "https://openalex.org/W1973473492",
+        "https://openalex.org/W1973832012",
+        "https://openalex.org/W1974331450",
+        "https://openalex.org/W1975213402",
+        "https://openalex.org/W1975645233",
+        "https://openalex.org/W1975873762",
+        "https://openalex.org/W1976364342",
+        "https://openalex.org/W1977277960",
+        "https://openalex.org/W1977925798",
+        "https://openalex.org/W1977943707",
+        "https://openalex.org/W1978145689",
+        "https://openalex.org/W1978197445",
+        "https://openalex.org/W1978239908",
+        "https://openalex.org/W1978577711",
+        "https://openalex.org/W1979035105",
+        "https://openalex.org/W1979084640",
+        "https://openalex.org/W1979942700",
+        "https://openalex.org/W1980181204",
+        "https://openalex.org/W1980934012",
+        "https://openalex.org/W1981714315",
+        "https://openalex.org/W1982174224",
+        "https://openalex.org/W1982292906",
+        "https://openalex.org/W1982783634",
+        "https://openalex.org/W1984383267",
+        "https://openalex.org/W1984570677",
+        "https://openalex.org/W1985856905",
+        "https://openalex.org/W1986271025",
+        "https://openalex.org/W1986409851",
+        "https://openalex.org/W1986776549",
+        "https://openalex.org/W1987289301",
+        "https://openalex.org/W1987640321",
+        "https://openalex.org/W1987727864",
+        "https://openalex.org/W1988100726",
+        "https://openalex.org/W1988368000",
+        "https://openalex.org/W1988738352",
+        "https://openalex.org/W1989209819",
+        "https://openalex.org/W1989241205",
+        "https://openalex.org/W1990149957",
+        "https://openalex.org/W1990876341",
+        "https://openalex.org/W1992799691",
+        "https://openalex.org/W1993061693",
+        "https://openalex.org/W1994225683",
+        "https://openalex.org/W1994605787",
+        "https://openalex.org/W1995087382",
+        "https://openalex.org/W1995817738",
+        "https://openalex.org/W1996151352",
+        "https://openalex.org/W1996286011",
+        "https://openalex.org/W1997350022",
+        "https://openalex.org/W1997567812",
+        "https://openalex.org/W1997997103",
+        "https://openalex.org/W1998494366",
+        "https://openalex.org/W1999544762",
+        "https://openalex.org/W2000103251",
+        "https://openalex.org/W2000354329",
+        "https://openalex.org/W2001811653",
+        "https://openalex.org/W2002418948",
+        "https://openalex.org/W2003190799",
+        "https://openalex.org/W2003320803",
+        "https://openalex.org/W2004342743",
+        "https://openalex.org/W2004346556",
+        "https://openalex.org/W2004872964",
+        "https://openalex.org/W2006613710",
+        "https://openalex.org/W2008048810",
+        "https://openalex.org/W2008231974",
+        "https://openalex.org/W2009285123",
+        "https://openalex.org/W2010645347",
+        "https://openalex.org/W2011732154",
+        "https://openalex.org/W2013769142",
+        "https://openalex.org/W2013794369",
+        "https://openalex.org/W2014480682",
+        "https://openalex.org/W2014630286",
+        "https://openalex.org/W2014958982",
+        "https://openalex.org/W2015926310",
+        "https://openalex.org/W2016179536",
+        "https://openalex.org/W2016322880",
+        "https://openalex.org/W2016360972",
+        "https://openalex.org/W2016801238",
+        "https://openalex.org/W2017965666",
+        "https://openalex.org/W2018120709",
+        "https://openalex.org/W2018858346",
+        "https://openalex.org/W2019045610",
+        "https://openalex.org/W2019708938",
+        "https://openalex.org/W2019867267",
+        "https://openalex.org/W2020053410",
+        "https://openalex.org/W2020276486",
+        "https://openalex.org/W2020295952",
+        "https://openalex.org/W2020749392",
+        "https://openalex.org/W2020812769",
+        "https://openalex.org/W2021070072",
+        "https://openalex.org/W2021189319",
+        "https://openalex.org/W2021755165",
+        "https://openalex.org/W2021884780",
+        "https://openalex.org/W2023084711",
+        "https://openalex.org/W2023270527",
+        "https://openalex.org/W2023703834",
+        "https://openalex.org/W2024393666",
+        "https://openalex.org/W2024623569",
+        "https://openalex.org/W2024735629",
+        "https://openalex.org/W2024870000",
+        "https://openalex.org/W2024973369",
+        "https://openalex.org/W2026073006",
+        "https://openalex.org/W2026259707",
+        "https://openalex.org/W2026490632",
+        "https://openalex.org/W2026744374",
+        "https://openalex.org/W2027079346",
+        "https://openalex.org/W2027202993",
+        "https://openalex.org/W2027492392",
+        "https://openalex.org/W2027607977",
+        "https://openalex.org/W2028401214",
+        "https://openalex.org/W2028952511",
+        "https://openalex.org/W2028992764",
+        "https://openalex.org/W2029158180",
+        "https://openalex.org/W2029272054",
+        "https://openalex.org/W2029443635",
+        "https://openalex.org/W2029758546",
+        "https://openalex.org/W2029920038",
+        "https://openalex.org/W2030051730",
+        "https://openalex.org/W2030463063",
+        "https://openalex.org/W2030566317",
+        "https://openalex.org/W2031025059",
+        "https://openalex.org/W2031453747",
+        "https://openalex.org/W2031513512",
+        "https://openalex.org/W2032210254",
+        "https://openalex.org/W2032220820",
+        "https://openalex.org/W2033371200",
+        "https://openalex.org/W2033943830",
+        "https://openalex.org/W2034036934",
+        "https://openalex.org/W2034360789",
+        "https://openalex.org/W2034785734",
+        "https://openalex.org/W2034868462",
+        "https://openalex.org/W2034923124",
+        "https://openalex.org/W2035459403",
+        "https://openalex.org/W2036144108",
+        "https://openalex.org/W2037197854",
+        "https://openalex.org/W2038178058",
+        "https://openalex.org/W2038205573",
+        "https://openalex.org/W2038397505",
+        "https://openalex.org/W2039058737",
+        "https://openalex.org/W2041102137",
+        "https://openalex.org/W2041508123",
+        "https://openalex.org/W2042454348",
+        "https://openalex.org/W2043639310",
+        "https://openalex.org/W2044090600",
+        "https://openalex.org/W2045077680",
+        "https://openalex.org/W2045187252",
+        "https://openalex.org/W2045198534",
+        "https://openalex.org/W2045516298",
+        "https://openalex.org/W2045775879",
+        "https://openalex.org/W2045870394",
+        "https://openalex.org/W2047442887",
+        "https://openalex.org/W2047565194",
+        "https://openalex.org/W2048274882",
+        "https://openalex.org/W2048595285",
+        "https://openalex.org/W2049320810",
+        "https://openalex.org/W2050375727",
+        "https://openalex.org/W2051097082",
+        "https://openalex.org/W2051405764",
+        "https://openalex.org/W2051912022",
+        "https://openalex.org/W2052137108",
+        "https://openalex.org/W2052262257",
+        "https://openalex.org/W2052334604",
+        "https://openalex.org/W2052453379",
+        "https://openalex.org/W2053087517",
+        "https://openalex.org/W2053435859",
+        "https://openalex.org/W2053955874",
+        "https://openalex.org/W2054009965",
+        "https://openalex.org/W2055225057",
+        "https://openalex.org/W2055315427",
+        "https://openalex.org/W2056275358",
+        "https://openalex.org/W2056824799",
+        "https://openalex.org/W2057252032",
+        "https://openalex.org/W2057436410",
+        "https://openalex.org/W2057845127",
+        "https://openalex.org/W2058363387",
+        "https://openalex.org/W2059534823",
+        "https://openalex.org/W2060140662",
+        "https://openalex.org/W2061246434",
+        "https://openalex.org/W2061455994",
+        "https://openalex.org/W2061559475",
+        "https://openalex.org/W2061631288",
+        "https://openalex.org/W2062397939",
+        "https://openalex.org/W2062811888",
+        "https://openalex.org/W2063627308",
+        "https://openalex.org/W2064267196",
+        "https://openalex.org/W2065012133",
+        "https://openalex.org/W2066140292",
+        "https://openalex.org/W2066422050",
+        "https://openalex.org/W2068105760",
+        "https://openalex.org/W2068817435",
+        "https://openalex.org/W2069344959",
+        "https://openalex.org/W2069831106",
+        "https://openalex.org/W2070132644",
+        "https://openalex.org/W2070510933",
+        "https://openalex.org/W2070693801",
+        "https://openalex.org/W2071792155",
+        "https://openalex.org/W2072300565",
+        "https://openalex.org/W2072324242",
+        "https://openalex.org/W2072446689",
+        "https://openalex.org/W2072560326",
+        "https://openalex.org/W2076193583",
+        "https://openalex.org/W2076325213",
+        "https://openalex.org/W2076436283",
+        "https://openalex.org/W2076619304",
+        "https://openalex.org/W2076651819",
+        "https://openalex.org/W2077206651",
+        "https://openalex.org/W2077898305",
+        "https://openalex.org/W2079719844",
+        "https://openalex.org/W2080702122",
+        "https://openalex.org/W2080797205",
+        "https://openalex.org/W2080918510",
+        "https://openalex.org/W2081134643",
+        "https://openalex.org/W2081197526",
+        "https://openalex.org/W2081207534",
+        "https://openalex.org/W2082896593",
+        "https://openalex.org/W2082902836",
+        "https://openalex.org/W2082903766",
+        "https://openalex.org/W2083232320",
+        "https://openalex.org/W2084113519",
+        "https://openalex.org/W2084456336",
+        "https://openalex.org/W2084686596",
+        "https://openalex.org/W2085220819",
+        "https://openalex.org/W2085664758",
+        "https://openalex.org/W2085755059",
+        "https://openalex.org/W2086534658",
+        "https://openalex.org/W2087133018",
+        "https://openalex.org/W2087685145",
+        "https://openalex.org/W2088257916",
+        "https://openalex.org/W2088618832",
+        "https://openalex.org/W2089283865",
+        "https://openalex.org/W2089384313",
+        "https://openalex.org/W2091235352",
+        "https://openalex.org/W2091396756",
+        "https://openalex.org/W2091727318",
+        "https://openalex.org/W2091902037",
+        "https://openalex.org/W2092461054",
+        "https://openalex.org/W2092714585",
+        "https://openalex.org/W2093154527",
+        "https://openalex.org/W2093454438",
+        "https://openalex.org/W2094186345",
+        "https://openalex.org/W2094624129",
+        "https://openalex.org/W2095044799",
+        "https://openalex.org/W2095356744",
+        "https://openalex.org/W2095720189",
+        "https://openalex.org/W2098157410",
+        "https://openalex.org/W2099489538",
+        "https://openalex.org/W2102606383",
+        "https://openalex.org/W2105242568",
+        "https://openalex.org/W2105326484",
+        "https://openalex.org/W2109676775",
+        "https://openalex.org/W2116662139",
+        "https://openalex.org/W2118585463",
+        "https://openalex.org/W2119372569",
+        "https://openalex.org/W2120181682",
+        "https://openalex.org/W2121852859",
+        "https://openalex.org/W2122323682",
+        "https://openalex.org/W2124579776",
+        "https://openalex.org/W2130737601",
+        "https://openalex.org/W2131661483",
+        "https://openalex.org/W2138425920",
+        "https://openalex.org/W2139278274",
+        "https://openalex.org/W2139703172",
+        "https://openalex.org/W2142796635",
+        "https://openalex.org/W2143129611",
+        "https://openalex.org/W2143296563",
+        "https://openalex.org/W2143515585",
+        "https://openalex.org/W2144149058",
+        "https://openalex.org/W2144733512",
+        "https://openalex.org/W2145504748",
+        "https://openalex.org/W2149994446",
+        "https://openalex.org/W2152070203",
+        "https://openalex.org/W2155257927",
+        "https://openalex.org/W2156497553",
+        "https://openalex.org/W2159543070",
+        "https://openalex.org/W2162913595",
+        "https://openalex.org/W2163327429",
+        "https://openalex.org/W2163761977",
+        "https://openalex.org/W2163866421",
+        "https://openalex.org/W2166346770",
+        "https://openalex.org/W2167739302",
+        "https://openalex.org/W2168043059",
+        "https://openalex.org/W2171904197",
+        "https://openalex.org/W2173141048",
+        "https://openalex.org/W2177288451",
+        "https://openalex.org/W2178018546",
+        "https://openalex.org/W2185768864",
+        "https://openalex.org/W2191444565",
+        "https://openalex.org/W2192574977",
+        "https://openalex.org/W2205528935",
+        "https://openalex.org/W2212893228",
+        "https://openalex.org/W2219274002",
+        "https://openalex.org/W2223436533",
+        "https://openalex.org/W2226979079",
+        "https://openalex.org/W2227539937",
+        "https://openalex.org/W2234498367",
+        "https://openalex.org/W2237815100",
+        "https://openalex.org/W2250787293",
+        "https://openalex.org/W2259612566",
+        "https://openalex.org/W2264034876",
+        "https://openalex.org/W2264417799",
+        "https://openalex.org/W2271218420",
+        "https://openalex.org/W2276132184",
+        "https://openalex.org/W2281395743",
+        "https://openalex.org/W2287248148",
+        "https://openalex.org/W2290447042",
+        "https://openalex.org/W2291812421",
+        "https://openalex.org/W2296480230",
+        "https://openalex.org/W2301917296",
+        "https://openalex.org/W2308947684",
+        "https://openalex.org/W2312236751",
+        "https://openalex.org/W2314772866",
+        "https://openalex.org/W2317184888",
+        "https://openalex.org/W2317453929",
+        "https://openalex.org/W2318802699",
+        "https://openalex.org/W2324760549",
+        "https://openalex.org/W2327526409",
+        "https://openalex.org/W2328223507",
+        "https://openalex.org/W2329593236",
+        "https://openalex.org/W2332831731",
+        "https://openalex.org/W2333217497",
+        "https://openalex.org/W2335547409",
+        "https://openalex.org/W2339817631",
+        "https://openalex.org/W2339846069",
+        "https://openalex.org/W2339973124",
+        "https://openalex.org/W2341325149",
+        "https://openalex.org/W2342665093",
+        "https://openalex.org/W2345705187",
+        "https://openalex.org/W2345811037",
+        "https://openalex.org/W2346250394",
+        "https://openalex.org/W2347030258",
+        "https://openalex.org/W2347065563",
+        "https://openalex.org/W2353902254",
+        "https://openalex.org/W2381659929",
+        "https://openalex.org/W2399435827",
+        "https://openalex.org/W2399436658",
+        "https://openalex.org/W2401149422",
+        "https://openalex.org/W2404367851",
+        "https://openalex.org/W2410438731",
+        "https://openalex.org/W2411185883",
+        "https://openalex.org/W2411256643",
+        "https://openalex.org/W2411317014",
+        "https://openalex.org/W2465779130",
+        "https://openalex.org/W2466128038",
+        "https://openalex.org/W2479588737",
+        "https://openalex.org/W2480535338",
+        "https://openalex.org/W2491104274",
+        "https://openalex.org/W2493037093",
+        "https://openalex.org/W2497853481",
+        "https://openalex.org/W2509249958",
+        "https://openalex.org/W2514205748",
+        "https://openalex.org/W2518388871",
+        "https://openalex.org/W2520493954",
+        "https://openalex.org/W2522489505",
+        "https://openalex.org/W2532098651",
+        "https://openalex.org/W2550556150",
+        "https://openalex.org/W2560311060",
+        "https://openalex.org/W2572157694",
+        "https://openalex.org/W2573572321",
+        "https://openalex.org/W2586647997",
+        "https://openalex.org/W2587577546",
+        "https://openalex.org/W2590352998",
+        "https://openalex.org/W2594878328",
+        "https://openalex.org/W2595686925",
+        "https://openalex.org/W2604380395",
+        "https://openalex.org/W2606978596",
+        "https://openalex.org/W2616641886",
+        "https://openalex.org/W2643984835",
+        "https://openalex.org/W3151972444",
+        "https://openalex.org/W4211110571",
+        "https://openalex.org/W4233270415",
+        "https://openalex.org/W4238661429",
+        "https://openalex.org/W4285719527",
+        "https://openalex.org/W6631287591",
+        "https://openalex.org/W6634389325",
+        "https://openalex.org/W6686832159",
+        "https://openalex.org/W6696577429",
+        "https://openalex.org/W6726768677",
+        "https://openalex.org/W6730425978",
+        "https://openalex.org/W7024519205"
+      ],
+      "related_works": [
+        "https://openalex.org/W2071402999",
+        "https://openalex.org/W4250231984",
+        "https://openalex.org/W4285650751",
+        "https://openalex.org/W2090614312",
+        "https://openalex.org/W2002359584",
+        "https://openalex.org/W4244642994",
+        "https://openalex.org/W69654520",
+        "https://openalex.org/W2061766636",
+        "https://openalex.org/W2074168774",
+        "https://openalex.org/W2985282126"
+      ],
+      "abstract_inverted_index": null,
+      "counts_by_year": [
+        {
+          "year": 2026,
+          "cited_by_count": 13
+        },
+        {
+          "year": 2025,
+          "cited_by_count": 43
+        },
+        {
+          "year": 2024,
+          "cited_by_count": 35
+        },
+        {
+          "year": 2023,
+          "cited_by_count": 48
+        },
+        {
+          "year": 2022,
+          "cited_by_count": 50
+        },
+        {
+          "year": 2021,
+          "cited_by_count": 60
+        },
+        {
+          "year": 2020,
+          "cited_by_count": 59
+        },
+        {
+          "year": 2019,
+          "cited_by_count": 34
+        },
+        {
+          "year": 2018,
+          "cited_by_count": 36
+        },
+        {
+          "year": 2017,
+          "cited_by_count": 7
+        }
+      ],
+      "updated_date": "2026-04-28T14:05:53.105641",
+      "created_date": "2025-10-10T00:00:00"
+    }
+  ],
+  "group_by": []
+}

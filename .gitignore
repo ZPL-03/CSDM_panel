@@ -28,6 +28,12 @@ data/results/latest_report.md
 data/results/latest_report.pdf
 data/results/batch_summary_*.json
 knowledge/chroma_db/
+knowledge/literature/pdfs/
+knowledge/literature/texts/
+knowledge/literature/markdown/
+knowledge/literature/json/
+knowledge/literature/images/
+knowledge/literature/imports/
 models/embedding_cache/
 
 # Abaqus session / generated files

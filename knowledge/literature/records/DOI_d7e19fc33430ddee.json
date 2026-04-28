@@ -1,0 +1,76 @@
+{
+  "paper_id": "DOI_d7e19fc33430ddee",
+  "source": "openalex",
+  "source_ids": {
+    "openalex_id": "https://openalex.org/W2103979104",
+    "doi": "10.1073/pnas.1515602112"
+  },
+  "title": "A mechanically driven form of Kirigami as a route to 3D mesostructures in micro/nanomembranes",
+  "abstract": "Assembly of 3D micro/nanostructures in advanced functional materials has important implications across broad areas of technology. Existing approaches are compatible, however, only with narrow classes of materials and/or 3D geometries. This paper introduces ideas for a form of Kirigami that allows precise, mechanically driven assembly of 3D mesostructures of diverse materials from 2D micro/nanomembranes with strategically designed geometries and patterns of cuts. Theoretical and experimental studies demonstrate applicability of the methods across length scales from macro to nano, in materials ranging from monocrystalline silicon to plastic, with levels of topographical complexity that significantly exceed those that can be achieved using other approaches. A broad set of examples includes 3D silicon mesostructures and hybrid nanomembrane-nanoribbon systems, including heterogeneous combinations with polymers and metals, with critical dimensions that range from 100 nm to 30 mm. A 3D mechanically tunable optical transmission window provides an application example of this Kirigami process, enabled by theoretically guided design.",
+  "authors": [
+    "Yihui Zhang",
+    "Zheng Yan",
+    "Kewang Nan",
+    "Dongqing Xiao",
+    "Yuhao Liu",
+    "Haiwen Luan",
+    "Haoran Fu",
+    "Xizhu Wang",
+    "Qinglin Yang",
+    "Jiechen Wang",
+    "Wen Ren",
+    "Hongzhi Si",
+    "Fei Liu",
+    "Lihen Yang",
+    "Hejun Li",
+    "Juntong Wang",
+    "Xuelin Guo",
+    "Hongying Luo",
+    "Liang Wang",
+    "Yonggang Huang",
+    "John A. Rogers"
+  ],
+  "year": 2015,
+  "venue": "Proceedings of the National Academy of Sciences",
+  "publisher": null,
+  "keywords": [],
+  "topics": [
+    "Advanced Materials and Mechanics",
+    "Advanced Sensor and Energy Harvesting Materials",
+    "Modular Robots and Swarm Intelligence"
+  ],
+  "concepts": [
+    "Materials science",
+    "Nanotechnology",
+    "Silicon",
+    "Nanostructure",
+    "Optoelectronics"
+  ],
+  "material_domain_tags": [
+    "Advanced Materials and Mechanics",
+    "Advanced Sensor and Energy Harvesting Materials",
+    "Modular Robots and Swarm Intelligence"
+  ],
+  "citation_count": 530,
+  "is_open_access": true,
+  "oa_status": "green",
+  "oa_url": "https://www.osti.gov/servlets/purl/1348412",
+  "oa_pdf_url": "https://www.osti.gov/servlets/purl/1348412",
+  "landing_page_url": "https://doi.org/10.1073/pnas.1515602112",
+  "license": null,
+  "retrieved_at": "2026-04-28T17:12:23.471454+00:00",
+  "fulltext_status": "pymupdf_parsed",
+  "fulltext_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\pdfs\\DOI_d7e19fc33430ddee.pdf",
+  "fulltext_text_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\texts\\DOI_d7e19fc33430ddee.txt",
+  "chunk_count": 0,
+  "provenance": {
+    "query": "postbuckling of composite laminates",
+    "provider": "openalex"
+  },
+  "fulltext_markdown_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\markdown\\DOI_d7e19fc33430ddee.md",
+  "fulltext_json_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\json\\DOI_d7e19fc33430ddee.json",
+  "fulltext_image_dir": null,
+  "parse_backend": "pymupdf",
+  "parse_ocr": false,
+  "parsed_image_count": 0
+}

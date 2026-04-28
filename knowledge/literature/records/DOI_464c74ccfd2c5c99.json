@@ -1,0 +1,65 @@
+{
+  "paper_id": "DOI_464c74ccfd2c5c99",
+  "source": "openalex",
+  "source_ids": {
+    "openalex_id": "https://openalex.org/W2089649876",
+    "doi": "10.2140/jomms.2009.4.1187"
+  },
+  "title": "Buckling and postbuckling behavior of laminated composite stringer stiffened curved panels under axial compression: Experiments and design guidelines",
+  "abstract": "An extensive test series on circular cylindrical laminated composite stringer-stiffened panels subjected to axial compression, shear loading introduced by shear and combined axial compression and shear was carried out at the Technion, Israel. The test program was an essential part of an ongoing effort undertaken by the POSICOSS project (improved postbuckling simulation for design of fibre composite stiffened fuselage structures) aiming at design of low cost, low weight airborne structures that was initiated and supported by the Fifth European Initiative Program.",
+  "authors": [
+    "Haim Abramovich",
+    "Tanchum Weller"
+  ],
+  "year": 2009,
+  "venue": "Journal of mechanics of materials and structures",
+  "publisher": null,
+  "keywords": [],
+  "topics": [
+    "Composite Structure Analysis and Optimization",
+    "Structural Load-Bearing Analysis",
+    "Mechanical Behavior of Composites"
+  ],
+  "concepts": [
+    "Buckling",
+    "Structural engineering",
+    "Stiffness",
+    "Stringer",
+    "Aerospace",
+    "Shell (structure)",
+    "Composite number",
+    "Critical load",
+    "Compression (physics)",
+    "Materials science",
+    "Engineering",
+    "Composite material",
+    "Aerospace engineering"
+  ],
+  "material_domain_tags": [
+    "Composite Structure Analysis and Optimization",
+    "Structural Load-Bearing Analysis",
+    "Mechanical Behavior of Composites"
+  ],
+  "citation_count": 22,
+  "is_open_access": true,
+  "oa_status": "bronze",
+  "oa_url": "https://msp.org/jomms/2009/4-7/jomms-v4-n7-p02-s.pdf",
+  "oa_pdf_url": "https://msp.org/jomms/2009/4-7/jomms-v4-n7-p02-s.pdf",
+  "landing_page_url": "https://doi.org/10.2140/jomms.2009.4.1187",
+  "license": null,
+  "retrieved_at": "2026-04-28T17:14:44.659400+00:00",
+  "fulltext_status": "pymupdf_parsed",
+  "fulltext_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\pdfs\\DOI_464c74ccfd2c5c99.pdf",
+  "fulltext_text_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\texts\\DOI_464c74ccfd2c5c99.txt",
+  "chunk_count": 0,
+  "provenance": {
+    "query": "stiffened composite panel buckling compression postbuckling",
+    "provider": "openalex"
+  },
+  "fulltext_markdown_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\markdown\\DOI_464c74ccfd2c5c99.md",
+  "fulltext_json_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\json\\DOI_464c74ccfd2c5c99.json",
+  "fulltext_image_dir": null,
+  "parse_backend": "pymupdf",
+  "parse_ocr": false,
+  "parsed_image_count": 0
+}

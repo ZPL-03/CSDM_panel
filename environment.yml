@@ -20,6 +20,7 @@ dependencies:
       - langchain==0.3.28
       - langchain-community==0.3.31
       - sentence-transformers==2.6.1
+      - PyMuPDF==1.24.14
       - scikit-learn==1.6.1
       - matplotlib==3.9.2
       - pyvista==0.46.5

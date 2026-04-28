@@ -1,0 +1,54 @@
+{
+  "paper_id": "DOI_6e7090afcfa04a9b",
+  "source": "openalex",
+  "source_ids": {
+    "openalex_id": "https://openalex.org/W2317472115",
+    "doi": "10.2514/6.1992-2285"
+  },
+  "title": "Buckling, postbuckling and failure behavior of composite-stiffened panels under axial compression",
+  "abstract": "For stiffened composite panels, the calculation of the postbuckling strength is a rather difficult problem. The nonlinear stepwise equilibrium calculation is accompanied by an eigenvalue calculation in order to find bifurcations or sensitive regions, in which a snap towards another buckling mode may occur. The corresponding eigenmode will be used for finding the new equilibrium point on the postbuckling branch. The solution is improved using the normal Newton-Raphson method. Two series of stiffened panels, beam-stiffened panels and bladestiffened panels, have been calculated. The beam-stiffened panels are the simplest stiffened panels. The load-displacement curve shows reasonable results and proves the method to be working. The blade-stiffened panels are more frequently used in practice. It exhibits a more distinct postbuckling behavior with a sudden drop after the global buckling load. The whole pre- and postbuckling analysis of long narrow unstiffened plates with three edges supported and one long edge free, the long supported edge being free on midsurface, was investigated. It shows the properties of blade stiffeners very well. The comparison of the computational results with typical tests from CAE, NLR and NASA is presented. The global buckling of the stiffened panels with buckled skin is supposed to be one importent failure mode of stiffened panels.",
+  "authors": [
+    "Shanzhen Fan",
+    "Bernd Kroeplin",
+    "B. Geier"
+  ],
+  "year": 1992,
+  "venue": "33rd Structures, Structural Dynamics and Materials Conference",
+  "publisher": null,
+  "keywords": [],
+  "topics": [
+    "Composite Structure Analysis and Optimization",
+    "Structural Load-Bearing Analysis",
+    "Mechanical Engineering and Vibrations Research"
+  ],
+  "concepts": [
+    "Buckling",
+    "Composite number",
+    "Structural engineering",
+    "Compression (physics)",
+    "Materials science",
+    "Composite material",
+    "Engineering"
+  ],
+  "material_domain_tags": [
+    "Composite Structure Analysis and Optimization",
+    "Structural Load-Bearing Analysis",
+    "Mechanical Engineering and Vibrations Research"
+  ],
+  "citation_count": 5,
+  "is_open_access": false,
+  "oa_status": "closed",
+  "oa_url": null,
+  "oa_pdf_url": "",
+  "landing_page_url": "https://doi.org/10.2514/6.1992-2285",
+  "license": null,
+  "retrieved_at": "2026-04-28T17:14:44.660384+00:00",
+  "fulltext_status": "pdf_parsed",
+  "fulltext_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\pdfs\\DOI_6e7090afcfa04a9b.pdf",
+  "fulltext_text_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\texts\\DOI_6e7090afcfa04a9b.txt",
+  "chunk_count": 0,
+  "provenance": {
+    "query": "stiffened composite panel buckling compression postbuckling",
+    "provider": "openalex"
+  }
+}

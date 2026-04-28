@@ -163,6 +163,38 @@ D:/anaconda3/envs/GPT/python.exe -m pytest tests -q
 D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --seed --query-group composite_basics --max-results 20
 ```
 
+也可以直接指定检索词：
+
+```powershell
+D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --query "stiffened composite panel buckling compression" --max-results 20
+```
+
+如需同步下载 OpenAlex 标注的开放获取 PDF，并在本地解析全文：
+
+```powershell
+D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --seed --query-group buckling_and_panels --max-results 20 --download-oa-pdfs --parse-pdfs
+```
+
+默认解析后端是 `pymupdf`，只能抽取文字层。需要公式 LaTeX、表格结构和图片文件时，安装 MinerU 后使用：
+
+```powershell
+D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --parse-existing-pdfs --parse-backend mineru --ocr --force-pdfs
+```
+
+对扫描版或公式密集型论文，可安装 Nougat 后使用：
+
+```powershell
+D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --parse-existing-pdfs --parse-backend nougat --force-pdfs
+```
+
+如需导入已通过学校账号合法下载到本地的 PDF，请先把文件集中放入一个目录，再执行：
+
+```powershell
+D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --import-pdf-dir D:/Project/VS_Code/CSDM/reference/authorized_pdfs --parse-pdfs --parse-backend mineru --ocr
+```
+
+脚本不保存学校账号，也不模拟出版社登录；授权 PDF 通过本地目录导入后进入 `knowledge/literature/imports/pdfs/`、`knowledge/literature/imports/texts/` 和文献向量库，与自动下载的开放获取 PDF 分开存放。
+
 ### 6.6 文献记录重建向量索引
 
 ```powershell
@@ -212,10 +244,19 @@ D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --reindex
 
 - `knowledge/literature/raw/`：原始 API 返回
 - `knowledge/literature/records/`：标准化文献记录
-- `knowledge/literature/pdfs/`：开放获取 PDF 预留目录
+- `knowledge/literature/pdfs/`：自动下载的开放获取 PDF
+- `knowledge/literature/texts/`：自动下载 PDF 解析后的纯文本
+- `knowledge/literature/markdown/`：自动下载 PDF 解析后的 Markdown，MinerU / Nougat 可保留 LaTeX
+- `knowledge/literature/json/`：自动下载 PDF 的结构化解析结果
+- `knowledge/literature/images/`：MinerU 提取的图片
+- `knowledge/literature/imports/pdfs/`：外部导入的授权 PDF
+- `knowledge/literature/imports/texts/`：外部导入 PDF 解析后的纯文本
+- `knowledge/literature/imports/markdown/`：外部导入 PDF 的 Markdown 解析结果
+- `knowledge/literature/imports/json/`：外部导入 PDF 的结构化解析结果
+- `knowledge/literature/imports/images/`：外部导入 PDF 中提取的图片
 - `knowledge/literature/manifests/`：最近一次 ingestion 摘要
 
-当前文献链路基于 `OpenAlex` 实现 metadata + abstract ingestion，支持后续重建索引与任务时检索。
+当前文献链路基于 `OpenAlex` 实现 metadata + abstract ingestion，并支持开放获取 PDF 下载、授权 PDF 本地导入、PyMuPDF 文字层解析、MinerU Markdown/JSON/图片解析、Nougat 公式 OCR Markdown 解析、全文分块索引与任务时检索。
 
 ## 11. 回归验证
 

@@ -1,0 +1,60 @@
+{
+  "paper_id": "DOI_2692a6d1fe8c0f9f",
+  "source": "openalex",
+  "source_ids": {
+    "openalex_id": "https://openalex.org/W2731622532",
+    "doi": "10.1016/j.compstruct.2017.06.040"
+  },
+  "title": "A review of continuum mechanics models for size-dependent analysis of beams and plates",
+  "abstract": "",
+  "authors": [
+    "Huu‐Tai Thai",
+    "Thuc P. Vo",
+    "Trung-Kien Nguyen",
+    "Seung-Eock Kim"
+  ],
+  "year": 2017,
+  "venue": "Composite Structures",
+  "publisher": null,
+  "keywords": [],
+  "topics": [
+    "Nonlocal and gradient elasticity in micro/nano structures",
+    "Composite Structure Analysis and Optimization",
+    "Mechanical and Optical Resonators"
+  ],
+  "concepts": [
+    "Continuum hypothesis",
+    "Continuum mechanics",
+    "Length scale",
+    "Finite element method",
+    "Elasticity (physics)",
+    "Statistical physics",
+    "Mechanics",
+    "Classical mechanics",
+    "Physics",
+    "Structural engineering",
+    "Engineering",
+    "Thermodynamics"
+  ],
+  "material_domain_tags": [
+    "Nonlocal and gradient elasticity in micro/nano structures",
+    "Composite Structure Analysis and Optimization",
+    "Mechanical and Optical Resonators"
+  ],
+  "citation_count": 385,
+  "is_open_access": true,
+  "oa_status": "green",
+  "oa_url": "https://figshare.com/articles/journal_contribution/A_review_of_continuum_mechanics_models_for_size-dependent_analysis_of_beams_and_plates/13309268",
+  "oa_pdf_url": "https://figshare.com/articles/journal_contribution/A_review_of_continuum_mechanics_models_for_size-dependent_analysis_of_beams_and_plates/13309268",
+  "landing_page_url": "https://doi.org/10.1016/j.compstruct.2017.06.040",
+  "license": null,
+  "retrieved_at": "2026-04-28T17:12:23.472783+00:00",
+  "fulltext_status": "pdf_download_failed:HTTPError",
+  "fulltext_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\pdfs\\DOI_2692a6d1fe8c0f9f.pdf",
+  "fulltext_text_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\texts\\DOI_2692a6d1fe8c0f9f.txt",
+  "chunk_count": 0,
+  "provenance": {
+    "query": "postbuckling of composite laminates",
+    "provider": "openalex"
+  }
+}

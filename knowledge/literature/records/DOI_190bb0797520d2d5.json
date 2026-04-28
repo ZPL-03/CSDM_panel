@@ -1,0 +1,64 @@
+{
+  "paper_id": "DOI_190bb0797520d2d5",
+  "source": "openalex",
+  "source_ids": {
+    "openalex_id": "https://openalex.org/W2047622789",
+    "doi": "10.1115/1.4026911"
+  },
+  "title": "Dynamics of Phononic Materials and Structures: Historical Origins, Recent Progress, and Future Outlook",
+  "abstract": "Abstract The study of phononic materials and structures is an emerging discipline that lies at the crossroads of vibration and acoustics engineering and condensed matter physics. Broadly speaking, a phononic medium is a material or structural system that usually exhibits some form of periodicity, which can be in the constituent material phases, or the internal geometry, or even the boundary conditions. As such, its overall dynamical characteristics are compactly described by a frequency band structure, in analogy to an electronic band diagram. With roots extended to early studies of periodic systems by Newton and Rayleigh, the field has grown to encompass engineering configurations ranging from trusses and ribbed shells to phononic crystals and metamaterials. While applied research in this area has been abundant in recent years, treatment from a fundamental mechanics perspective, and particularly from the standpoint of dynamical systems, is needed to advance the field in new directions. For example, techniques already developed for the incorporation of damping and nonlinearities have recently been applied to wave propagation in phononic materials and structures. Similarly, numerical and experimental approaches originally developed for the characterization of conventional materials and structures are now being employed toward better understanding and exploitation of phononic systems. This article starts with an overview of historical developments and follows with an in-depth literature and technical review of recent progress in the field with special consideration given to aspects pertaining to the fundamentals of dynamics, vibrations, and acoustics. Finally, an outlook is projected onto the future on the basis of the current trajectories of the field.",
+  "authors": [
+    "Mahmoud I. Hussein",
+    "Michael J. Leamy",
+    "Massimo Ruzzene"
+  ],
+  "year": 2014,
+  "venue": "Applied Mechanics Reviews",
+  "publisher": null,
+  "keywords": [],
+  "topics": [
+    "Acoustic Wave Phenomena Research",
+    "Music Technology and Sound Studies",
+    "Hearing Loss and Rehabilitation"
+  ],
+  "concepts": [
+    "Truss",
+    "Metamaterial",
+    "Field (mathematics)",
+    "Acoustic metamaterials",
+    "Characterization (materials science)",
+    "Vibration",
+    "Physics",
+    "Mechanical engineering",
+    "Engineering",
+    "Theoretical physics",
+    "Materials science",
+    "Acoustics",
+    "Structural engineering",
+    "Nanotechnology",
+    "Mathematics",
+    "Optics",
+    "Pure mathematics"
+  ],
+  "material_domain_tags": [
+    "Acoustic Wave Phenomena Research",
+    "Music Technology and Sound Studies",
+    "Hearing Loss and Rehabilitation"
+  ],
+  "citation_count": 1604,
+  "is_open_access": true,
+  "oa_status": "hybrid",
+  "oa_url": "https://asmedigitalcollection.asme.org/appliedmechanicsreviews/article-pdf/66/4/040802/6782437/amr_066_04_040802.pdf",
+  "oa_pdf_url": "https://asmedigitalcollection.asme.org/appliedmechanicsreviews/article-pdf/66/4/040802/6782437/amr_066_04_040802.pdf",
+  "landing_page_url": "https://doi.org/10.1115/1.4026911",
+  "license": "cc-by-nc-sa",
+  "retrieved_at": "2026-04-28T17:12:20.371307+00:00",
+  "fulltext_status": "pdf_download_failed:HTTPError",
+  "fulltext_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\pdfs\\DOI_190bb0797520d2d5.pdf",
+  "fulltext_text_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\texts\\DOI_190bb0797520d2d5.txt",
+  "chunk_count": 0,
+  "provenance": {
+    "query": "stiffened composite panel buckling",
+    "provider": "openalex"
+  }
+}

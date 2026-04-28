@@ -1,0 +1,67 @@
+{
+  "paper_id": "W639581896",
+  "source": "openalex",
+  "source_ids": {
+    "openalex_id": "https://openalex.org/W639581896",
+    "doi": ""
+  },
+  "title": "Mechanics of laminated composite plates and shells : theory and analysis",
+  "abstract": "Equations of Anisotropic Elasticity, Virtual Work Principles, and Variational Methods Fiber-Reinforced Composite Materials Mathematical Preliminaries Equations of Anisotropic Entropy Virtual Work Principles Variational Methods Summary Introduction to Composite Materials Basic Concepts and Terminology Constitutive Equations of a Lamina Transformation of Stresses and Strains Plan Stress Constitutive Relations Classical and First-Order Theories of Laminated Composite Plates Introduction An Overview of Laminated Plate Theories The Classical Laminated Plate Theory The First-Order Laminated Plate Theory Laminate Stiffnesses for Selected Laminates One-Dimensional Analysis of Laminated Composite Plates Introduction Analysis of Laminated Beams Using CLPT Analysis of Laminated Beams Using FSDT Cylindrical Bending Using CLPT Cylindrical Bending Using FSDT Vibration Suppression in Beams Closing Remarks Analysis of Specially Orthotropic Laminates Using CLPT Introduction Bending of Simply Supported Rectangular Plates Bending of Plates with Two Opposite Edges Simply Supported Bending of Rectangular Plates with Various Boundary Conditions Buckling of Simply Supported Plates Under Compressive Loads Buckling of Rectangular Plates Under In-Plane Shear Load Vibration of Simply Supported Plates Buckling and Vibration of Plates with Two Parallel Edges Simply Supported Transient Analysis Closure Analytical Solutions of Rectangular Laminated Plates Using CLPT Governing Equations in Terms of Displacements Admissible Boundary Conditions for the Navier Solutions Navier Solutions of Antisymmetric Cross-Ply Laminates Navier Solutions of Antisymmetric Angle-Ply Laminates The Levy Solutions Analysis of Midplane Symmetric Laminates Transient Analysis Summary Analytical Solutions of Rectangular Laminated Plates Using FSDT Introduction Simply Supported Antisymmetric Cross-Ply Laminated Plates Simply Supported Antisymmetric Angle-Ply Laminated Plates Antisymmetric Cross-Ply Laminates with Two Opposite Edges Simply Supported Antisymmetric Angle-Ply Laminates with Two Opposite Edges Simply Supported Transient Solutions Vibration Control of Laminated Plates Summary Theory and Analysis of Laminated Shells Introduction Governing Equations Theory of Doubly-Curved Shell Vibration and Buckling of Cross-Ply Laminated Circular Cylindrical Shells Linear Finite Element Analysis of Composite Plates and Shells Introduction Finite Element Models of the Classical Plate Theory (CLPT) Finite Element Models of Shear Deformation Plate Theory (FSDT) Finite Element Analysis of Shells Summary Nonlinear Analysis of Composite Plates and Shells Introduction Classical Plate Theory First-Order Shear Deformation Plate Theory Time Approximation and the Newton-Raphson Method Numerical Examples of Plates Functionally Graded Plates Finite Element Models of Laminated Shell Theory Continuum Shell Finite Element Postbuckling Response and Progressive Failure of Composite Panels in Compression Closure Third-Order Theory of Laminated Composite Plates and Shells Introduction A Third-Order Plate Theory Higher-Order Laminate Stiffness Characteristics The Navier Solutions Levy Solutions of Cross-Ply Laminates Finite Element Model of Plates Equations of Motion of the Third-Order Theory of Doubly-Curved Shells Layerwise Theory and Variable Kinematic Model Introduction Development of the Theory Finite Element Model Variable Kinematic Formulations Application to Adaptive Structures Layerwise Theory of Cylindrical Shell Closure Subject Index",
+  "authors": [
+    "J. N. Reddy"
+  ],
+  "year": 2004,
+  "venue": null,
+  "publisher": null,
+  "keywords": [],
+  "topics": [
+    "Composite Structure Analysis and Optimization",
+    "Structural Analysis and Optimization",
+    "Topology Optimization in Engineering"
+  ],
+  "concepts": [
+    "Antisymmetric relation",
+    "Orthotropic material",
+    "Plate theory",
+    "Bending of plates",
+    "Boundary value problem",
+    "Composite laminates",
+    "Virtual work",
+    "Structural engineering",
+    "Buckling",
+    "Materials science",
+    "Constitutive equation",
+    "Bending",
+    "Vibration",
+    "Composite material",
+    "Mathematics",
+    "Composite number",
+    "Finite element method",
+    "Mathematical analysis",
+    "Physics",
+    "Engineering",
+    "Mathematical physics",
+    "Quantum mechanics"
+  ],
+  "material_domain_tags": [
+    "Composite Structure Analysis and Optimization",
+    "Structural Analysis and Optimization",
+    "Topology Optimization in Engineering"
+  ],
+  "citation_count": 4655,
+  "is_open_access": false,
+  "oa_status": "closed",
+  "oa_url": null,
+  "oa_pdf_url": "",
+  "landing_page_url": "https://ebookcentral.proquest.com/lib/munchentech/detail.action?docID=5268440",
+  "license": null,
+  "retrieved_at": "2026-04-28T17:12:25.406517+00:00",
+  "fulltext_status": "pdf_parsed",
+  "fulltext_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\pdfs\\W639581896.pdf",
+  "fulltext_text_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\texts\\W639581896.txt",
+  "chunk_count": 0,
+  "provenance": {
+    "query": "composite panel compression shear buckling",
+    "provider": "openalex"
+  }
+}

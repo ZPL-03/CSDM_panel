@@ -1,0 +1,60 @@
+{
+  "paper_id": "DOI_1dc83109f5d4d6d4",
+  "source": "openalex",
+  "source_ids": {
+    "openalex_id": "https://openalex.org/W2011019069",
+    "doi": "10.2514/3.10202"
+  },
+  "title": "Recent advances in analysis of laminated beams and plates. Part I - Sheareffects and buckling.",
+  "abstract": "A review of the recent developments in the analysis of laminated beams and plates with an emphasis on shear effects and buckling is presented. A discussion of various shear-deformation theories for plates and beams is given. The available theories are derived assuming a variation of either the in-plane displacement components or the stress components or both in the thickness coordinate. A review of the recently developed finite elements to analyze thin and thick laminated beams and plates is given next. These elements have been derived using the displacement methods, or the mixed methods or the hybrid methods. Recent studies on the buckling and postbuckling behavior of perfect and geometrically imperfect plates are described next. These behaviors have been studied using analytical, numerical, and experimental techniques. Finally, a review of the various studies on the delamination buckling and growth in beams and plates is given. Once again, the studies have been conducted using analytical, numerical, and experimental techniques. The energy release rates have been determined using closed-form solutions or using numerical differentiation. Mention also is made of studies on multiple delaminations and on dynamic response of composite laminates under impact loads.",
+  "authors": [
+    "Rakesh K. Kapania",
+    "Stefano Raciti"
+  ],
+  "year": 1989,
+  "venue": "AIAA Journal",
+  "publisher": null,
+  "keywords": [],
+  "topics": [
+    "Composite Structure Analysis and Optimization",
+    "Structural Load-Bearing Analysis",
+    "Structural Analysis and Optimization"
+  ],
+  "concepts": [
+    "Buckling",
+    "Structural engineering",
+    "Delamination (geology)",
+    "Materials science",
+    "Numerical analysis",
+    "Shear (geology)",
+    "Composite material",
+    "Engineering",
+    "Mathematics",
+    "Mathematical analysis",
+    "Geology",
+    "Paleontology",
+    "Tectonics",
+    "Subduction"
+  ],
+  "material_domain_tags": [
+    "Composite Structure Analysis and Optimization",
+    "Structural Load-Bearing Analysis",
+    "Structural Analysis and Optimization"
+  ],
+  "citation_count": 505,
+  "is_open_access": false,
+  "oa_status": "closed",
+  "oa_url": null,
+  "oa_pdf_url": "",
+  "landing_page_url": "https://doi.org/10.2514/3.10202",
+  "license": null,
+  "retrieved_at": "2026-04-28T17:12:23.472783+00:00",
+  "fulltext_status": "pdf_parsed",
+  "fulltext_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\pdfs\\DOI_1dc83109f5d4d6d4.pdf",
+  "fulltext_text_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\texts\\DOI_1dc83109f5d4d6d4.txt",
+  "chunk_count": 0,
+  "provenance": {
+    "query": "postbuckling of composite laminates",
+    "provider": "openalex"
+  }
+}

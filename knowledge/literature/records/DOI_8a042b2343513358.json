@@ -1,0 +1,64 @@
+{
+  "paper_id": "DOI_8a042b2343513358",
+  "source": "openalex",
+  "source_ids": {
+    "openalex_id": "https://openalex.org/W2071082437",
+    "doi": "10.1039/c3cs35468g"
+  },
+  "title": "Hallmarks of mechanochemistry: from nanoparticles to technology",
+  "abstract": "The aim of this review article on recent developments of mechanochemistry (nowadays established as a part of chemistry) is to provide a comprehensive overview of advances achieved in the field of atomistic processes, phase transformations, simple and multicomponent nanosystems and peculiarities of mechanochemical reactions. Industrial aspects with successful penetration into fields like materials engineering, heterogeneous catalysis and extractive metallurgy are also reviewed. The hallmarks of mechanochemistry include influencing reactivity of solids by the presence of solid-state defects, interphases and relaxation phenomena, enabling processes to take place under non-equilibrium conditions, creating a well-crystallized core of nanoparticles with disordered near-surface shell regions and performing simple dry time-convenient one-step syntheses. Underlying these hallmarks are technological consequences like preparing new nanomaterials with the desired properties or producing these materials in a reproducible way with high yield and under simple and easy operating conditions. The last but not least hallmark is enabling work under environmentally friendly and essentially waste-free conditions (822 references).",
+  "authors": [
+    "Peter Baláž",
+    "Marcela Achimovičová",
+    "Matěj Baláž",
+    "Peter Billik",
+    "Zara Cherkezova‐Zheleva",
+    "José M. Criado",
+    "Francesco Delogu",
+    "Erika Dutková",
+    "Éric Gaffet",
+    "F.J. Gotor",
+    "Rakesh Kumar",
+    "Ivan Mitov",
+    "Tadej Rojac",
+    "Mamoru Senna",
+    "Andrey N. Streletskii",
+    "K. Wieczorek-Ciurowa"
+  ],
+  "year": 2013,
+  "venue": "Chemical Society Reviews",
+  "publisher": null,
+  "keywords": [],
+  "topics": [
+    "nanoparticles nucleation surface interactions",
+    "X-ray Diffraction in Crystallography",
+    "Advanced materials and composites"
+  ],
+  "concepts": [
+    "Mechanochemistry",
+    "Nanotechnology",
+    "Nanomaterials",
+    "Materials science"
+  ],
+  "material_domain_tags": [
+    "nanoparticles nucleation surface interactions",
+    "X-ray Diffraction in Crystallography",
+    "Advanced materials and composites"
+  ],
+  "citation_count": 1238,
+  "is_open_access": true,
+  "oa_status": "bronze",
+  "oa_url": "https://pubs.rsc.org/en/content/articlepdf/2013/cs/c3cs35468g",
+  "oa_pdf_url": "https://pubs.rsc.org/en/content/articlepdf/2013/cs/c3cs35468g",
+  "landing_page_url": "https://doi.org/10.1039/c3cs35468g",
+  "license": null,
+  "retrieved_at": "2026-04-28T17:12:29.208825+00:00",
+  "fulltext_status": "pdf_download_skipped_non_pdf",
+  "fulltext_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\pdfs\\DOI_8a042b2343513358.pdf",
+  "fulltext_text_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\texts\\DOI_8a042b2343513358.txt",
+  "chunk_count": 0,
+  "provenance": {
+    "query": "aerospace composite structures buckling",
+    "provider": "openalex"
+  }
+}

@@ -54,6 +54,8 @@ literature:
   metadata_only_default: true
   download_oa_pdfs: false
   parse_oa_pdfs: false
+  pdf_parse_backend: pymupdf
+  pdf_parse_ocr: false
   max_results_per_query: 50
   sources:
     - openalex

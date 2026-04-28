@@ -1,0 +1,61 @@
+{
+  "paper_id": "DOI_9a6cc76a6fbdf699",
+  "source": "openalex",
+  "source_ids": {
+    "openalex_id": "https://openalex.org/W2765802355",
+    "doi": "10.1038/natrevmats.2017.66"
+  },
+  "title": "Flexible mechanical metamaterials",
+  "abstract": "",
+  "authors": [
+    "Katia Bertoldi",
+    "Vincenzo Vitelli",
+    "Johan Christensen",
+    "Martin van Hecke"
+  ],
+  "year": 2017,
+  "venue": "Nature Reviews Materials",
+  "publisher": null,
+  "keywords": [],
+  "topics": [
+    "Advanced Materials and Mechanics",
+    "Cellular and Composite Structures",
+    "Structural Analysis and Optimization"
+  ],
+  "concepts": [
+    "Metamaterial",
+    "Morphing",
+    "Field (mathematics)",
+    "Topology (electrical circuits)",
+    "Computer science",
+    "Physics",
+    "Materials science",
+    "Optoelectronics",
+    "Engineering",
+    "Mathematics",
+    "Artificial intelligence",
+    "Electrical engineering",
+    "Pure mathematics"
+  ],
+  "material_domain_tags": [
+    "Advanced Materials and Mechanics",
+    "Cellular and Composite Structures",
+    "Structural Analysis and Optimization"
+  ],
+  "citation_count": 1684,
+  "is_open_access": true,
+  "oa_status": "green",
+  "oa_url": "http://hdl.handle.net/10016/25772",
+  "oa_pdf_url": "http://hdl.handle.net/10016/25772",
+  "landing_page_url": "https://doi.org/10.1038/natrevmats.2017.66",
+  "license": null,
+  "retrieved_at": "2026-04-28T17:12:25.406517+00:00",
+  "fulltext_status": "pdf_download_skipped_non_pdf",
+  "fulltext_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\pdfs\\DOI_9a6cc76a6fbdf699.pdf",
+  "fulltext_text_path": "D:\\Project\\VS_Code\\CSDM\\knowledge\\literature\\texts\\DOI_9a6cc76a6fbdf699.txt",
+  "chunk_count": 0,
+  "provenance": {
+    "query": "composite panel compression shear buckling",
+    "provider": "openalex"
+  }
+}
