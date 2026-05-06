@@ -1,4 +1,4 @@
-active_provider: local_ollama
+active_provider: remote_vllm
 
 ollama_cloud:
   provider: ollama_cloud
@@ -17,6 +17,15 @@ local_ollama:
   timeout_seconds: 180
   base_url: http://127.0.0.1:11434/v1
   api_key: ollama
+
+remote_vllm:
+  provider: remote_vllm
+  model: gpt-5.4
+  temperature: 0.2
+  max_tokens: 1800
+  timeout_seconds: 180
+  base_url: http://154.12.179.181:8080/v1
+  api_key_env: REMOTE_VLLM_API_KEY
 
 fallback:
   enable_doe_only_when_llm_fails: true

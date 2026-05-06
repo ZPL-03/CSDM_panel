@@ -108,7 +108,8 @@ CSDM/
 - `doe_sampler.py`：DOE 采样
 - `llm_backend.py`：本地 Ollama 与兼容 OpenAI 接口适配层
 - `rag_engine.py`：通用文本向量引擎
-- `case_retriever.py`：结构化历史案例检索
+- `case_retriever.py`：结构化历史案例检索与案例记忆排序
+- `case_memory.py`：案例记忆文本、元数据和向量索引入口
 - `literature_corpus.py`：运行时文献检索包装
 - `literature_ingest.py`：文献导入与索引构建
 - `surrogate_model.py`：代理模型训练与预测
@@ -122,7 +123,7 @@ CSDM/
 - `candidate_gen.py`：调度 LLM、CASE_TRANSFER、DOE 三条候选路径
 - `screener.py`：使用代理模型排序并标记入选理由
 - `fem_agent.py`：驱动 ABAQUS 运行与失败重试
-- `knowledge_agent.py`：归档案例、写入正式案例库、更新案例向量库、按阈值触发模型重训
+- `knowledge_agent.py`：归档案例、写入正式案例库、写入案例记忆索引、按阈值触发模型重训
 - `report_gen.py`：输出 Markdown / PDF 报告
 
 ### 4.3 `knowledge/`
@@ -131,7 +132,7 @@ CSDM/
 
 - 案例知识资产
   - `knowledge/case_library/`：通过样本形成的正式案例库
-  - `knowledge/chroma_db/`：案例向量库
+  - `knowledge/chroma_db/`：案例记忆集合与文献集合共用的 Chroma 目录
 - 文献知识资产
   - `knowledge/literature/raw/`
   - `knowledge/literature/records/`
@@ -275,7 +276,8 @@ GUI 主控制器负责：
 #### CASE_TRANSFER 路径
 
 - 使用 `CaseRetriever` 在 `data/cases/` 和 `knowledge/case_library/` 中查找相似案例
-- 结构化匹配条件包含筋型、工况、边界和材料兼容性
+- 结构化匹配条件包含筋型、工况、边界、材料兼容性和通过结论
+- 使用 `CaseMemoryIndex` 查询 `csdm_case_memory`，对结构化候选做相似度排序辅助
 - 只迁移“可直接复用”的通过案例
 - 不再把历史案例原文注入 LLM Prompt
 
@@ -309,9 +311,9 @@ GUI 主控制器负责：
 
 `agents/knowledge_agent.py` 负责：
 
-- 把成功样本写入 `data/cases/`
+- 把所有校核样本写入 `data/cases/`
 - 把通过样本写入 `knowledge/case_library/`
-- 把正式案例写入向量库
+- 把案例摘要和元数据写入案例记忆向量索引
 - 满足样本规模阈值时触发代理模型训练
 
 ### 7.6 `REPORT_GEN`
@@ -326,21 +328,22 @@ GUI 主控制器负责：
 
 ### 8.1 `core/rag_engine.py`
 
-`RAGEngine` 现在是通用文本向量引擎：
+`RAGEngine` 是通用文本向量引擎：
 
-- 默认案例集合：`csdm_case_memory`
-- 支持 `upsert_records()` 和 `retrieve()` 兼容案例向量写法
+- 默认案例记忆集合：`csdm_case_memory`
+- 支持 `upsert_records()` 和 `retrieve()` 兼容旧案例向量写法
 - 支持 `upsert_documents()` 和 `query_text()` 供文献库使用
+- 支持 `reset_collection()` 只重置当前集合，避免影响同目录下的其他集合
 
 ### 8.2 `core/case_retriever.py`
 
-结构化案例检索器直接读取案例 JSON，当前提供：
+结构化案例检索器直接读取案例 JSON，并可使用案例记忆向量索引做排序辅助，当前提供：
 
 - `retrieve_similar_cases(task, top_k=5)`
 - `retrieve_transferable_cases(task, top_k=5)`
 - `transfer_candidates(task, top_k=2)`
 
-它的职责是“在历史案例中找可迁移设计”，而不是“把案例文本送给 LLM 参考”。
+它的职责是“在历史案例中找可迁移设计”，而不是“把案例文本送给 LLM 参考”。结构化硬约束决定能否迁移，向量索引只影响相似案例的排序或非迁移场景下的观察召回。
 
 ### 8.3 `core/literature_ingest.py`
 
@@ -474,6 +477,7 @@ GUI 主控制器负责：
 
 - 评估档案数
 - 正式案例数
+- 案例记忆向量块数
 - 已归档 ODB 数
 - 模态可视化数据数
 
@@ -489,7 +493,7 @@ GUI 主控制器负责：
 页面上已经明确说明：
 
 - LLM 候选生成会优先引用文献片段
-- 历史案例迁移和 DOE 采样不依赖文献库
+- 历史案例迁移使用案例记忆向量库辅助排序，但不依赖文献库
 
 ## 12. 常用脚本
 
@@ -523,13 +527,19 @@ D:/anaconda3/envs/GPT/python.exe scripts/build_initial_cases.py --count 20 --tas
 D:/anaconda3/envs/GPT/python.exe scripts/train_screener.py
 ```
 
-### 12.6 契约迁移与重建
+### 12.6 案例记忆索引
+
+```powershell
+D:/anaconda3/envs/GPT/python.exe scripts/migrate_contracts.py --case-memory-only
+```
+
+### 12.7 契约迁移与重建
 
 ```powershell
 D:/anaconda3/envs/GPT/python.exe scripts/migrate_contracts.py --retrain-surrogate
 ```
 
-### 12.7 文献导入
+### 12.8 文献导入
 
 ```powershell
 D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --seed --query-group composite_basics --max-results 20
@@ -559,7 +569,7 @@ D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --parse-existing-p
 D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --import-pdf-dir D:/Project/VS_Code/CSDM/reference/authorized_pdfs --parse-pdfs --parse-backend mineru --ocr
 ```
 
-### 12.8 文献索引重建
+### 12.9 文献索引重建
 
 ```powershell
 D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --reindex
@@ -600,7 +610,8 @@ D:/anaconda3/envs/GPT/python.exe
 当前实现已经明确拆分：
 
 - 文献 RAG 只服务于 LLM 路径
-- 案例迁移走结构化检索
+- 案例迁移走结构化硬过滤和案例记忆向量排序
+- 直接迁移不得把历史案例原文拼进 LLM Prompt
 
 ### 坑 3：以为没有文献库就不能生成候选
 

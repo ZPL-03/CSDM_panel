@@ -7,8 +7,12 @@ from pathlib import Path
 from typing import Any, Dict
 
 import yaml
+from dotenv import load_dotenv
 
-from core.paths import CONFIG_DIR
+from core.paths import CONFIG_DIR, ROOT_DIR
+
+# 自动加载项目根目录下的 .env 文件
+_load_dotenv_result = load_dotenv(ROOT_DIR / ".env")
 
 
 def _load_yaml(path: Path) -> Dict[str, Any]:

@@ -89,8 +89,8 @@ def normalize_load_conditions(load_conditions):
     if not isinstance(load_conditions, dict):
         load_conditions = {}
     raw_type = str(load_conditions.get("type", "")).strip()
-    nx_value = max(safe_float(load_conditions.get("Nx_kN_per_m"), 0.0), 0.0)
-    nxy_value = max(safe_float(load_conditions.get("Nxy_kN_per_m"), 0.0), 0.0)
+    nx_value = abs(safe_float(load_conditions.get("Nx_kN_per_m"), 0.0))
+    nxy_value = abs(safe_float(load_conditions.get("Nxy_kN_per_m"), 0.0))
     mapping = {
         "单轴压缩": "axial_compression",
         "axial_compression": "axial_compression",
@@ -179,6 +179,358 @@ def stiffener_positions(panel_width_mm, pitch_mm):
     return [min(max(value, 0.0), panel_width_mm) for value in positions]
 
 
+def _assemble_blade(assembly, model, web_part, skin_instance, spec,
+                    index, position_mm, display_index, tol):
+    """BLADE 型筋：仅竖腹板，无翼缘。"""
+    from abaqusConstants import COMPUTED, ON
+    web_name = "Web-%02d" % display_index
+    assembly.Instance(name=web_name, part=web_part, dependent=ON)
+    assembly.rotate(
+        instanceList=(web_name,),
+        axisPoint=(0.0, 0.0, 0.0),
+        axisDirection=(1.0, 0.0, 0.0),
+        angle=90.0,
+    )
+    assembly.translate(instanceList=(web_name,), vector=(0.0, position_mm, spec["skin_thickness_mm"]))
+    skin_face = skin_instance.faces
+    web_instance = assembly.instances[web_name]
+    web_edge = web_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=spec["panel_length_mm"] + tol,
+        yMin=position_mm - tol, yMax=position_mm + tol,
+        zMin=-tol, zMax=spec["skin_thickness_mm"] + tol,
+    )
+    # 仅 Tie 与皮肤相交的边
+    skin_edges_at_web = skin_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=spec["panel_length_mm"] + tol,
+        yMin=position_mm - tol, yMax=position_mm + tol,
+        zMin=-tol, zMax=spec["skin_thickness_mm"] + tol,
+    )
+    model.Tie(
+        name="Tie_Web_Skin_%02d" % display_index,
+        main=assembly.Surface(name="SurfSkinW_%02d" % display_index, side1Faces=skin_face),
+        secondary=assembly.Surface(name="SurfWebB_%02d" % display_index, side1Edges=web_edge),
+        positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
+    )
+
+
+def _assemble_t(assembly, model, web_part, flange_part, skin_instance, spec,
+                index, position_mm, display_index, tol):
+    """T 型筋：竖腹板 + 左右半翼缘。"""
+    from abaqusConstants import COMPUTED, ON
+    flange_width = spec["flange_width_mm"]
+    half_flange_width = flange_width / 2.0
+    panel_length = spec["panel_length_mm"]
+    skin_t = spec["skin_thickness_mm"]
+
+    web_name = "Web-%02d" % display_index
+    flange_left_name = "FlangeL-%02d" % display_index
+    flange_right_name = "FlangeR-%02d" % display_index
+
+    assembly.Instance(name=web_name, part=web_part, dependent=ON)
+    assembly.rotate(
+        instanceList=(web_name,),
+        axisPoint=(0.0, 0.0, 0.0),
+        axisDirection=(1.0, 0.0, 0.0),
+        angle=90.0,
+    )
+    assembly.translate(instanceList=(web_name,), vector=(0.0, position_mm, spec["flange_thickness_mm"] + skin_t))
+
+    assembly.Instance(name=flange_left_name, part=flange_part, dependent=ON)
+    assembly.translate(instanceList=(flange_left_name,), vector=(0.0, position_mm - half_flange_width, skin_t))
+
+    assembly.Instance(name=flange_right_name, part=flange_part, dependent=ON)
+    assembly.translate(instanceList=(flange_right_name,), vector=(0.0, position_mm, skin_t))
+
+    web_instance = assembly.instances[web_name]
+    web_bottom_edge = web_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - tol, yMax=position_mm + tol,
+        zMin=skin_t + spec["flange_thickness_mm"] - tol,
+        zMax=skin_t + spec["flange_thickness_mm"] + tol,
+    )
+    flange_left_instance = assembly.instances[flange_left_name]
+    flange_right_instance = assembly.instances[flange_right_name]
+    flange_left_inner = flange_left_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - tol, yMax=position_mm + tol,
+        zMin=-tol, zMax=tol,
+    )
+    flange_right_inner = flange_right_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - tol, yMax=position_mm + tol,
+        zMin=-tol, zMax=tol,
+    )
+    flange_inner_edges = flange_left_inner + flange_right_inner
+
+    flange_left_face = flange_left_instance.faces.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - half_flange_width - tol, yMax=position_mm + tol,
+        zMin=-tol, zMax=skin_t + tol,
+    )
+    flange_right_face = flange_right_instance.faces.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - tol, yMax=position_mm + half_flange_width + tol,
+        zMin=-tol, zMax=skin_t + tol,
+    )
+    skin_left_face = skin_instance.faces.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - half_flange_width - tol, yMax=position_mm + tol,
+        zMin=-tol, zMax=skin_t + tol,
+    )
+    skin_right_face = skin_instance.faces.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - tol, yMax=position_mm + half_flange_width + tol,
+        zMin=-tol, zMax=skin_t + tol,
+    )
+
+    model.Tie(
+        name="Tie_Skin_FlangeL_%02d" % display_index,
+        main=assembly.Surface(name="SurfSkinL_%02d" % display_index, side1Faces=skin_left_face),
+        secondary=assembly.Surface(name="SurfFlangeFaceL_%02d" % display_index, side1Faces=flange_left_face),
+        positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
+    )
+    model.Tie(
+        name="Tie_Skin_FlangeR_%02d" % display_index,
+        main=assembly.Surface(name="SurfSkinR_%02d" % display_index, side1Faces=skin_right_face),
+        secondary=assembly.Surface(name="SurfFlangeFaceR_%02d" % display_index, side1Faces=flange_right_face),
+        positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
+    )
+    model.Tie(
+        name="Tie_Web_Flange_%02d" % display_index,
+        main=assembly.Surface(name="SurfFlangeInner_%02d" % display_index, side1Edges=flange_inner_edges),
+        secondary=assembly.Surface(name="SurfWebBase_%02d" % display_index, side1Edges=web_bottom_edge),
+        positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
+    )
+
+
+def _assemble_l(assembly, model, web_part, flange_part, skin_instance, spec,
+                index, position_mm, display_index, tol):
+    """L 型角材：竖腹板 + 单侧翼缘（右侧全宽）。"""
+    from abaqusConstants import COMPUTED, ON
+    flange_width = spec["flange_width_mm"]
+    panel_length = spec["panel_length_mm"]
+    skin_t = spec["skin_thickness_mm"]
+    flange_t = spec["flange_thickness_mm"]
+
+    web_name = "Web-%02d" % display_index
+    flange_name = "Flange-%02d" % display_index
+
+    assembly.Instance(name=web_name, part=web_part, dependent=ON)
+    assembly.rotate(
+        instanceList=(web_name,),
+        axisPoint=(0.0, 0.0, 0.0),
+        axisDirection=(1.0, 0.0, 0.0),
+        angle=90.0,
+    )
+    assembly.translate(instanceList=(web_name,), vector=(0.0, position_mm, flange_t + skin_t))
+
+    # L 型 flange 全宽，从 position_mm 向右延伸
+    assembly.Instance(name=flange_name, part=flange_part, dependent=ON)
+    assembly.translate(instanceList=(flange_name,), vector=(0.0, position_mm, skin_t))
+
+    web_instance = assembly.instances[web_name]
+    web_bottom_edge = web_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - tol, yMax=position_mm + tol,
+        zMin=skin_t + flange_t - tol, zMax=skin_t + flange_t + tol,
+    )
+    flange_instance = assembly.instances[flange_name]
+    flange_inner = flange_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - tol, yMax=position_mm + tol,
+        zMin=-tol, zMax=tol,
+    )
+    flange_face = flange_instance.faces.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - tol, yMax=position_mm + flange_width + tol,
+        zMin=-tol, zMax=skin_t + tol,
+    )
+    skin_face = skin_instance.faces.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - tol, yMax=position_mm + flange_width + tol,
+        zMin=-tol, zMax=skin_t + tol,
+    )
+
+    model.Tie(
+        name="Tie_Skin_Flange_%02d" % display_index,
+        main=assembly.Surface(name="SurfSkinF_%02d" % display_index, side1Faces=skin_face),
+        secondary=assembly.Surface(name="SurfFlangeF_%02d" % display_index, side1Faces=flange_face),
+        positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
+    )
+    model.Tie(
+        name="Tie_Web_Flange_%02d" % display_index,
+        main=assembly.Surface(name="SurfFlangeIn_%02d" % display_index, side1Edges=flange_inner),
+        secondary=assembly.Surface(name="SurfWebB_%02d" % display_index, side1Edges=web_bottom_edge),
+        positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
+    )
+
+
+def _assemble_hat(assembly, model, web_part, flange_part, cap_part, skin_instance,
+                  spec, index, position_mm, display_index, tol):
+    """HAT 帽型筋：左右斜腹板 + 底部翼缘 + 顶部帽顶。"""
+    from abaqusConstants import COMPUTED, ON
+    import math as _math
+    flange_width = spec["flange_width_mm"]
+    cap_width = spec.get("cap_width_mm", 20.0)
+    height = spec["stiffener_height_mm"]
+    skin_t = spec["skin_thickness_mm"]
+    flange_t = spec["flange_thickness_mm"]
+    panel_length = spec["panel_length_mm"]
+    half_flange = flange_width / 2.0
+    half_cap = cap_width / 2.0
+    half_diff = half_flange - half_cap
+    if half_diff <= 0:
+        half_diff = 1.0
+
+    incline_len = _math.sqrt(half_diff ** 2 + height ** 2)
+    incline_angle = _math.degrees(_math.atan2(height, half_diff))
+
+    # 左斜腹板：从 (pos-half_flange, skin+flange) 延伸到 (pos-half_cap, skin+flange+height)
+    web_left_name = "WebL-%02d" % display_index
+    assembly.Instance(name=web_left_name, part=web_part, dependent=ON)
+    assembly.rotate(
+        instanceList=(web_left_name,),
+        axisPoint=(0.0, 0.0, 0.0),
+        axisDirection=(1.0, 0.0, 0.0),
+        angle=incline_angle,
+    )
+    assembly.translate(instanceList=(web_left_name,),
+                       vector=(0.0, position_mm - half_flange, skin_t + flange_t))
+
+    # 右斜腹板：从 (pos+half_flange, skin+flange) 延伸到 (pos+half_cap, skin+flange+height)
+    web_right_name = "WebR-%02d" % display_index
+    assembly.Instance(name=web_right_name, part=web_part, dependent=ON)
+    assembly.rotate(
+        instanceList=(web_right_name,),
+        axisPoint=(0.0, 0.0, 0.0),
+        axisDirection=(1.0, 0.0, 0.0),
+        angle=180.0 - incline_angle,
+    )
+    assembly.translate(instanceList=(web_right_name,),
+                       vector=(0.0, position_mm + half_flange, skin_t + flange_t))
+
+    # 左底部 flange（宽度 = half_diff，从 pos-half_flange 到 pos-half_cap）
+    flange_left_name = "FlangeL-%02d" % display_index
+    assembly.Instance(name=flange_left_name, part=flange_part, dependent=ON)
+    assembly.translate(instanceList=(flange_left_name,),
+                       vector=(0.0, position_mm - half_flange, skin_t))
+
+    # 右底部 flange（宽度 = half_diff，从 pos+half_cap 到 pos+half_flange）
+    flange_right_name = "FlangeR-%02d" % display_index
+    assembly.Instance(name=flange_right_name, part=flange_part, dependent=ON)
+    assembly.translate(instanceList=(flange_right_name,),
+                       vector=(0.0, position_mm + half_cap, skin_t))
+
+    # 顶部 cap（全宽 = cap_width，居中于 position_mm）
+    cap_name = "Cap-%02d" % display_index
+    assembly.Instance(name=cap_name, part=cap_part, dependent=ON)
+    assembly.translate(instanceList=(cap_name,),
+                       vector=(0.0, position_mm - half_cap, skin_t + flange_t + height))
+
+    # Tie: 左 flange → skin（用全部 skin faces 避免分区后 BoundingBox 查找失败）
+    flange_left_instance = assembly.instances[flange_left_name]
+    flange_left_face = flange_left_instance.faces.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - half_flange - tol, yMax=position_mm - half_cap + tol,
+        zMin=-tol, zMax=skin_t + tol,
+    )
+    model.Tie(
+        name="Tie_Skin_FlangeL_%02d" % display_index,
+        main=assembly.Surface(name="SurfSkinFL_%02d" % display_index, side1Faces=skin_instance.faces),
+        secondary=assembly.Surface(name="SurfFlangeL_%02d" % display_index, side1Faces=flange_left_face),
+        positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
+    )
+
+    # Tie: 右 flange → skin
+    flange_right_instance = assembly.instances[flange_right_name]
+    flange_right_face = flange_right_instance.faces.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm + half_cap - tol, yMax=position_mm + half_flange + tol,
+        zMin=-tol, zMax=skin_t + tol,
+    )
+    model.Tie(
+        name="Tie_Skin_FlangeR_%02d" % display_index,
+        main=assembly.Surface(name="SurfSkinFR_%02d" % display_index, side1Faces=skin_instance.faces),
+        secondary=assembly.Surface(name="SurfFlangeR_%02d" % display_index, side1Faces=flange_right_face),
+        positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
+    )
+
+    # Tie: 左 web 底边 → 左 flange 左边（外侧）
+    web_left_instance = assembly.instances[web_left_name]
+    web_left_bottom = web_left_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - half_flange - tol, yMax=position_mm - half_flange + tol,
+        zMin=skin_t + flange_t - tol, zMax=skin_t + flange_t + tol,
+    )
+    flange_left_outer = flange_left_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - half_flange - tol, yMax=position_mm - half_flange + tol,
+        zMin=-tol, zMax=skin_t + tol,
+    )
+    model.Tie(
+        name="Tie_WebL_FlangeL_%02d" % display_index,
+        main=assembly.Surface(name="SurfFlangeLOuter_%02d" % display_index, side1Edges=flange_left_outer),
+        secondary=assembly.Surface(name="SurfWebLBottom_%02d" % display_index, side1Edges=web_left_bottom),
+        positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
+    )
+
+    # Tie: 右 web 底边 → 右 flange 右边（外侧）
+    web_right_instance = assembly.instances[web_right_name]
+    web_right_bottom = web_right_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm + half_flange - tol, yMax=position_mm + half_flange + tol,
+        zMin=skin_t + flange_t - tol, zMax=skin_t + flange_t + tol,
+    )
+    flange_right_outer = flange_right_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm + half_flange - tol, yMax=position_mm + half_flange + tol,
+        zMin=-tol, zMax=skin_t + tol,
+    )
+    model.Tie(
+        name="Tie_WebR_FlangeR_%02d" % display_index,
+        main=assembly.Surface(name="SurfFlangeROuter_%02d" % display_index, side1Edges=flange_right_outer),
+        secondary=assembly.Surface(name="SurfWebRBottom_%02d" % display_index, side1Edges=web_right_bottom),
+        positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
+    )
+
+    # Tie: 左 web 顶边 → cap 左边
+    cap_instance = assembly.instances[cap_name]
+    cap_left_edge = cap_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - half_cap - tol, yMax=position_mm - half_cap + tol,
+        zMin=skin_t + flange_t + height - tol, zMax=skin_t + flange_t + height + tol,
+    )
+    web_left_top = web_left_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm - half_cap - tol, yMax=position_mm - half_cap + tol,
+        zMin=skin_t + flange_t + height - tol, zMax=skin_t + flange_t + height + tol,
+    )
+    model.Tie(
+        name="Tie_WebL_Cap_%02d" % display_index,
+        main=assembly.Surface(name="SurfCapLEdge_%02d" % display_index, side1Edges=cap_left_edge),
+        secondary=assembly.Surface(name="SurfWebLTop_%02d" % display_index, side1Edges=web_left_top),
+        positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
+    )
+
+    # Tie: 右 web 顶边 → cap 右边
+    cap_right_edge = cap_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm + half_cap - tol, yMax=position_mm + half_cap + tol,
+        zMin=skin_t + flange_t + height - tol, zMax=skin_t + flange_t + height + tol,
+    )
+    web_right_top = web_right_instance.edges.getByBoundingBox(
+        xMin=-tol, xMax=panel_length + tol,
+        yMin=position_mm + half_cap - tol, yMax=position_mm + half_cap + tol,
+        zMin=skin_t + flange_t + height - tol, zMax=skin_t + flange_t + height + tol,
+    )
+    model.Tie(
+        name="Tie_WebR_Cap_%02d" % display_index,
+        main=assembly.Surface(name="SurfCapREdge_%02d" % display_index, side1Edges=cap_right_edge),
+        secondary=assembly.Surface(name="SurfWebRTop_%02d" % display_index, side1Edges=web_right_top),
+        positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
+    )
+
+
 def resolve_analysis_spec(candidate):
     geometry = dict(candidate.get("geometry", {}))
     layup = dict(candidate.get("layup", {}))
@@ -187,12 +539,21 @@ def resolve_analysis_spec(candidate):
     material_system = dict(candidate.get("material_system", {}))
     analysis = dict(candidate.get("analysis", {}))
 
+    stiffener_type = str(candidate.get("stiffener_type", "T"))
+
     panel_length_mm = safe_float(geometry.get("panel_length_mm"), 700.0)
     panel_width_mm = safe_float(geometry.get("panel_width_mm"), 600.0)
     pitch_mm = max(safe_float(geometry.get("pitch_mm"), 120.0), 1.0)
     stiffener_height_mm = safe_float(geometry.get("stiffener_height_mm"), 28.0)
-    flange_width_mm = safe_float(geometry.get("flange_width_mm"), 16.0)
+    flange_width_mm = safe_float(geometry.get("flange_width_mm"), 40.0 if stiffener_type == "HAT" else 16.0)
 
+    cap_width_mm = safe_float(geometry.get("cap_width_mm"), 20.0)
+    cap_thickness_mm = safe_float(geometry.get("cap_thickness_mm"), 2.0)
+
+    max_span = max(
+        max(flange_width_mm, 8.0),
+        cap_width_mm if stiffener_type == "HAT" else 0.0,
+    )
     mesh_size_mm = max(
         12.0,
         min(
@@ -200,7 +561,7 @@ def resolve_analysis_spec(candidate):
             panel_width_mm / 16.0,
             pitch_mm / 5.0,
             max(stiffener_height_mm, 8.0) / 2.5,
-            max(flange_width_mm, 8.0) / 1.8,
+            max(max_span, 8.0) / 1.8,
         ),
     )
 
@@ -213,6 +574,7 @@ def resolve_analysis_spec(candidate):
     return {
         "candidate_id": str(candidate.get("candidate_id", "UNKNOWN")),
         "job_name": str(candidate.get("candidate_id", "UNKNOWN")),
+        "stiffener_type": stiffener_type,
         "panel_length_mm": panel_length_mm,
         "panel_width_mm": panel_width_mm,
         "skin_thickness_mm": safe_float(geometry.get("skin_thickness_mm"), 2.5),
@@ -221,6 +583,8 @@ def resolve_analysis_spec(candidate):
         "web_thickness_mm": safe_float(geometry.get("web_thickness_mm"), 2.0),
         "flange_width_mm": flange_width_mm,
         "flange_thickness_mm": safe_float(geometry.get("flange_thickness_mm"), 2.0),
+        "cap_width_mm": cap_width_mm,
+        "cap_thickness_mm": cap_thickness_mm,
         "stiffener_positions_mm": stiffener_positions(panel_width_mm, pitch_mm),
         "mesh_size_mm": round(mesh_size_mm, 3),
         "buckling_modes": int(analysis.get("buckling_modes", default_buckling_modes)),
@@ -396,11 +760,24 @@ def build_panel(input_json, result_json):
             integrationRule=SIMPSON,
             numIntPts=5,
         )
+        if spec.get("stiffener_type") == "HAT":
+            model.HomogeneousShellSection(
+                name="CapSection",
+                material=material_name,
+                thickness=spec.get("cap_thickness_mm", 2.0),
+                idealization=NO_IDEALIZATION,
+                poissonDefinition=DEFAULT,
+                thicknessModulus=None,
+                temperature=GRADIENT,
+                integrationRule=SIMPSON,
+                numIntPts=5,
+            )
 
         panel_length = spec["panel_length_mm"]
         panel_width = spec["panel_width_mm"]
         stiffener_height = spec["stiffener_height_mm"]
         flange_width = spec["flange_width_mm"]
+        stiffener_type = spec.get("stiffener_type", "T")
         half_flange_width = flange_width / 2.0
         tol = max(spec["mesh_size_mm"] * 0.25, 1.0)
 
@@ -410,28 +787,58 @@ def build_panel(input_json, result_json):
         skin_part.BaseShell(sketch=skin_sketch)
         del skin_sketch
 
-        partition_sketch = model.ConstrainedSketch(name="SkinPartitionSketch", sheetSize=max(panel_length, panel_width) * 2.0)
-        partition_y_positions = []
-        for position_mm in spec["stiffener_positions_mm"]:
-            for y_value in (position_mm - half_flange_width, position_mm, position_mm + half_flange_width):
-                if 0.0 <= y_value <= panel_width:
-                    partition_y_positions.append(round(y_value, 6))
-        for y_value in sorted(set(partition_y_positions)):
-            partition_sketch.Line(point1=(0.0, y_value), point2=(panel_length, y_value))
-        skin_part.PartitionFaceBySketch(faces=skin_part.faces, sketch=partition_sketch)
-        del partition_sketch
+        if stiffener_type != "BLADE":
+            partition_sketch = model.ConstrainedSketch(name="SkinPartitionSketch", sheetSize=max(panel_length, panel_width) * 2.0)
+            partition_y_positions = []
+            for position_mm in spec["stiffener_positions_mm"]:
+                for y_value in (position_mm - half_flange_width, position_mm, position_mm + half_flange_width):
+                    if 0.0 <= y_value <= panel_width:
+                        partition_y_positions.append(round(y_value, 6))
+            for y_value in sorted(set(partition_y_positions)):
+                partition_sketch.Line(point1=(0.0, y_value), point2=(panel_length, y_value))
+            skin_part.PartitionFaceBySketch(faces=skin_part.faces, sketch=partition_sketch)
+            del partition_sketch
 
         web_sketch = model.ConstrainedSketch(name="WebSketch", sheetSize=max(panel_length, stiffener_height) * 2.0)
-        web_sketch.rectangle(point1=(0.0, 0.0), point2=(panel_length, stiffener_height))
+        if stiffener_type == "HAT":
+            cap_width = spec.get("cap_width_mm", 20.0)
+            half_diff = (flange_width - cap_width) / 2.0
+            if half_diff <= 0:
+                half_diff = 1.0
+            incline_len = (half_diff ** 2 + stiffener_height ** 2) ** 0.5
+            web_sketch.rectangle(point1=(0.0, 0.0), point2=(panel_length, incline_len))
+        else:
+            web_sketch.rectangle(point1=(0.0, 0.0), point2=(panel_length, stiffener_height))
         web_part = model.Part(name="WebPart", dimensionality=THREE_D, type=DEFORMABLE_BODY)
         web_part.BaseShell(sketch=web_sketch)
         del web_sketch
 
-        flange_sketch = model.ConstrainedSketch(name="FlangeHalfSketch", sheetSize=max(panel_length, flange_width) * 2.0)
-        flange_sketch.rectangle(point1=(0.0, 0.0), point2=(panel_length, half_flange_width))
-        flange_part = model.Part(name="FlangeHalfPart", dimensionality=THREE_D, type=DEFORMABLE_BODY)
-        flange_part.BaseShell(sketch=flange_sketch)
-        del flange_sketch
+        flange_part = None
+        cap_part = None
+        if stiffener_type != "BLADE":
+            if stiffener_type == "HAT":
+                cap_width = spec.get("cap_width_mm", 20.0)
+                half_diff = (flange_width - cap_width) / 2.0
+                if half_diff <= 0:
+                    half_diff = 1.0
+                flange_half_width = half_diff
+            elif stiffener_type == "L":
+                flange_half_width = flange_width  # L 型单侧翼缘全宽
+            else:
+                flange_half_width = half_flange_width  # T 型半宽
+            flange_sketch = model.ConstrainedSketch(name="FlangeHalfSketch", sheetSize=max(panel_length, flange_width) * 2.0)
+            flange_sketch.rectangle(point1=(0.0, 0.0), point2=(panel_length, flange_half_width))
+            flange_part = model.Part(name="FlangeHalfPart", dimensionality=THREE_D, type=DEFORMABLE_BODY)
+            flange_part.BaseShell(sketch=flange_sketch)
+            del flange_sketch
+
+        if stiffener_type == "HAT":
+            cap_width = spec.get("cap_width_mm", 20.0)
+            cap_sketch = model.ConstrainedSketch(name="CapSketch", sheetSize=max(panel_length, cap_width) * 2.0)
+            cap_sketch.rectangle(point1=(0.0, 0.0), point2=(panel_length, cap_width))
+            cap_part = model.Part(name="CapPart", dimensionality=THREE_D, type=DEFORMABLE_BODY)
+            cap_part.BaseShell(sketch=cap_sketch)
+            del cap_sketch
 
         skin_part.SectionAssignment(
             region=regionToolset.Region(faces=skin_part.faces),
@@ -449,17 +856,32 @@ def build_panel(input_json, result_json):
             offsetField="",
             thicknessAssignment=FROM_SECTION,
         )
-        flange_part.SectionAssignment(
-            region=regionToolset.Region(faces=flange_part.faces),
-            sectionName="FlangeSection",
-            offset=0.0,
-            offsetType=MIDDLE_SURFACE,
-            offsetField="",
-            thicknessAssignment=FROM_SECTION,
-        )
+        if flange_part is not None:
+            flange_part.SectionAssignment(
+                region=regionToolset.Region(faces=flange_part.faces),
+                sectionName="FlangeSection",
+                offset=0.0,
+                offsetType=MIDDLE_SURFACE,
+                offsetField="",
+                thicknessAssignment=FROM_SECTION,
+            )
+        if cap_part is not None:
+            cap_part.SectionAssignment(
+                region=regionToolset.Region(faces=cap_part.faces),
+                sectionName="CapSection",
+                offset=0.0,
+                offsetType=MIDDLE_SURFACE,
+                offsetField="",
+                thicknessAssignment=FROM_SECTION,
+            )
 
         elem_type = ElemType(elemCode=S4R, elemLibrary=STANDARD)
-        for part in (skin_part, web_part, flange_part):
+        mesh_parts = [skin_part, web_part]
+        if flange_part is not None:
+            mesh_parts.append(flange_part)
+        if cap_part is not None:
+            mesh_parts.append(cap_part)
+        for part in mesh_parts:
             part.setElementType(regions=(part.faces,), elemTypes=(elem_type,))
             part.seedPart(size=spec["mesh_size_mm"], deviationFactor=0.1, minSizeFactor=0.1)
             part.setMeshControls(regions=part.faces, elemShape=QUAD, technique=FREE)
@@ -471,121 +893,20 @@ def build_panel(input_json, result_json):
 
         for index, position_mm in enumerate(spec["stiffener_positions_mm"]):
             display_index = index + 1
-            web_name = "Web-%02d" % display_index
-            flange_left_name = "FlangeL-%02d" % display_index
-            flange_right_name = "FlangeR-%02d" % display_index
 
-            assembly.Instance(name=web_name, part=web_part, dependent=ON)
-            assembly.rotate(
-                instanceList=(web_name,),
-                axisPoint=(0.0, 0.0, 0.0),
-                axisDirection=(1.0, 0.0, 0.0),
-                angle=90.0,
-            )
-            assembly.translate(instanceList=(web_name,), vector=(0.0, position_mm, 0.0))
-
-            assembly.Instance(name=flange_left_name, part=flange_part, dependent=ON)
-            assembly.translate(instanceList=(flange_left_name,), vector=(0.0, position_mm - half_flange_width, 0.0))
-
-            assembly.Instance(name=flange_right_name, part=flange_part, dependent=ON)
-            assembly.translate(instanceList=(flange_right_name,), vector=(0.0, position_mm, 0.0))
-
-            skin_edge = skin_instance.edges.getByBoundingBox(
-                xMin=-tol,
-                xMax=panel_length + tol,
-                yMin=position_mm - tol,
-                yMax=position_mm + tol,
-                zMin=-tol,
-                zMax=tol,
-            )
-            web_instance = assembly.instances[web_name]
-            web_bottom_edge = web_instance.edges.getByBoundingBox(
-                xMin=-tol,
-                xMax=panel_length + tol,
-                yMin=position_mm - tol,
-                yMax=position_mm + tol,
-                zMin=-tol,
-                zMax=tol,
-            )
-            flange_left_instance = assembly.instances[flange_left_name]
-            flange_right_instance = assembly.instances[flange_right_name]
-            flange_left_inner = flange_left_instance.edges.getByBoundingBox(
-                xMin=-tol,
-                xMax=panel_length + tol,
-                yMin=position_mm - tol,
-                yMax=position_mm + tol,
-                zMin=-tol,
-                zMax=tol,
-            )
-            flange_right_inner = flange_right_instance.edges.getByBoundingBox(
-                xMin=-tol,
-                xMax=panel_length + tol,
-                yMin=position_mm - tol,
-                yMax=position_mm + tol,
-                zMin=-tol,
-                zMax=tol,
-            )
-            flange_inner_edges = flange_left_inner + flange_right_inner
-            flange_left_face = flange_left_instance.faces.getByBoundingBox(
-                xMin=-tol,
-                xMax=panel_length + tol,
-                yMin=position_mm - half_flange_width - tol,
-                yMax=position_mm + tol,
-                zMin=-tol,
-                zMax=tol,
-            )
-            flange_right_face = flange_right_instance.faces.getByBoundingBox(
-                xMin=-tol,
-                xMax=panel_length + tol,
-                yMin=position_mm - tol,
-                yMax=position_mm + half_flange_width + tol,
-                zMin=-tol,
-                zMax=tol,
-            )
-            skin_left_face = skin_instance.faces.getByBoundingBox(
-                xMin=-tol,
-                xMax=panel_length + tol,
-                yMin=position_mm - half_flange_width - tol,
-                yMax=position_mm + tol,
-                zMin=-tol,
-                zMax=tol,
-            )
-            skin_right_face = skin_instance.faces.getByBoundingBox(
-                xMin=-tol,
-                xMax=panel_length + tol,
-                yMin=position_mm - tol,
-                yMax=position_mm + half_flange_width + tol,
-                zMin=-tol,
-                zMax=tol,
-            )
-
-            model.Tie(
-                name="Tie_Skin_FlangeL_%02d" % display_index,
-                main=assembly.Surface(name="SurfSkinL_%02d" % display_index, side1Faces=skin_left_face),
-                secondary=assembly.Surface(name="SurfFlangeFaceL_%02d" % display_index, side1Faces=flange_left_face),
-                positionToleranceMethod=COMPUTED,
-                adjust=ON,
-                tieRotations=ON,
-                thickness=ON,
-            )
-            model.Tie(
-                name="Tie_Skin_FlangeR_%02d" % display_index,
-                main=assembly.Surface(name="SurfSkinR_%02d" % display_index, side1Faces=skin_right_face),
-                secondary=assembly.Surface(name="SurfFlangeFaceR_%02d" % display_index, side1Faces=flange_right_face),
-                positionToleranceMethod=COMPUTED,
-                adjust=ON,
-                tieRotations=ON,
-                thickness=ON,
-            )
-            model.Tie(
-                name="Tie_Web_Flange_%02d" % display_index,
-                main=assembly.Surface(name="SurfFlangeInner_%02d" % display_index, side1Edges=flange_inner_edges),
-                secondary=assembly.Surface(name="SurfWebBase_%02d" % display_index, side1Edges=web_bottom_edge),
-                positionToleranceMethod=COMPUTED,
-                adjust=ON,
-                tieRotations=ON,
-                thickness=ON,
-            )
+            if stiffener_type == "BLADE":
+                _assemble_blade(assembly, model, web_part, skin_instance, spec,
+                                index, position_mm, display_index, tol)
+            elif stiffener_type == "HAT":
+                _assemble_hat(assembly, model, web_part, flange_part, cap_part,
+                              skin_instance, spec, index, position_mm,
+                              display_index, tol)
+            elif stiffener_type == "L":
+                _assemble_l(assembly, model, web_part, flange_part, skin_instance,
+                            spec, index, position_mm, display_index, tol)
+            else:
+                _assemble_t(assembly, model, web_part, flange_part, skin_instance,
+                            spec, index, position_mm, display_index, tol)
 
         x0_nodes = skin_instance.nodes.getByBoundingBox(
             xMin=-tol,

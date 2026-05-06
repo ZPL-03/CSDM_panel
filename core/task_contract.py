@@ -271,7 +271,8 @@ def normalize_task_payload(
         **deepcopy(DEFAULT_DESIGN_TARGETS),
         **dict(normalized.get("design_targets", {})),
     }
-    normalized["stiffener_type"] = str(normalized.get("stiffener_type") or "T")
+    from core.stiffener_profile import resolve_stiffener_type
+    normalized["stiffener_type"] = resolve_stiffener_type(normalized.get("stiffener_type"))
     return normalized
 
 

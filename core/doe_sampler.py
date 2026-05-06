@@ -9,22 +9,16 @@ import numpy as np
 from core.config_loader import load_app_config, load_material_db, load_param_ranges
 from core.id_utils import format_candidate_id
 from core.rule_checker import RuleChecker
+from core.stiffener_profile import (
+    load_param_ranges_for_type,
+    required_geometry_params,
+    resolve_stiffener_type,
+)
 from core.task_contract import task_payload_from_request
 
 
 class DOESampler:
-    """使用轻量 LHS 生成结构参数、铺层与材料组合。"""
-
-    FEATURE_ORDER = [
-        "panel_length_mm",
-        "panel_width_mm",
-        "skin_thickness_mm",
-        "pitch_mm",
-        "stiffener_height_mm",
-        "web_thickness_mm",
-        "flange_width_mm",
-        "flange_thickness_mm",
-    ]
+    """使用轻量 LHS 生成结构参数、铺层与材料组合（支持多筋型）。"""
 
     def __init__(self) -> None:
         app_config = load_app_config()
@@ -114,17 +108,21 @@ class DOESampler:
         n_samples: int,
         start_index: int = 1,
         strict_solver_window: bool = False,
+        stiffener_type: str = "T",
         id_factory=None,
     ) -> List[Dict]:
         valid_candidates: List[Dict] = []
         generation_round = 0
         candidate_id_factory = id_factory or format_candidate_id
+        stype = resolve_stiffener_type(stiffener_type)
+        feature_order = required_geometry_params(stype)
+        type_ranges = load_param_ranges_for_type(stype)
 
         while len(valid_candidates) < n_samples and generation_round < 12:
             batch_multiplier = 8 if strict_solver_window else 3
             remaining = n_samples - len(valid_candidates)
             lhs_values = self._lhs(
-                len(self.FEATURE_ORDER),
+                len(feature_order),
                 max(remaining * batch_multiplier, remaining),
                 seed_offset=generation_round,
             )
@@ -132,8 +130,10 @@ class DOESampler:
 
             for row in lhs_values:
                 geometry = {}
-                for idx, feature in enumerate(self.FEATURE_ORDER):
-                    bounds = self.param_ranges[feature]
+                for idx, feature in enumerate(feature_order):
+                    bounds = type_ranges.get(feature)
+                    if not bounds:
+                        bounds = {"min": 0.0, "max": 1.0}
                     value = bounds["min"] + row[idx] * (bounds["max"] - bounds["min"])
                     geometry[feature] = round(float(value), 3)
 
@@ -144,7 +144,7 @@ class DOESampler:
                 candidate = {
                     "candidate_id": candidate_id_factory(candidate_index),
                     "source": "DOE",
-                    "stiffener_type": "T",
+                    "stiffener_type": stype,
                     "geometry": geometry,
                     "layup": layup,
                     "rule_check": {},
@@ -157,7 +157,9 @@ class DOESampler:
                     "boundary_conditions": task_payload["boundary_conditions"],
                     "design_targets": task_payload["design_targets"],
                 }
-                rule_check = self.rule_checker.run(candidate, strict_solver_window=strict_solver_window)
+                rule_check = self.rule_checker.run(
+                    candidate, strict_solver_window=strict_solver_window, stiffener_type=stype,
+                )
                 candidate["rule_check"] = rule_check
                 if rule_check["is_valid"]:
                     valid_candidates.append(candidate)

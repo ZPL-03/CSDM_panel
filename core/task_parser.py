@@ -10,6 +10,7 @@ from core.config_loader import load_app_config, load_llm_config, load_material_d
 from core.id_utils import next_task_id
 from core.llm_backend import LLMBackend
 from core.schema_validator import validate_or_raise
+from core.stiffener_profile import TYPE_DISPLAY_NAMES, resolve_stiffener_type
 from core.task_contract import (
     DEFAULT_CANDIDATE_GENERATION_PREFERENCES,
     DEFAULT_DESIGN_TARGETS,
@@ -78,6 +79,25 @@ class TaskParser:
         material["material_key"] = "T300_5208"
         material["is_user_specified"] = False
         return material, False
+
+    def _extract_stiffener_type(self, text: str) -> str:
+        """从用户自然语言中识别筋条类型。"""
+        mapping = [
+            ("板式筋", "BLADE"), ("板式", "BLADE"), ("blade", "BLADE"),
+            ("平板筋", "BLADE"), ("刀型筋", "BLADE"), ("刀型", "BLADE"),
+            ("帽型筋", "HAT"), ("帽型", "HAT"), ("帽形", "HAT"),
+            ("hat", "HAT"), ("槽型筋", "HAT"), ("槽型", "HAT"),
+            ("L型角材", "L"), ("L 型角材", "L"), ("角材", "L"),
+            ("角型筋", "L"), ("角型", "L"), ("l型", "L"),
+            ("T型筋", "T"), ("T 型筋", "T"), ("T型", "T"),
+            ("T 型", "T"), ("T形筋", "T"), ("T形", "T"),
+            ("t型", "T"), ("t 型", "T"),
+        ]
+        lowered = text.lower()
+        for keyword, stype in mapping:
+            if keyword.lower() in lowered:
+                return stype
+        return "T"
 
     def _extract_application(self, text: str) -> str:
         if "尾翼" in text:
@@ -240,7 +260,7 @@ class TaskParser:
                 "is_user_specified": is_user_specified,
             },
             "layup_constraints": dict(DEFAULT_LAYUP_CONSTRAINTS),
-            "stiffener_type": "T",
+            "stiffener_type": self._extract_stiffener_type(text),
             "design_targets": self._extract_design_targets(text),
         }
 
@@ -251,6 +271,7 @@ class TaskParser:
             "只输出 JSON，不要解释。"
             "load_conditions.type 只能是 axial_compression、in_plane_shear、compression_shear。"
             "boundary_conditions.type 只能是 SSSS、CCCC、SSCC。"
+            "stiffener_type 只能是 BLADE、T、HAT、L。"
             "candidate_generation_preferences.total_candidates 表示初始候选池目标数量。"
             "screening_preferences.top_k_candidates 表示 DNN 初筛后希望保留的样本数。"
         )
@@ -293,6 +314,11 @@ class TaskParser:
         hint_material = dict(hints.get("material_system", {}))
         if hint_material.get("is_user_specified", False):
             normalized["material_system"] = hint_material
+
+        # 筋型由规则提取锁定，不交给 LLM 判断
+        hint_stype = hints.get("stiffener_type")
+        if hint_stype:
+            normalized["stiffener_type"] = hint_stype
 
         return normalized
 

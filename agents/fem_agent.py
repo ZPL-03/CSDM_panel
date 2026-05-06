@@ -153,6 +153,24 @@ class FEMAgent(BaseAgent):
 
     def _run_mock(self, candidate: Dict, retry_count: int = 0) -> Dict:
         geometry = candidate["geometry"]
+        stype = str(candidate.get("stiffener_type", "T"))
+        flange_w = float(geometry.get("flange_width_mm", 0.0))
+        flange_t = float(geometry.get("flange_thickness_mm", 0.0))
+        if stype == "HAT":
+            cap_w = float(geometry.get("cap_width_mm", 20.0))
+            cap_t = float(geometry.get("cap_thickness_mm", 2.0))
+            flange_factor = flange_w * 0.004 + cap_w * 0.002
+            flange_t_factor = flange_t * 0.11 + cap_t * 0.06
+        elif stype == "BLADE":
+            flange_factor = 0.0
+            flange_t_factor = 0.0
+        elif stype == "L":
+            flange_factor = flange_w * 0.002
+            flange_t_factor = flange_t * 0.055
+        else:  # T
+            flange_factor = flange_w * 0.004
+            flange_t_factor = flange_t * 0.11
+
         load_conditions = normalize_load_conditions(candidate.get("load_conditions", {}))
         boundary_conditions = normalize_boundary_conditions(candidate.get("boundary_conditions", {}))
         equivalent_load = equivalent_in_plane_load(load_conditions) or 850.0
@@ -162,14 +180,14 @@ class FEMAgent(BaseAgent):
             + geometry["skin_thickness_mm"] * 0.08
             + geometry["stiffener_height_mm"] * 0.006
             + geometry["web_thickness_mm"] * 0.03
-            + geometry["flange_width_mm"] * 0.004
+            + flange_factor
         ) * stiffness_factor / max(equivalent_load / 850.0, 0.2)
         weight = (
             3.55
             + geometry["skin_thickness_mm"] * 0.24
             + geometry["stiffener_height_mm"] * 0.026
             + geometry["web_thickness_mm"] * 0.15
-            + geometry["flange_thickness_mm"] * 0.11
+            + flange_t_factor
         )
         self._write_mock_artifacts(candidate)
         failure_mode = {

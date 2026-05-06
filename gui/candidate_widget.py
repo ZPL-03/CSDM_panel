@@ -16,6 +16,7 @@ from PyQt6.QtWidgets import (
 )
 
 from gui.interactive_view import InteractivePlotWidget
+from core.stiffener_profile import GEOMETRY_LABELS, TYPE_DISPLAY_NAMES
 from core.task_contract import describe_boundary_conditions, describe_load_conditions
 
 
@@ -166,7 +167,10 @@ class CandidateWidget(QWidget):
             f"<li>第 {index + 1} 层：{angle}&deg;</li>"
             for index, angle in enumerate(_parse_layup_sequence(layup.get("skin_layup", "")))
         )
-        geometry_items = "".join(f"<li>{key}: {_format_number(value)}</li>" for key, value in geometry.items())
+        geometry_items = "".join(
+            f"<li>{GEOMETRY_LABELS.get(key, key)}: {_format_number(value)}</li>"
+            for key, value in geometry.items()
+        )
         material_items = "".join(f"<li>{key}: {value}</li>" for key, value in material.items())
         target_items = "".join(f"<li>{key}: {value}</li>" for key, value in design_targets.items())
         rule_errors = rule_check.get("errors") or ["无"]
@@ -186,8 +190,11 @@ class CandidateWidget(QWidget):
                 f"结论：{result.get('verdict', '-')}</p>"
             )
 
+        stype = str(candidate.get("stiffener_type", "T"))
+        stype_display = TYPE_DISPLAY_NAMES.get(stype, stype)
+
         html = (
-            f"<h3>{candidate.get('display_name', candidate.get('candidate_id'))} | {_format_source_label(candidate.get('source'))}</h3>"
+            f"<h3>{candidate.get('display_name', candidate.get('candidate_id'))} | {_format_source_label(candidate.get('source'))} | {stype_display}</h3>"
             f"<p><b>会话编号：</b>{candidate.get('candidate_id', '-')}<br>"
             f"<b>正式编号：</b>{archive_id}</p>"
             f"<p><b>生成说明：</b>{candidate.get('rationale', '-')}</p>"

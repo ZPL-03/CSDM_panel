@@ -155,6 +155,19 @@ class RAGEngine:
             pass
         self.collection = self.client.get_or_create_collection(name=self.collection_name)
 
+    def reset_collection(self) -> None:
+        """只重置当前 collection，避免误删同一 Chroma 目录下的其他知识库。"""
+        self._reset_collection()
+
+    def count(self) -> int:
+        try:
+            return int(self.collection.count())
+        except Exception:
+            rows = getattr(self.collection, "_rows", None)
+            if isinstance(rows, list):
+                return len(rows)
+        return 0
+
     def upsert_documents(self, ids: Iterable[str], documents: Iterable[str], metadatas: Iterable[Dict] | None = None) -> None:
         doc_ids = [str(item) for item in ids]
         docs = [str(item) for item in documents]

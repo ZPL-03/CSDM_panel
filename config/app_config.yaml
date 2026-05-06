@@ -45,6 +45,12 @@ rag:
   use_hash_embedding_only: false
   allow_hash_fallback: true
 
+case_memory:
+  collection_name: csdm_case_memory
+  hybrid_retrieval: true
+  vector_top_k_multiplier: 4
+  vector_rank_weight: 0.1
+
 literature:
   enabled: true
   collection_name: csdm_literature_corpus

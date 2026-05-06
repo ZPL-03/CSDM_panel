@@ -1,35 +1,78 @@
-panel_length_mm:
-  min: 600
-  max: 900
-panel_width_mm:
-  min: 480
-  max: 780
-skin_thickness_mm:
-  min: 1.2
-  max: 4.0
-pitch_mm:
-  min: 85
-  max: 150
-stiffener_height_mm:
-  min: 16
-  max: 42
-web_thickness_mm:
-  min: 1.0
-  max: 3.2
-flange_width_mm:
-  min: 12
-  max: 24
-flange_thickness_mm:
-  min: 1.0
-  max: 3.2
+# 通用参数（所有类型共用）
+common:
+  panel_length_mm:
+    min: 600
+    max: 900
+  panel_width_mm:
+    min: 480
+    max: 780
+  skin_thickness_mm:
+    min: 1.2
+    max: 4.0
+  pitch_mm:
+    min: 85
+    max: 150
+  stiffener_height_mm:
+    min: 16
+    max: 42
+  web_thickness_mm:
+    min: 1.0
+    max: 3.2
+
+# BLADE（板式筋）—— 无额外参数
+BLADE: {}
+
+# T 型筋
+T:
+  flange_width_mm:
+    min: 12
+    max: 24
+  flange_thickness_mm:
+    min: 1.0
+    max: 3.2
+
+# HAT（帽型筋）—— 底部翼缘 + 顶部帽顶
+HAT:
+  flange_width_mm:
+    min: 24
+    max: 50
+  flange_thickness_mm:
+    min: 1.0
+    max: 3.2
+  cap_width_mm:
+    min: 12
+    max: 30
+  cap_thickness_mm:
+    min: 1.0
+    max: 3.2
+
+# L 型角材 —— 单侧翼缘
+L:
+  flange_width_mm:
+    min: 12
+    max: 24
+  flange_thickness_mm:
+    min: 1.0
+    max: 3.2
+
+# HAT 专用约束
+HAT_constraints:
+  cap_to_flange_width_max: 0.8
+  web_incline_min_deg: 20
+
+# 载荷范围
 Nx_kN_per_m:
   min: 120
   max: 1200
+
+# 铺层约束
 layup:
   allowed_angles: [0, 45, -45, 90]
   min_ratio_per_angle: 0.1
   symmetric: true
   balanced: true
+
+# 铺层模板
 layup_templates:
   - name: QI_14
     skin_layup: "[45/-45/0/90/0/-45/45]s"

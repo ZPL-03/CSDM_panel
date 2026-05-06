@@ -135,7 +135,7 @@
     },
     "stiffener_type": {
       "type": "string",
-      "enum": ["T"]
+      "enum": ["BLADE", "T", "HAT", "L"]
     },
     "design_targets": {
       "type": "object",

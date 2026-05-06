@@ -66,12 +66,30 @@ class ReportGenAgent(BaseAgent):
         if self.llm_backend is not None:
             system_prompt = (
                 "你是复合材料加筋壁板工程报告助手。"
-                "请根据结构化摘要生成简洁专业的中文工程说明。"
-                "输出 3 个短段落：总体判断、候选对比、建议动作。"
+                "请根据结构化摘要生成专业详尽的中文工程说明，确保分析全面、数据准确。"
+                "输出 3 个段落：总体判断、候选对比、建议动作。"
+                "每个段落充分展开，包含具体的数值对比和工程推理，确保输出完整，不要中途截断。"
             )
-            user_prompt = json.dumps(summary, ensure_ascii=False, indent=2)
+            # 精简输入，去掉重复的 screening/selection 字段以减少 prompt 长度
+            compact = dict(summary)
+            compact.pop("screened_candidates", None)
+            compact["results_summary"] = [
+                {
+                    "candidate_id": r["candidate_id"],
+                    "BLF_global": r.get("BLF_global"),
+                    "weight_kg_per_m2": r.get("weight_kg_per_m2"),
+                    "verdict": r.get("verdict"),
+                    "failure_mode": r.get("failure_mode"),
+                }
+                for r in summary.get("results", [])
+            ]
+            compact.pop("results", None)
+            user_prompt = json.dumps(compact, ensure_ascii=False, indent=2)
             try:
-                return self.llm_backend.chat(system_prompt, user_prompt).strip()
+                return self.llm_backend.chat(
+                    system_prompt, user_prompt,
+                    max_tokens_override=4096,
+                ).strip()
             except Exception:
                 pass
 

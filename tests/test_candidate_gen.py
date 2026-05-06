@@ -214,6 +214,35 @@ def test_candidate_gen_respects_total_candidate_target() -> None:
         return candidates
 
     agent.doe_sampler = type("FakeDOE", (), {"sample_candidates": staticmethod(_fake_doe_candidates)})()
+
+    def _fake_retrieve_transferable_cases(task: dict, top_k: int = 5) -> list[dict]:
+        return [
+            {
+                "case_id": f"CASE_{idx}",
+                "design": {
+                    "stiffener_type": task.get("stiffener_type", "T"),
+                    "geometry": {
+                        "panel_length_mm": 700, "panel_width_mm": 600,
+                        "skin_thickness_mm": 2.5, "pitch_mm": 120,
+                        "stiffener_height_mm": 28, "web_thickness_mm": 2.0,
+                        "flange_width_mm": 16, "flange_thickness_mm": 2.0,
+                    },
+                    "layup": {"skin_layup": "[45/-45/0/90/0/-45/45]s"},
+                    "rationale": f"case transfer candidate {idx + 1}",
+                    "load_conditions": task.get("load_conditions", {}),
+                    "boundary_conditions": task.get("boundary_conditions", {}),
+                    "material_system": task.get("material_system", {}),
+                },
+                "abaqus_results": {"status": "success", "verdict": "通过"},
+            }
+            for idx in range(2)
+        ]
+
+    agent.case_retriever = type(
+        "FakeCaseRetriever",
+        (),
+        {"retrieve_transferable_cases": staticmethod(_fake_retrieve_transferable_cases)},
+    )()
     task = _build_task()
     task["task"]["candidate_generation_preferences"] = {"total_candidates": 12}
 

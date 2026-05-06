@@ -6,6 +6,7 @@ import json
 
 from PyQt6.QtWidgets import QTextBrowser
 
+from core.case_memory import CaseMemoryIndex
 from core.literature_corpus import LiteratureCorpus
 from core.paths import ABAQUS_RUNS_DIR, CASES_DIR, CASE_LIBRARY_DIR, MODELS_DIR
 
@@ -19,6 +20,10 @@ class KnowledgeWidget(QTextBrowser):
         metrics_path = MODELS_DIR / "surrogate_metrics.json"
         metrics = json.loads(metrics_path.read_text(encoding="utf-8")) if metrics_path.exists() else {}
         literature_status = LiteratureCorpus().status()
+        try:
+            case_memory_count = CaseMemoryIndex().engine.count()
+        except Exception:
+            case_memory_count = 0
 
         odb_count = 0
         vis_count = 0
@@ -33,10 +38,12 @@ class KnowledgeWidget(QTextBrowser):
             "<p><b>评估档案数：</b>"
             f"{len(archive_cases)}<br>"
             f"<b>正式知识库数：</b>{len(formal_cases)}<br>"
+            f"<b>案例记忆向量块数：</b>{case_memory_count}<br>"
             f"<b>已归档 ODB 数：</b>{odb_count}<br>"
             f"<b>模态可视化数据数：</b>{vis_count}</p>",
             "<p>说明：候选方案只保存在当前会话中；完成 Abaqus 校核后会进入评估档案。"
-            "只有校核结论为“通过”的样本才会进入正式知识库。</p>",
+            "只有校核结论为“通过”的样本才会进入正式知识库；案例记忆向量库用于相似案例召回和排序，"
+            "不替代结构化迁移约束。</p>",
         ]
 
         if metrics:
@@ -71,7 +78,7 @@ class KnowledgeWidget(QTextBrowser):
             ]
         )
 
-        lines.append("<p>说明：LLM 候选生成会优先引用文献片段；历史案例迁移与 DOE 采样不依赖文献库。</p>")
+        lines.append("<p>说明：LLM 候选生成会优先引用文献片段；历史案例迁移使用案例记忆向量库辅助排序，但不依赖文献库。</p>")
 
         lines.append("<h3>最新正式案例</h3>")
         if formal_cases:

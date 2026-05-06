@@ -13,6 +13,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from agents.fem_agent import FEMAgent
+from core.case_memory import CaseMemoryIndex
 from core.io_utils import read_json, write_json
 from core.paths import CASES_DIR, CASE_LIBRARY_DIR, IO_DIR
 from scripts.clean_debug_artifacts import purge_business_records
@@ -30,6 +31,11 @@ def _write_case_library_record(case_path: Path, payload: dict) -> None:
         write_json(library_path, payload)
         return
     library_path.unlink(missing_ok=True)
+
+
+def _upsert_case_memory(payload: dict) -> None:
+    scope = "formal" if _should_store_case_library_record(payload) else "archive"
+    CaseMemoryIndex().upsert_cases([payload], scope=scope)
 
 
 def _clear_existing_candidate_artifacts(payload: dict) -> None:
@@ -59,6 +65,7 @@ def rebuild_case(case_path: Path, *, force: bool = False) -> dict:
 
     write_json(case_path, payload)
     _write_case_library_record(case_path, payload)
+    _upsert_case_memory(payload)
     write_json(IO_DIR / f"result_{candidate['candidate_id']}.json", result)
     return {
         "case_id": payload["case_id"],

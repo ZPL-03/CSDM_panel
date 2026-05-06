@@ -1,4 +1,7 @@
+from core.case_memory import case_record_metadata, case_record_to_search_text, task_to_case_query_text
 from core.case_retriever import CaseRetriever, _is_pass_verdict
+from core.io_utils import read_json
+from core.paths import CASE_LIBRARY_DIR
 
 
 def _task() -> dict:
@@ -18,7 +21,7 @@ def _task() -> dict:
 
 
 def test_case_retriever_returns_matching_cases() -> None:
-    retriever = CaseRetriever(include_archive=True, include_formal=True)
+    retriever = CaseRetriever(include_archive=True, include_formal=True, use_vector_index=False)
     matches = retriever.retrieve_similar_cases(_task(), top_k=3)
 
     assert matches
@@ -37,7 +40,7 @@ def test_is_pass_verdict_only_accepts_exact_pass() -> None:
 
 
 def test_case_retriever_transfer_cases_are_all_passed() -> None:
-    retriever = CaseRetriever(include_archive=True, include_formal=True)
+    retriever = CaseRetriever(include_archive=True, include_formal=True, use_vector_index=False)
     task = _task()
     task["load_conditions"] = {"type": "axial_compression", "Nx_kN_per_m": 1000.0}
     task["boundary_conditions"] = {"type": "SSSS"}
@@ -48,3 +51,21 @@ def test_case_retriever_transfer_cases_are_all_passed() -> None:
     assert all(match.get("abaqus_results", {}).get("verdict") == "通过" for match in matches)
     assert all(match["design"]["load_conditions"]["type"] == "axial_compression" for match in matches)
     assert all(match["design"]["boundary_conditions"]["type"] == "SSSS" for match in matches)
+
+
+def test_case_memory_document_keeps_engineering_context() -> None:
+    first_case = next(iter(sorted(CASE_LIBRARY_DIR.glob("CASE_*.json"))))
+    record = read_json(first_case)
+
+    text = case_record_to_search_text(record)
+    metadata = case_record_metadata(record, scope="formal")
+    query_text = task_to_case_query_text(_task())
+
+    assert record["case_id"] in text
+    assert "工况" in text
+    assert "边界" in text
+    assert "几何" in text
+    assert metadata["kind"] == "case"
+    assert metadata["case_scope"] == "formal"
+    assert metadata["transferable"] == "true"
+    assert "目标" in query_text

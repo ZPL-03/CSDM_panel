@@ -163,6 +163,43 @@ class LLMBackend:
         repair_user = f"请修复为合法 JSON：\n{broken_text}"
         return self.chat(repair_system, repair_user, max_tokens_override=self._json_output_budget())
 
+    def _parse_json_robust(self, text: str) -> Dict | List:
+        """多级 JSON 解析：直接解析 → 修复解析 → 激进提取。全部失败则返回空结构。"""
+        extracted = self._extract_json_text(text)
+        try:
+            return json.loads(extracted)
+        except json.JSONDecodeError:
+            pass
+        try:
+            repaired = self._extract_json_text(self._repair_json(extracted))
+            return json.loads(repaired)
+        except Exception:
+            pass
+        # 最终尝试：从文本中逐字符匹配最外层 {} 或 []
+        for wrapper_start, wrapper_end in [("{", "}"), ("[", "]")]:
+            depth = 0
+            start = -1
+            end = -1
+            for idx, ch in enumerate(text):
+                if ch == wrapper_start:
+                    if depth == 0:
+                        start = idx
+                    depth += 1
+                elif ch == wrapper_end:
+                    depth -= 1
+                    if depth == 0:
+                        end = idx + 1
+                        break
+            if start != -1 and end != -1 and end > start:
+                candidate = text[start:end]
+                try:
+                    result = json.loads(candidate)
+                    if isinstance(result, (dict, list)):
+                        return result
+                except json.JSONDecodeError:
+                    continue
+        return {}
+
     def generate_json(self, system_prompt: str, user_prompt: str) -> Dict | List:
         if self.provider == "local_ollama":
             text = self._chat_local_ollama(
@@ -171,17 +208,7 @@ class LLMBackend:
                 json_mode=True,
                 max_tokens_override=self._json_output_budget(),
             )
-            extracted = self._extract_json_text(text)
-            try:
-                return json.loads(extracted)
-            except json.JSONDecodeError:
-                repaired = self._extract_json_text(self._repair_json(extracted))
-                return json.loads(repaired)
+            return self._parse_json_robust(text)
 
         text = self.chat(system_prompt, user_prompt)
-        extracted = self._extract_json_text(text)
-        try:
-            return json.loads(extracted)
-        except json.JSONDecodeError:
-            repaired = self._extract_json_text(self._repair_json(extracted))
-            return json.loads(repaired)
+        return self._parse_json_robust(text)

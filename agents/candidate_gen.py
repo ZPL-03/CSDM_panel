@@ -12,6 +12,12 @@ from core.literature_corpus import LiteratureCorpus
 from core.llm_backend import LLMBackend
 from core.rule_checker import RuleChecker
 from core.schema_validator import SchemaValidationError, validate_or_raise
+from core.stiffener_profile import (
+    TYPE_DISPLAY_NAMES,
+    normalize_geometry,
+    required_geometry_params,
+    resolve_stiffener_type,
+)
 from core.task_contract import (
     describe_boundary_conditions,
     describe_load_conditions,
@@ -134,6 +140,11 @@ class CandidateGenAgent(BaseAgent):
         """构造 LLM 候选生成 Prompt，只注入任务约束和文献依据。"""
         task_payload = self._task_payload(task)
         material_options = [item.get("name", "") for item in self._material_options(task)]
+        stype = task_payload.get("stiffener_type", "T")
+        type_display = TYPE_DISPLAY_NAMES.get(stype, stype)
+        geom_keys = required_geometry_params(stype)
+        geom_hint = "、".join(geom_keys)
+
         system_prompt = (
             "你是复合材料加筋壁板结构设计专家。"
             "只输出合法 JSON，不要输出解释。"
@@ -141,13 +152,12 @@ class CandidateGenAgent(BaseAgent):
             "每个 candidate 必须包含 geometry、layup、rationale。"
             "当任务未固定材料时，可以为 candidate 指定 material_system。"
             "不要输出 case_id、task、abaqus_results、verdict、created_at 等历史字段。"
-            "方案必须满足 T 形筋、线性屈曲场景，并与任务中的工况和边界一致。"
+            f"方案必须为 {type_display} 加筋壁板，线性屈曲场景，与任务中的工况和边界一致。"
         )
         literature_text = "\n\n".join(literature_guidance) if literature_guidance else "当前没有可用文献片段，请仅依据任务约束生成。"
         user_prompt = (
             f"请基于以下任务和文献依据生成 {desired_count} 个候选方案，只输出 JSON。\n"
-            "geometry 必须包含 panel_length_mm、panel_width_mm、skin_thickness_mm、pitch_mm、"
-            "stiffener_height_mm、web_thickness_mm、flange_width_mm、flange_thickness_mm。\n"
+            f"geometry 必须包含 {geom_hint}。\n"
             "layup 必须包含 skin_layup、skin_f0、skin_f45、skin_f90。\n"
             f"可选材料体系：{', '.join(material_options)}。\n"
             f"工况说明：{describe_load_conditions(task_payload['load_conditions'])}\n"
@@ -159,10 +169,11 @@ class CandidateGenAgent(BaseAgent):
 
     def _normalize_candidate(self, task: Dict, raw: Dict[str, Any], index: int, source: str) -> Dict:
         task_payload = self._task_payload(task)
-        geometry = raw.get("geometry", {})
+        stype = resolve_stiffener_type(
+            raw.get("stiffener_type") or task_payload.get("stiffener_type", "T")
+        )
+        geometry = normalize_geometry(stype, raw.get("geometry"))
         layup = raw.get("layup", {})
-        if not isinstance(geometry, dict):
-            geometry = {}
         if not isinstance(layup, dict):
             layup = {}
         material_system = self._resolve_material_system(task, raw.get("material_system"), index)
@@ -170,17 +181,8 @@ class CandidateGenAgent(BaseAgent):
         candidate = {
             "candidate_id": format_temp_candidate_id(index),
             "source": source,
-            "stiffener_type": "T",
-            "geometry": {
-                "panel_length_mm": float(geometry.get("panel_length_mm", 700.0)),
-                "panel_width_mm": float(geometry.get("panel_width_mm", 600.0)),
-                "skin_thickness_mm": float(geometry.get("skin_thickness_mm", 2.5)),
-                "pitch_mm": float(geometry.get("pitch_mm", 120.0)),
-                "stiffener_height_mm": float(geometry.get("stiffener_height_mm", 28.0)),
-                "web_thickness_mm": float(geometry.get("web_thickness_mm", 2.0)),
-                "flange_width_mm": float(geometry.get("flange_width_mm", 16.0)),
-                "flange_thickness_mm": float(geometry.get("flange_thickness_mm", 2.0)),
-            },
+            "stiffener_type": stype,
+            "geometry": geometry,
             "layup": {
                 "skin_layup": self._normalize_layup_string(layup.get("skin_layup", "[45/-45/0/90/0/-45/45]s")),
                 "skin_f0": self._normalize_ratio(layup.get("skin_f0"), 0.286),
@@ -196,7 +198,9 @@ class CandidateGenAgent(BaseAgent):
             "boundary_conditions": task_payload["boundary_conditions"],
             "design_targets": task_payload["design_targets"],
         }
-        candidate["rule_check"] = self.rule_checker.run(candidate, strict_solver_window=True)
+        candidate["rule_check"] = self.rule_checker.run(
+            candidate, strict_solver_window=True, stiffener_type=stype,
+        )
         validate_or_raise("candidate.schema.json", candidate)
         return candidate
 
@@ -256,8 +260,9 @@ class CandidateGenAgent(BaseAgent):
         """从结构化历史案例中迁移候选，不向 LLM 提供历史案例原文。"""
         if desired_count <= 0:
             return []
+        task_payload = self._task_payload(task)
         transferred: List[Dict] = []
-        for offset, case in enumerate(self.case_retriever.retrieve_transferable_cases(task, top_k=desired_count)):
+        for offset, case in enumerate(self.case_retriever.retrieve_transferable_cases(task_payload, top_k=desired_count)):
             raw_design = case.get("design", {})
             if not isinstance(raw_design, dict) or not raw_design:
                 continue
@@ -321,11 +326,13 @@ class CandidateGenAgent(BaseAgent):
         next_index += len(transfer_candidates)
 
         doe_count = max(source_targets["total"] - len(candidates), 0)
+        stype = task_payload_from_request(task).get("stiffener_type", "T")
         doe_candidates = self.doe_sampler.sample_candidates(
             task,
             n_samples=doe_count,
             start_index=next_index,
             strict_solver_window=True,
+            stiffener_type=stype,
             id_factory=format_temp_candidate_id,
         )
         candidates.extend(doe_candidates)

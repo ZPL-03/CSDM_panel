@@ -1,12 +1,12 @@
 {
-  "selected_model": "rf",
+  "selected_model": "mlp",
   "rf": {
-    "mape": 0.12161989441565263,
-    "rmse": 0.09375553527823058
+    "mape": 0.3341472869267674,
+    "rmse": 0.24370972563274085
   },
   "mlp": {
-    "mape": 0.1457329997353162,
-    "rmse": 0.09394036987752036
+    "mape": 0.2607992202452102,
+    "rmse": 0.2937222343000139
   },
   "feature_order": [
     "panel_length_mm",
@@ -31,6 +31,6 @@
     "G12_GPa",
     "nu12"
   ],
-  "training_size": 317,
+  "training_size": 350,
   "rf_target_transform": "log1p"
 }

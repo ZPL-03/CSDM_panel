@@ -199,7 +199,7 @@ class MainWindow(QMainWindow):
 
         self.input_line = QLineEdit()
         self.input_line.setPlaceholderText(
-            "例如：请为机翼下蒙皮壁板设计一个 T 形加筋方案，压缩 900 kN/m，剪切 180 kN/m，边界 SSCC，生成 18 个候选，初筛保留 6 个候选"
+            "例如：请为机翼下蒙皮壁板设计一个 T 形/帽形/板式加筋方案，压缩 900 kN/m，剪切 180 kN/m，边界 SSCC，生成 18 个候选，初筛保留 6 个候选"
         )
 
         self.generate_button = QPushButton("开始对话设计")
@@ -486,7 +486,7 @@ class MainWindow(QMainWindow):
 
     def _load_example_prompt(self) -> None:
         self.input_line.setText(
-            "请为机翼下蒙皮壁板设计一个 T 形加筋方案，压缩 900 kN/m，剪切 180 kN/m，边界 SSCC，BLF 不低于 1.35，生成 18 个候选，初筛保留 6 个候选"
+            "请为机翼下蒙皮壁板设计一个帽型加筋方案，压缩 900 kN/m，剪切 180 kN/m，边界 SSCC，BLF 不低于 1.35，生成 18 个候选，初筛保留 6 个候选"
         )
         self.input_line.setFocus()
 

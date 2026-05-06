@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import shutil
 import sys
 from pathlib import Path
 from typing import Dict, Iterable, List
@@ -13,9 +12,9 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from core.case_memory import CaseMemoryIndex, is_pass_verdict
 from core.io_utils import read_json, write_json
-from core.paths import ABAQUS_RUNS_DIR, CASES_DIR, CASE_LIBRARY_DIR, CHROMA_DIR, IO_DIR, RESULTS_DIR
-from core.rag_engine import RAGEngine
+from core.paths import ABAQUS_RUNS_DIR, CASES_DIR, CASE_LIBRARY_DIR, IO_DIR, RESULTS_DIR
 from core.schema_validator import validate_or_raise
 from core.surrogate_model import SurrogateModelManager
 from core.task_contract import (
@@ -172,17 +171,46 @@ def migrate_run_inputs() -> Dict[str, int]:
     return summary
 
 
-def rebuild_rag_index() -> Dict[str, int]:
-    if CHROMA_DIR.exists():
-        shutil.rmtree(CHROMA_DIR, ignore_errors=True)
-    engine = RAGEngine()
-    records: List[Dict] = []
-    for path in sorted(CASE_LIBRARY_DIR.glob("CASE_*.json")):
+def rebuild_case_memory_index() -> Dict[str, int]:
+    index = CaseMemoryIndex()
+    index.engine.reset_collection()
+
+    formal_names = {path.name for path in CASE_LIBRARY_DIR.glob("CASE_*.json")}
+    archive_records: List[Dict] = []
+    formal_records: List[Dict] = []
+    seen = set()
+
+    for path in sorted(CASES_DIR.glob("CASE_*.json")):
         payload = normalize_case_record(read_json(path))
-        if payload.get("abaqus_results", {}).get("status") == "success" and payload.get("verdict") == "通过":
-            records.append(payload)
-    engine.upsert_records(records, id_key="case_id")
-    return {"indexed_records": len(records)}
+        seen.add(path.name)
+        is_formal = (
+            path.name in formal_names
+            and payload.get("abaqus_results", {}).get("status") == "success"
+            and is_pass_verdict(payload.get("abaqus_results", {}).get("verdict") or payload.get("verdict"))
+        )
+        if is_formal:
+            formal_records.append(payload)
+        else:
+            archive_records.append(payload)
+
+    for path in sorted(CASE_LIBRARY_DIR.glob("CASE_*.json")):
+        if path.name in seen:
+            continue
+        payload = normalize_case_record(read_json(path))
+        formal_records.append(payload)
+
+    index.upsert_cases(archive_records, scope="archive")
+    index.upsert_cases(formal_records, scope="formal")
+    return {
+        "indexed_records": len(archive_records) + len(formal_records),
+        "archive_records": len(archive_records),
+        "formal_records": len(formal_records),
+    }
+
+
+def rebuild_rag_index() -> Dict[str, int]:
+    """向后兼容旧函数名；实际重建的是案例记忆索引。"""
+    return rebuild_case_memory_index()
 
 
 def maybe_retrain_surrogate() -> Dict | None:
@@ -201,7 +229,7 @@ def run_migration(rebuild_rag: bool, retrain_surrogate: bool) -> Dict:
         "abaqus_runs": migrate_run_inputs(),
     }
     if rebuild_rag:
-        summary["rag"] = rebuild_rag_index()
+        summary["case_memory"] = rebuild_case_memory_index()
     if retrain_surrogate:
         summary["surrogate"] = maybe_retrain_surrogate()
     write_json(RESULTS_DIR / "contract_migration_summary.json", summary)
@@ -211,8 +239,15 @@ def run_migration(rebuild_rag: bool, retrain_surrogate: bool) -> Dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--skip-rag", action="store_true")
+    parser.add_argument("--case-memory-only", action="store_true", help="仅重建 csdm_case_memory 案例记忆集合")
     parser.add_argument("--retrain-surrogate", action="store_true")
     args = parser.parse_args()
+
+    if args.case_memory_only:
+        summary = {"mode": "case_memory_only", "case_memory": rebuild_case_memory_index()}
+        write_json(RESULTS_DIR / "contract_migration_summary.json", summary)
+        print(json.dumps(summary, ensure_ascii=False, indent=2))
+        return 0
 
     summary = run_migration(
         rebuild_rag=not args.skip_rag,

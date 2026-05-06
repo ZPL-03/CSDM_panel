@@ -21,7 +21,7 @@
     },
     "stiffener_type": {
       "type": "string",
-      "enum": ["T"]
+      "enum": ["BLADE", "T", "HAT", "L"]
     },
     "geometry": {
       "type": "object",
@@ -31,9 +31,7 @@
         "skin_thickness_mm",
         "pitch_mm",
         "stiffener_height_mm",
-        "web_thickness_mm",
-        "flange_width_mm",
-        "flange_thickness_mm"
+        "web_thickness_mm"
       ],
       "properties": {
         "panel_length_mm": {"type": "number"},
@@ -43,7 +41,9 @@
         "stiffener_height_mm": {"type": "number"},
         "web_thickness_mm": {"type": "number"},
         "flange_width_mm": {"type": "number"},
-        "flange_thickness_mm": {"type": "number"}
+        "flange_thickness_mm": {"type": "number"},
+        "cap_width_mm": {"type": "number"},
+        "cap_thickness_mm": {"type": "number"}
       },
       "additionalProperties": true
     },

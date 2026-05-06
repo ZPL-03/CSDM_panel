@@ -6,6 +6,7 @@ from typing import Dict, List
 
 from agents.base import BaseAgent
 from core.config_loader import load_app_config
+from core.stiffener_profile import resolve_stiffener_type
 from core.surrogate_model import SurrogateModelManager
 from core.task_contract import effective_screen_top_k
 
@@ -34,14 +35,34 @@ class ScreenerAgent(BaseAgent):
         skin_t = float(geometry["skin_thickness_mm"])
         height = float(geometry["stiffener_height_mm"])
         web_t = float(geometry["web_thickness_mm"])
-        flange_w = float(geometry["flange_width_mm"])
-        flange_t = float(geometry["flange_thickness_mm"])
         pitch = max(float(geometry["pitch_mm"]), 1.0)
+        stype = resolve_stiffener_type(candidate.get("stiffener_type"))
 
         panel_area_m2 = max(panel_length * panel_width * 1e-6, 1e-9)
         skin_volume_m3 = panel_length * panel_width * skin_t * 1e-9
         stiffener_count = max(1, int(round(panel_width / pitch)))
-        stiffener_volume_m3 = stiffener_count * panel_length * (web_t * height + flange_t * flange_w) * 1e-9
+
+        if stype == "BLADE":
+            stiffener_area = web_t * height
+        elif stype == "HAT":
+            flange_w = float(geometry.get("flange_width_mm", 40.0))
+            flange_t = float(geometry.get("flange_thickness_mm", 2.0))
+            cap_w = float(geometry.get("cap_width_mm", 20.0))
+            cap_t = float(geometry.get("cap_thickness_mm", 2.0))
+            half_diff = (flange_w - cap_w) / 2.0
+            incline_len = (half_diff ** 2 + height ** 2) ** 0.5
+            stiffener_area = (2.0 * web_t * incline_len + cap_w * cap_t
+                              + flange_w * flange_t)
+        elif stype == "L":
+            flange_w = float(geometry.get("flange_width_mm", 16.0))
+            flange_t = float(geometry.get("flange_thickness_mm", 2.0))
+            stiffener_area = web_t * height + flange_w * flange_t * 0.5
+        else:  # T
+            flange_w = float(geometry.get("flange_width_mm", 16.0))
+            flange_t = float(geometry.get("flange_thickness_mm", 2.0))
+            stiffener_area = web_t * height + flange_w * flange_t
+
+        stiffener_volume_m3 = stiffener_count * panel_length * stiffener_area * 1e-9
         total_mass_kg = density * (skin_volume_m3 + stiffener_volume_m3)
         return round(total_mass_kg / panel_area_m2, 3)
 

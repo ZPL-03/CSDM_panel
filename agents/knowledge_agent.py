@@ -6,11 +6,11 @@ from datetime import datetime
 from typing import Dict
 
 from agents.base import BaseAgent
+from core.case_memory import CaseMemoryIndex
 from core.config_loader import load_app_config
 from core.id_utils import next_case_id
 from core.io_utils import write_json
 from core.paths import CASE_LIBRARY_DIR, CASES_DIR
-from core.rag_engine import RAGEngine
 from core.schema_validator import validate_or_raise
 from core.surrogate_model import SurrogateModelManager
 from core.task_contract import (
@@ -26,7 +26,7 @@ class KnowledgeAgent(BaseAgent):
 
     def __init__(self, progress_callback=None) -> None:
         super().__init__(progress_callback=progress_callback)
-        self.rag_engine = RAGEngine()
+        self.case_memory = CaseMemoryIndex()
         self.model_manager = SurrogateModelManager()
         self.config = load_app_config()
         self.min_case_records_for_retrain = int(self.config["pipeline"]["min_case_records_for_retrain"])
@@ -121,7 +121,9 @@ class KnowledgeAgent(BaseAgent):
         write_json(CASES_DIR / f"{record['case_id']}.json", record)
         if self._should_store_record(record.get("abaqus_results", {})):
             write_json(CASE_LIBRARY_DIR / f"{record['case_id']}.json", record)
-            self.rag_engine.upsert_records([record], id_key="case_id")
+            self.case_memory.upsert_cases([record], scope="formal")
+        else:
+            self.case_memory.upsert_cases([record], scope="archive")
 
     def _maybe_retrain_surrogate(self) -> Dict | None:
         records = self.model_manager.load_training_records()

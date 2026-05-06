@@ -19,6 +19,7 @@ from torch.utils.data import DataLoader, TensorDataset
 
 from core.io_utils import read_json
 from core.paths import CASES_DIR, MODELS_DIR
+from core.stiffener_profile import CANONICAL_GEOMETRY_ORDER, geometry_to_feature_vector
 from core.task_contract import boundary_condition_code, load_case_code, normalize_boundary_conditions, normalize_load_conditions
 
 
@@ -71,15 +72,9 @@ def candidate_to_features(candidate: Dict, task: Dict | None = None, feature_ord
     if ply_count is None:
         ply_count = len(_parse_layup_sequence(str(layup.get("skin_layup", ""))))
 
+    geom_features = geometry_to_feature_vector(geometry)
     feature_map = {
-        "panel_length_mm": float(geometry.get("panel_length_mm", 0.0)),
-        "panel_width_mm": float(geometry.get("panel_width_mm", 0.0)),
-        "skin_thickness_mm": float(geometry.get("skin_thickness_mm", 0.0)),
-        "pitch_mm": float(geometry.get("pitch_mm", 0.0)),
-        "stiffener_height_mm": float(geometry.get("stiffener_height_mm", 0.0)),
-        "web_thickness_mm": float(geometry.get("web_thickness_mm", 0.0)),
-        "flange_width_mm": float(geometry.get("flange_width_mm", 0.0)),
-        "flange_thickness_mm": float(geometry.get("flange_thickness_mm", 0.0)),
+        **{CANONICAL_GEOMETRY_ORDER[i]: geom_features[i] for i in range(len(CANONICAL_GEOMETRY_ORDER))},
         "skin_f0": float(layup.get("skin_f0", 0.0)),
         "skin_f45": float(layup.get("skin_f45", 0.0)),
         "skin_f90": float(layup.get("skin_f90", 0.0)),

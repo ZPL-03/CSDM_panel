@@ -1,0 +1,190 @@
+{
+  "case_id": "CASE_350",
+  "created_at": "2026-05-06T17:18:23.963629+00:00",
+  "source": "abaqus_auto",
+  "task": {
+    "application": "复合材料加筋壁板",
+    "load_conditions": {
+      "type": "axial_compression",
+      "label": "单轴压缩",
+      "Nx_kN_per_m": -850.0,
+      "Nxy_kN_per_m": 0.0
+    },
+    "boundary_conditions": {
+      "type": "SSCC",
+      "label": "加载边简支、侧边固支（SSCC）",
+      "description": "加载边（X0, X1）简支，侧边（Y0, Y1）固支，适合中厚壁板压缩屈曲评估。",
+      "simply_supported_edges": [
+        "X0",
+        "X1"
+      ],
+      "clamped_edges": [
+        "Y0",
+        "Y1"
+      ]
+    },
+    "geometry_envelope": {
+      "panel_length_mm": [
+        480.0,
+        580.0
+      ],
+      "panel_width_mm": [
+        350.0,
+        450.0
+      ],
+      "max_stiffener_height_mm": 36.0
+    },
+    "material_system": {
+      "name": "T300/5208",
+      "density_kg_per_m3": 1600.0,
+      "E1_GPa": 181.0,
+      "E2_GPa": 10.3,
+      "G12_GPa": 7.17,
+      "nu12": 0.28
+    },
+    "layup_constraints": {
+      "allowed_angles": [
+        0,
+        45,
+        -45,
+        90
+      ],
+      "symmetric": true,
+      "balanced": true,
+      "min_ratio_per_angle": 0.1
+    },
+    "stiffener_type": "L",
+    "design_targets": {
+      "BLF_min": 1.2,
+      "primary_objective": "最小重量"
+    },
+    "screening_preferences": {
+      "top_k_candidates": 5
+    },
+    "candidate_generation_preferences": {
+      "total_candidates": 10
+    }
+  },
+  "design": {
+    "candidate_id": "C350",
+    "source": "DOE",
+    "stiffener_type": "L",
+    "geometry": {
+      "panel_length_mm": 530.0,
+      "panel_width_mm": 400.0,
+      "skin_thickness_mm": 2.5,
+      "pitch_mm": 120.0,
+      "stiffener_height_mm": 31.0,
+      "web_thickness_mm": 2.2,
+      "flange_width_mm": 17.0,
+      "flange_thickness_mm": 2.5
+    },
+    "layup": {
+      "skin_layup": "[45/-45/0/90/0/-45/45]s",
+      "skin_f0": 0.286,
+      "skin_f45": 0.428,
+      "skin_f90": 0.286,
+      "ply_count": 14
+    },
+    "material_system": {
+      "name": "T300/5208",
+      "density_kg_per_m3": 1600.0,
+      "E1_GPa": 181.0,
+      "E2_GPa": 10.3,
+      "G12_GPa": 7.17,
+      "nu12": 0.28
+    },
+    "load_conditions": {
+      "type": "axial_compression",
+      "label": "单轴压缩",
+      "Nx_kN_per_m": -850.0,
+      "Nxy_kN_per_m": 0.0
+    },
+    "boundary_conditions": {
+      "type": "SSCC",
+      "label": "加载边简支、侧边固支（SSCC）",
+      "description": "加载边（X0, X1）简支，侧边（Y0, Y1）固支，适合中厚壁板压缩屈曲评估。",
+      "simply_supported_edges": [
+        "X0",
+        "X1"
+      ],
+      "clamped_edges": [
+        "Y0",
+        "Y1"
+      ]
+    },
+    "design_targets": {
+      "BLF_min": 1.2,
+      "primary_objective": "最小重量"
+    },
+    "rule_check": {
+      "is_valid": false,
+      "errors": [
+        "panel_length_mm 小于最小值 600.0",
+        "panel_width_mm 小于最小值 480.0"
+      ],
+      "suggestions": [],
+      "details": {
+        "panel_length_mm_ok": false,
+        "panel_width_mm_ok": false,
+        "skin_thickness_mm_ok": true,
+        "pitch_mm_ok": true,
+        "stiffener_height_mm_ok": true,
+        "web_thickness_mm_ok": true,
+        "flange_width_mm_ok": true,
+        "flange_thickness_mm_ok": true,
+        "symmetric": true,
+        "balanced": true,
+        "min_ratio_ok": true,
+        "height_pitch_ratio_ok": true,
+        "height_thickness_ratio_ok": true,
+        "solver_skin_thickness_ok": true,
+        "solver_pitch_ok": true,
+        "solver_height_ok": true,
+        "solver_height_pitch_band_ok": true,
+        "solver_flange_width_ok": true
+      }
+    },
+    "surrogate_BLF": null,
+    "rationale": "多筋型验证样本 | 材料=T300/5208 | 铺层=[45/-45/0/90/0/-45/45]s"
+  },
+  "abaqus_results": {
+    "status": "success",
+    "abaqus_odb": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C350\\C350.odb",
+    "visualization_json": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C350\\C350_mode1.json",
+    "failure_mode": "整体屈曲",
+    "error_type": null,
+    "max_displacement_mm": 1.000002,
+    "error_log": null,
+    "BLF_local": 0.07477,
+    "BLF_global": 0.031855,
+    "verdict": "不通过",
+    "candidate_id": "C350",
+    "mode_eigenvalues": [
+      0.031855,
+      0.07477,
+      0.088749,
+      0.11508,
+      0.15737,
+      0.17157
+    ],
+    "abaqus_inp": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C350\\C350.inp",
+    "analysis_flags": {
+      "first_positive_mode_index": 1,
+      "negative_modes_skipped": 0
+    },
+    "effective_mode_eigenvalues": [
+      0.031855,
+      0.07477,
+      0.088749,
+      0.11508,
+      0.15737
+    ],
+    "retry_count": 0,
+    "weight_kg_per_m2": 5.3284,
+    "artifact_dir": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C350"
+  },
+  "verdict": "不通过",
+  "surrogate_BLF_error_pct": null,
+  "fem_agent_retry_count": 0
+}
