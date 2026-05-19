@@ -10,9 +10,6 @@ __pycache__/
 AGENTS.md
 CLAUDE.md
 AI规范文档/
-docx/
-*.doc
-*.docx
 .venv/
 venv/
 
