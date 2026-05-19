@@ -8,7 +8,7 @@ from typing import Any, Dict
 
 from core.config_loader import load_app_config, load_llm_config, load_material_db
 from core.id_utils import next_task_id
-from core.llm_backend import LLMBackend
+from core.llm_backend import LLMBackend, auto_llm_enabled
 from core.schema_validator import validate_or_raise
 from core.stiffener_profile import TYPE_DISPLAY_NAMES, resolve_stiffener_type
 from core.task_contract import (
@@ -50,10 +50,11 @@ class TaskParser:
             + self.app_config.get("pipeline", {}).get("doe_candidates", 4)
         )
         self.llm_backend: LLMBackend | None = None
-        try:
-            self.llm_backend = LLMBackend(load_llm_config())
-        except Exception:
-            self.llm_backend = None
+        if auto_llm_enabled():
+            try:
+                self.llm_backend = LLMBackend(load_llm_config())
+            except Exception:
+                self.llm_backend = None
 
     def _extract_float(self, pattern: str, text: str) -> float | None:
         match = re.search(pattern, text, flags=re.IGNORECASE)

@@ -7,7 +7,7 @@ def test_report_pdf_generation_handles_long_lines(tmp_path: Path) -> None:
     agent = ReportGenAgent()
     markdown_text = "\n".join(
         [
-            "# CSDM 设计报告",
+            "# CSDM_panel 设计报告",
             "",
             "## 工程摘要",
             "",

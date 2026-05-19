@@ -1,1 +1,1 @@
-"""CSDM GUI 包。"""
+"""CSDM_panel GUI 包。"""

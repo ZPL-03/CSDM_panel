@@ -1,4 +1,4 @@
-"""CSDM 桌面程序入口。"""
+"""CSDM_panel 桌面程序入口。"""
 
 from __future__ import annotations
 

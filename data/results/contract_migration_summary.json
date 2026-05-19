@@ -1,8 +1,8 @@
 {
   "mode": "case_memory_only",
   "case_memory": {
-    "indexed_records": 344,
-    "archive_records": 303,
+    "indexed_records": 350,
+    "archive_records": 309,
     "formal_records": 41
   }
 }

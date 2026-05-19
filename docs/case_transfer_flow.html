@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>案例迁移完整流程图</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
+        }
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 1400px;
+            width: 100%;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 28px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .diagram-wrapper {
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            overflow-x: auto;
+            background: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .mermaid {
+            min-width: 100%;
+            height: auto;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>案例迁移（CASE_TRANSFER）完整流程图</h1>
+        <div class="diagram-wrapper">
+            <div class="mermaid">
+graph TD
+    A["用户需求<br/>设计T型筋<br/>轴压500kN/m<br/>SSSS边界"] -->|任务解析| B["结构化任务契约"]
+
+    B -->|三条并行路径| C["候选生成编排<br/>CandidateGenAgent"]
+
+    C -->|路径1| D["LLM + 外部知识库/知识图谱"]
+    C -->|路径2| E["案例迁移<br/>CASE_TRANSFER"]
+    C -->|路径3| F["DOE参数采样"]
+
+    E -->|收集候选| G["向量库查询<br/>csdm_case_memory"]
+
+    G -->|返回候选集合| H["结构化硬过滤<br/>CaseRetriever"]
+
+    H -->|过滤规则1| H1["✓ ABAQUS求解成功<br/>✓ 设计结论为'通过'<br/>✗ 其他排除"]
+
+    H -->|过滤规则2| H2["✓ L3级匹配<br/>筋型相同<br/>+ 工况相同<br/>+ 边界相同<br/>+ 材料一致"]
+
+    H1 --> I["可迁移案例集合<br/>通常2-5个"]
+    H2 --> I
+
+    I -->|组合评分排序| J["基础评分计算<br/>load_gap × 1.0<br/>+ geometry_gap × 0.02-0.05<br/>+ blf_gap × 100.0"]
+
+    J -->|混合调整| K["向量排序调整<br/>combined_score =<br/>base_score +<br/>vector_rank × 0.1"]
+
+    K -->|选取Top-K| L["按评分升序排列<br/>返回Top-K候选"]
+
+    L -->|规范化| M["normalize_candidate<br/>- 新建candidate_id<br/>- source=CASE_TRANSFER<br/>- 补充task约束<br/>- 生成rationale"]
+
+    M -->|规则检查| N["rule_checker.run<br/>- 几何范围检查<br/>- 铺层合理性检查<br/>- 求解器窗口检查"]
+
+    N -->|is_valid?| O{通过<br/>规则检查?}
+    O -->|是| P["保留为有效候选"]
+    O -->|否| Q["舍弃"]
+
+    P -->|汇合| R["三条路径结果合并<br/>总共target_total个候选"]
+
+    D -->|LLM候选| R
+    F -->|DOE候选| R
+
+    R -->|进入下游| S["SCREENER<br/>代理模型初筛"]
+
+    S -->|预测BLF/重量| T["Top-K排序"]
+
+    T -->|用户确认| U["FEM_AGENT<br/>ABAQUS校核"]
+
+    U -->|建模、求解、后处理| V["结果归档"]
+
+    V -->|通过验证| W["KNOWLEDGE_AGENT<br/>写入正式库<br/>更新案例记忆"]
+
+    W -->|重建索引| X["rebuild_case_memory_index<br/>扫描档案库和正式库<br/>按scope分类<br/>更新Chroma向量库"]
+
+    style E fill:#e1f5ff,stroke:#0288d1,stroke-width:3px,color:#000
+    style H fill:#fff3e0,stroke:#f57c00,stroke-width:2px,color:#000
+    style J fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000
+    style K fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#000
+    style M fill:#fce4ec,stroke:#c2185b,stroke-width:2px,color:#000
+    style N fill:#e0f2f1,stroke:#00897b,stroke-width:2px,color:#000
+    style O fill:#fff9c4,stroke:#f57f17,stroke-width:2px,color:#000
+    style P fill:#c8e6c9,stroke:#2e7d32,stroke-width:2px,color:#000
+    style Q fill:#ffccbc,stroke:#d84315,stroke-width:2px,color:#000
+            </div>
+        </div>
+        <div class="footer">
+            <p>案例迁移流程：从历史案例库中检索、评分、规范化并验证可迁移的设计方案</p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            securityLevel: 'loose',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true
+            }
+        });
+        mermaid.run();
+    </script>
+</body>
+</html>

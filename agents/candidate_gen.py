@@ -8,8 +8,8 @@ from core.case_retriever import CaseRetriever
 from core.config_loader import load_app_config, load_llm_config, load_material_db
 from core.doe_sampler import DOESampler
 from core.id_utils import format_temp_candidate_id
-from core.literature_corpus import LiteratureCorpus
-from core.llm_backend import LLMBackend
+from core.domain_knowledge import DomainKnowledgeBase
+from core.llm_backend import LLMBackend, auto_llm_enabled
 from core.rule_checker import RuleChecker
 from core.schema_validator import SchemaValidationError, validate_or_raise
 from core.stiffener_profile import (
@@ -26,6 +26,21 @@ from core.task_contract import (
 )
 
 
+LLM_CANDIDATE_KEYS = [
+    "candidates",
+    "candidate_designs",
+    "design_candidates",
+    "designs",
+    "items",
+    "results",
+    "data",
+    "方案",
+    "候选方案",
+    "候选",
+    "候选设计",
+]
+
+
 class CandidateGenAgent(BaseAgent):
     """候选生成编排器，统一调度 LLM、案例迁移与 DOE 三条路径。"""
 
@@ -39,13 +54,14 @@ class CandidateGenAgent(BaseAgent):
         self.doe_sampler = DOESampler()
         self.rule_checker = RuleChecker()
         self.case_retriever = CaseRetriever()
-        self.literature_corpus = LiteratureCorpus()
+        self.knowledge_base = DomainKnowledgeBase()
         self.material_catalog = self._build_material_catalog()
         self.llm_backend: LLMBackend | None = None
-        try:
-            self.llm_backend = LLMBackend(self.llm_config)
-        except Exception as exc:
-            self.emit(f"LLM 后端初始化失败，将自动退回案例迁移和 DOE：{exc}")
+        if auto_llm_enabled():
+            try:
+                self.llm_backend = LLMBackend(self.llm_config)
+            except Exception as exc:
+                self.emit(f"LLM 后端初始化失败，将自动退回案例迁移和 DOE：{exc}")
 
     def _coerce_dict(self, value: Any) -> Dict[str, Any] | None:
         if isinstance(value, dict):
@@ -132,12 +148,12 @@ class CandidateGenAgent(BaseAgent):
             return task_material
         return dict(options[(max(index, 1) - 1) % len(options)])
 
-    def _literature_guidance(self, task: Dict, top_k: int) -> List[str]:
-        """仅为 LLM 路径检索文献片段，避免与历史案例迁移职责混用。"""
-        return self.literature_corpus.format_snippets(task, top_k=max(1, top_k))
+    def _knowledge_guidance(self, task: Dict, top_k: int) -> List[str]:
+        """仅为 LLM 路径检索外部知识库/知识图谱片段，避免与历史案例迁移职责混用。"""
+        return self.knowledge_base.format_snippets(task, top_k=max(1, min(3, top_k)))
 
-    def _build_prompt(self, task: Dict, literature_guidance: List[str], desired_count: int) -> tuple[str, str]:
-        """构造 LLM 候选生成 Prompt，只注入任务约束和文献依据。"""
+    def _build_prompt(self, task: Dict, knowledge_guidance: List[str], desired_count: int) -> tuple[str, str]:
+        """构造 LLM 候选生成 Prompt，只注入任务约束和外部知识库/知识图谱依据。"""
         task_payload = self._task_payload(task)
         material_options = [item.get("name", "") for item in self._material_options(task)]
         stype = task_payload.get("stiffener_type", "T")
@@ -147,23 +163,25 @@ class CandidateGenAgent(BaseAgent):
 
         system_prompt = (
             "你是复合材料加筋壁板结构设计专家。"
-            "只输出合法 JSON，不要输出解释。"
-            "顶层格式必须是 {\"candidates\": [...]}。"
+            "只输出合法 JSON，不要输出 Markdown、解释、注释或多余字段。"
+            "顶层必须严格为 {\"candidates\": [...]}。"
             "每个 candidate 必须包含 geometry、layup、rationale。"
             "当任务未固定材料时，可以为 candidate 指定 material_system。"
             "不要输出 case_id、task、abaqus_results、verdict、created_at 等历史字段。"
             f"方案必须为 {type_display} 加筋壁板，线性屈曲场景，与任务中的工况和边界一致。"
         )
-        literature_text = "\n\n".join(literature_guidance) if literature_guidance else "当前没有可用文献片段，请仅依据任务约束生成。"
+        knowledge_text = "\n\n".join(knowledge_guidance) if knowledge_guidance else "当前没有可用外部知识库/知识图谱片段，请仅依据任务约束生成。"
         user_prompt = (
-            f"请基于以下任务和文献依据生成 {desired_count} 个候选方案，只输出 JSON。\n"
+            f"请基于以下任务和外部知识库/知识图谱依据生成 {desired_count} 个候选方案，只输出 JSON。\n"
             f"geometry 必须包含 {geom_hint}。\n"
             "layup 必须包含 skin_layup、skin_f0、skin_f45、skin_f90。\n"
             f"可选材料体系：{', '.join(material_options)}。\n"
             f"工况说明：{describe_load_conditions(task_payload['load_conditions'])}\n"
             f"边界说明：{describe_boundary_conditions(task_payload['boundary_conditions'])}\n"
             f"任务：\n{json.dumps(task_payload, ensure_ascii=False, indent=2)}\n"
-            f"文献依据：\n{literature_text}"
+            f"外部知识库/知识图谱依据：\n{knowledge_text}\n"
+            "返回 JSON 模板：\n"
+            "{\"candidates\":[{\"geometry\":{},\"layup\":{},\"material_system\":{},\"rationale\":\"\"}]}"
         )
         return system_prompt, user_prompt
 
@@ -206,14 +224,30 @@ class CandidateGenAgent(BaseAgent):
 
     def _extract_llm_items(self, payload: Any) -> List[Dict[str, Any]]:
         if isinstance(payload, dict):
-            payload = (
-                payload.get("candidates")
-                or payload.get("items")
-                or payload.get("results")
-                or payload.get("data")
-                or ([payload["design"]] if isinstance(payload.get("design"), dict) else None)
-                or ([payload] if isinstance(payload.get("geometry"), dict) else None)
-            )
+            for key in LLM_CANDIDATE_KEYS:
+                if key in payload:
+                    return self._extract_llm_items(payload.get(key))
+            for key in ["output", "response", "answer", "content", "json"]:
+                value = payload.get(key)
+                if isinstance(value, (str, dict, list)):
+                    extracted = self._extract_llm_items(value)
+                    if extracted:
+                        return extracted
+            if isinstance(payload.get("design"), dict):
+                payload = [payload["design"]]
+            elif isinstance(payload.get("geometry"), dict):
+                payload = [payload]
+            else:
+                dict_values = [value for value in payload.values() if isinstance(value, dict)]
+                if dict_values and all(isinstance(value.get("geometry"), dict) for value in dict_values):
+                    payload = dict_values
+                elif len(payload) == 1:
+                    only_value = next(iter(payload.values()))
+                    if isinstance(only_value, (str, dict, list)):
+                        return self._extract_llm_items(only_value)
+                else:
+                    keys = ", ".join(str(key) for key in list(payload.keys())[:8])
+                    raise SchemaValidationError(f"LLM 输出不是候选数组，顶层字段：{keys}")
         elif isinstance(payload, str):
             parsed = self._coerce_dict(payload)
             if parsed is not None:
@@ -222,6 +256,7 @@ class CandidateGenAgent(BaseAgent):
                 payload = json.loads(payload)
             except json.JSONDecodeError as exc:
                 raise SchemaValidationError(f"LLM 输出不是合法 JSON: {exc}") from exc
+            return self._extract_llm_items(payload)
 
         if not isinstance(payload, list):
             raise SchemaValidationError("LLM 输出不是候选数组")
@@ -238,8 +273,8 @@ class CandidateGenAgent(BaseAgent):
         if self.llm_backend is None or desired_count <= 0:
             return []
 
-        literature_guidance = self._literature_guidance(task, top_k=max(3, desired_count))
-        system_prompt, user_prompt = self._build_prompt(task, literature_guidance, desired_count)
+        knowledge_guidance = self._knowledge_guidance(task, top_k=max(3, desired_count))
+        system_prompt, user_prompt = self._build_prompt(task, knowledge_guidance, desired_count)
 
         for _ in range(int(self.llm_config["fallback"]["max_format_retries"])):
             try:

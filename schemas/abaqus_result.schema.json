@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "cssm/abaqus_result.schema.json",
-  "title": "CSDM Abaqus Result Schema",
+  "title": "CSDM_panel Abaqus Result Schema",
   "type": "object",
   "required": [
     "candidate_id",

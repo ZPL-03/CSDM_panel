@@ -150,9 +150,9 @@ class KnowledgeAgent(BaseAgent):
         record = self._build_record(task, design, abaqus_results)
         self._store_record(record)
         if self._should_store_record(record["abaqus_results"]):
-            self.emit(f"案例 {record['case_id']} 已进入正式知识库")
+            self.emit(f"案例 {record['case_id']} 已进入正式案例库")
         else:
-            self.emit(f"案例 {record['case_id']} 已归档到评估档案，未进入正式知识库")
+            self.emit(f"案例 {record['case_id']} 已归档到评估档案，未进入正式案例库")
 
         retrain_summary = self._maybe_retrain_surrogate()
         return {

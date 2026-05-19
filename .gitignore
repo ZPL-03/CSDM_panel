@@ -9,6 +9,10 @@ __pycache__/
 .env
 AGENTS.md
 CLAUDE.md
+AI规范文档/
+docx/
+*.doc
+*.docx
 .venv/
 venv/
 
@@ -28,12 +32,10 @@ data/results/latest_report.md
 data/results/latest_report.pdf
 data/results/batch_summary_*.json
 knowledge/chroma_db/
-knowledge/literature/pdfs/
-knowledge/literature/texts/
-knowledge/literature/markdown/
-knowledge/literature/json/
-knowledge/literature/images/
-knowledge/literature/imports/
+knowledge/external/rag/
+knowledge/external/kg/
+knowledge/external/provenance/
+knowledge/external/manifest.json
 models/embedding_cache/
 
 # Abaqus session / generated files

@@ -1,1 +1,1 @@
-"""CSDM ABAQUS 接口包。"""
+"""CSDM_panel ABAQUS 接口包。"""

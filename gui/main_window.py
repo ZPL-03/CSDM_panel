@@ -178,11 +178,11 @@ class PipelineWorker(QObject):
 
 
 class MainWindow(QMainWindow):
-    """CSDM 对话主导交互界面。"""
+    """CSDM_panel 对话主导交互界面。"""
 
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("CSDM - 复合材料加筋壁板智能设计系统")
+        self.setWindowTitle("CSDM_panel - 复合材料加筋壁板智能设计系统")
         self.resize(1680, 980)
         self.session = PipelineSession()
         self.worker_thread: QThread | None = None

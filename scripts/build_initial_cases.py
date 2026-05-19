@@ -123,11 +123,10 @@ def build_candidates(task: Dict, count: int, start_index: int, strict_solver_win
     )
 
 
-def solve_candidate(task: Dict, candidate: Dict, mock_mode: bool) -> Tuple[Dict, Dict]:
+def solve_candidate(task: Dict, candidate: Dict) -> Tuple[Dict, Dict]:
     agent = FEMAgent()
     task_payload = task_payload_from_request(task)
     payload = dict(candidate)
-    payload["mock_mode"] = mock_mode
     payload["design_targets"] = task_payload["design_targets"]
     payload["load_conditions"] = task_payload["load_conditions"]
     payload["boundary_conditions"] = task_payload["boundary_conditions"]
@@ -151,7 +150,7 @@ def clean_run_directory(run_dir: Path, candidate_id: str) -> None:
                 child.unlink(missing_ok=True)
 
 
-def run_task_batch(task: Dict, count: int, workers: int, mock_mode: bool, strict_solver_window: bool) -> List[Dict]:
+def run_task_batch(task: Dict, count: int, workers: int, strict_solver_window: bool) -> List[Dict]:
     if count <= 0:
         return []
 
@@ -167,7 +166,7 @@ def run_task_batch(task: Dict, count: int, workers: int, mock_mode: bool, strict
     records: List[Dict] = []
     with ThreadPoolExecutor(max_workers=max(1, workers)) as executor:
         future_map = {
-            executor.submit(solve_candidate, task, candidate, mock_mode): candidate["candidate_id"]
+            executor.submit(solve_candidate, task, candidate): candidate["candidate_id"]
             for candidate in candidates
         }
         for future in as_completed(future_map):
@@ -230,7 +229,6 @@ def main() -> int:
     parser.add_argument("--count", type=int, default=100)
     parser.add_argument("--task-count", type=int, default=8)
     parser.add_argument("--workers", type=int, default=2)
-    parser.add_argument("--mock", action="store_true")
     parser.add_argument("--full-range", action="store_true")
     parser.add_argument("--loads", type=str, default="")
     parser.add_argument("--reset", action="store_true")
@@ -242,7 +240,7 @@ def main() -> int:
     loads = parse_loads(args.loads or None, args.task_count)
     specs = task_specs(args.task_count, loads)
     bucket_sizes = partition_count(args.count, len(specs))
-    strict_solver_window = not args.mock and not args.full_range
+    strict_solver_window = not args.full_range
 
     all_records: List[Dict] = []
     for (material_key, nx, task_index), bucket_count in zip(specs, bucket_sizes):
@@ -251,7 +249,6 @@ def main() -> int:
             task=task,
             count=bucket_count,
             workers=args.workers,
-            mock_mode=args.mock,
             strict_solver_window=strict_solver_window,
         )
         all_records.extend(task_records)

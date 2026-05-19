@@ -86,7 +86,7 @@ def test_extract_blf_uses_first_positive_eigenvalue(monkeypatch, tmp_path: Path)
     fake_module = types.SimpleNamespace(openOdb=lambda path: _DummyOdb([-0.21, -0.08, 0.035, 0.072, 0.11]))
     monkeypatch.setitem(sys.modules, "odbAccess", fake_module)
 
-    extract_blf(odb_path=odb_path, result_json=result_json, input_json=input_json, mock=False)
+    extract_blf(odb_path=odb_path, result_json=result_json, input_json=input_json)
 
     payload = read_json(result_json)
     assert payload["status"] == "success"

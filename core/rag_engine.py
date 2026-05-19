@@ -1,4 +1,4 @@
-"""基于 ChromaDB 的本地 RAG 检索。"""
+"""基于 ChromaDB 的文本向量检索。"""
 
 from __future__ import annotations
 
@@ -88,7 +88,7 @@ class RAGEngine:
         self.embedding_cache_dir = Path(str(rag_config.get("embedding_cache_dir", "models/embedding_cache")))
         self.embedding_cache_dir.mkdir(parents=True, exist_ok=True)
         self.local_files_only = bool(rag_config.get("local_files_only", True))
-        self.use_hash_embedding_only = os.getenv("CSDM_USE_HASH_EMBEDDING", "0") == "1" or bool(
+        self.use_hash_embedding_only = os.getenv("CSDM_panel_USE_HASH_EMBEDDING", "0") == "1" or bool(
             rag_config.get("use_hash_embedding_only", False)
         )
         self.allow_hash_fallback = bool(rag_config.get("allow_hash_fallback", True))
@@ -156,7 +156,7 @@ class RAGEngine:
         self.collection = self.client.get_or_create_collection(name=self.collection_name)
 
     def reset_collection(self) -> None:
-        """只重置当前 collection，避免误删同一 Chroma 目录下的其他知识库。"""
+        """只重置当前 collection，避免误删同一 Chroma 目录下的其他集合。"""
         self._reset_collection()
 
     def count(self) -> int:

@@ -8,7 +8,7 @@ import re
 import uuid
 
 from core.io_utils import read_json
-from core.paths import ABAQUS_DIR, ABAQUS_RUNS_DIR, CASES_DIR, IO_DIR, TASKS_DIR
+from core.paths import CASE_LIBRARY_DIR, CASES_DIR, TASKS_DIR
 
 
 TASK_PATTERN = re.compile(r"^TASK_(\d+)$")
@@ -146,32 +146,24 @@ def case_id_for_candidate(candidate_id: str) -> str | None:
     return format_case_id(index)
 
 
+def _case_record_paths() -> list:
+    paths = []
+    seen = set()
+    for folder in [CASES_DIR, CASE_LIBRARY_DIR]:
+        for path in folder.glob("CASE_*.json"):
+            if path.name in seen:
+                continue
+            seen.add(path.name)
+            paths.append(path)
+    return paths
+
+
 def _max_candidate_index() -> int:
     indices = []
-    for path in IO_DIR.glob("input_*.json"):
-        parsed = _parse_index(path.stem.replace("input_", ""), CANDIDATE_PATTERN)
-        if parsed is not None:
-            indices.append(parsed)
-    for path in IO_DIR.glob("result_*.json"):
-        parsed = _parse_index(path.stem.replace("result_", ""), CANDIDATE_PATTERN)
-        if parsed is not None:
-            indices.append(parsed)
-    for folder in (ABAQUS_DIR,):
-        for path in folder.glob("C*.odb"):
-            parsed = _parse_index(path.stem, CANDIDATE_PATTERN)
-            if parsed is not None:
-                indices.append(parsed)
-        for path in folder.glob("C*.inp"):
-            parsed = _parse_index(path.stem, CANDIDATE_PATTERN)
-            if parsed is not None:
-                indices.append(parsed)
-    for path in ABAQUS_RUNS_DIR.glob("C*"):
-        if not path.is_dir():
-            continue
-        parsed = _parse_index(path.name, CANDIDATE_PATTERN)
-        if parsed is not None:
-            indices.append(parsed)
-    for path in CASES_DIR.glob("CASE_*.json"):
+    for path in _case_record_paths():
+        parsed_case = _parse_index(path.stem, CASE_PATTERN)
+        if parsed_case is not None:
+            indices.append(parsed_case)
         try:
             payload = read_json(path)
         except Exception:
@@ -188,7 +180,7 @@ def _max_candidate_index() -> int:
 
 def _max_case_index() -> int:
     indices = []
-    for path in CASES_DIR.glob("CASE_*.json"):
+    for path in _case_record_paths():
         parsed = _parse_index(path.stem, CASE_PATTERN)
         if parsed is not None:
             indices.append(parsed)
@@ -208,7 +200,12 @@ def next_candidate_index() -> int:
 
 
 def next_case_id(candidate_id: str | None = None) -> str:
-    preferred = case_id_for_candidate(candidate_id) if candidate_id else None
-    if preferred is not None:
-        return preferred
-    return format_case_id(_max_case_index() + 1)
+    next_index = _max_case_index() + 1
+    preferred_index = candidate_index(candidate_id) if candidate_id else None
+    if preferred_index is not None:
+        if preferred_index != next_index:
+            raise ValueError(
+                f"候选编号 {candidate_id} 与案例编号不连续，当前下一正式编号应为 C{next_index}"
+            )
+        return format_case_id(preferred_index)
+    return format_case_id(next_index)

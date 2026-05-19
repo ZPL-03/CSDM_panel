@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "cssm/candidate.schema.json",
-  "title": "CSDM Candidate Schema",
+  "title": "CSDM_panel Candidate Schema",
   "type": "object",
   "required": [
     "candidate_id",

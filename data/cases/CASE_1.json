@@ -146,8 +146,8 @@
   },
   "abaqus_results": {
     "status": "success",
-    "abaqus_odb": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C1\\C1.odb",
-    "visualization_json": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C1\\C1_mode1.json",
+    "abaqus_odb": "D:\\Project\\VS_Code\\CSDM_panel\\data\\abaqus_runs\\C1\\C1.odb",
+    "visualization_json": "D:\\Project\\VS_Code\\CSDM_panel\\data\\abaqus_runs\\C1\\C1_mode1.json",
     "failure_mode": "整体屈曲",
     "error_type": null,
     "max_displacement_mm": 1.0,
@@ -166,7 +166,7 @@
       0.4739,
       0.47865
     ],
-    "abaqus_inp": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C1\\C1.inp",
+    "abaqus_inp": "D:\\Project\\VS_Code\\CSDM_panel\\data\\abaqus_runs\\C1\\C1.inp",
     "analysis_flags": {
       "first_positive_mode_index": 1,
       "negative_modes_skipped": 0
@@ -180,7 +180,7 @@
     ],
     "retry_count": 0,
     "weight_kg_per_m2": 3.438633,
-    "artifact_dir": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C1",
+    "artifact_dir": "D:\\Project\\VS_Code\\CSDM_panel\\data\\abaqus_runs\\C1",
     "load_summary": "单轴压缩：Nx=120.0 kN/m",
     "boundary_summary": "四边简支（SSSS）",
     "diagnosis_summary": "线性屈曲校核已完成，当前结论为“不通过”。"

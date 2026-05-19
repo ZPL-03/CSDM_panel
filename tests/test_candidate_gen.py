@@ -1,5 +1,3 @@
-import json
-
 from agents.candidate_gen import CandidateGenAgent
 from core.llm_backend import LLMBackend
 
@@ -79,7 +77,7 @@ def test_candidate_gen_tolerates_string_items_from_llm() -> None:
             )
         },
     )()
-    agent.literature_corpus = type("FakeLiterature", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
+    agent.knowledge_base = type("FakeKnowledge", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
 
     candidates = agent.run(_build_task())
 
@@ -123,7 +121,7 @@ def test_candidate_gen_tolerates_list_layup_from_llm() -> None:
             )
         },
     )()
-    agent.literature_corpus = type("FakeLiterature", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
+    agent.knowledge_base = type("FakeKnowledge", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
 
     candidates = agent.run(_build_task())
 
@@ -132,6 +130,47 @@ def test_candidate_gen_tolerates_list_layup_from_llm() -> None:
     assert llm_candidate["source"] == "LLM"
     assert llm_candidate["layup"]["skin_layup"] == "[45/-45/0/90/0/-45/45]s"
     assert llm_candidate["rule_check"]["is_valid"] is True
+
+
+def test_candidate_gen_tolerates_alternate_llm_candidate_keys() -> None:
+    agent = CandidateGenAgent()
+    agent.llm_backend = type(
+        "FakeBackend",
+        (),
+        {
+            "generate_json": staticmethod(
+                lambda _system, _user: {
+                    "候选方案": {
+                        "方案1": {
+                            "geometry": {
+                                "panel_length_mm": 700,
+                                "panel_width_mm": 600,
+                                "skin_thickness_mm": 2.5,
+                                "pitch_mm": 120,
+                                "stiffener_height_mm": 28,
+                                "web_thickness_mm": 2.0,
+                                "flange_width_mm": 16,
+                                "flange_thickness_mm": 2.0,
+                            },
+                            "layup": {
+                                "skin_layup": "[45/-45/0/90/0/-45/45]s",
+                                "skin_f0": 0.286,
+                                "skin_f45": 0.571,
+                                "skin_f90": 0.143,
+                            },
+                            "rationale": "alternate key",
+                        }
+                    }
+                }
+            )
+        },
+    )()
+    agent.knowledge_base = type("FakeKnowledge", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
+
+    candidates = agent.run(_build_task())
+
+    assert candidates[0]["source"] == "LLM"
+    assert candidates[0]["rationale"] == "alternate key"
 
 
 def test_candidate_gen_respects_total_candidate_target() -> None:
@@ -186,7 +225,7 @@ def test_candidate_gen_respects_total_candidate_target() -> None:
             )
         },
     )()
-    agent.literature_corpus = type("FakeLiterature", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
+    agent.knowledge_base = type("FakeKnowledge", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
 
     def _fake_doe_candidates(task: dict, n_samples: int, start_index: int = 1, **_kwargs) -> list[dict]:
         candidates = []
@@ -254,50 +293,48 @@ def test_candidate_gen_respects_total_candidate_target() -> None:
     assert sum(1 for item in candidates if item["source"] == "DOE") == 8
 
 
-def test_candidate_gen_build_prompt_uses_literature_guidance() -> None:
+def test_candidate_gen_build_prompt_uses_knowledge_base_guidance() -> None:
     agent = CandidateGenAgent()
     system_prompt, user_prompt = agent._build_prompt(
         _build_task(),
-        ["[1] Composite buckling study | source=openalex\nabstract snippet"],
+        ["[外部知识库 1] Composite buckling study\nabstract snippet"],
         2,
     )
 
-    assert "文献依据" in user_prompt
+    assert "外部知识库/知识图谱依据" in user_prompt
     assert "Composite buckling study" in user_prompt
     assert "参考案例" not in user_prompt
     assert "只输出合法 JSON" in system_prompt
 
 
-def test_local_ollama_json_mode_uses_larger_output_budget(monkeypatch) -> None:
+def test_openai_compatible_json_mode_uses_larger_output_budget(monkeypatch) -> None:
     captured: dict[str, object] = {}
 
-    class _FakeResponse:
-        def __enter__(self):
-            return self
+    class _FakeCompletions:
+        def create(self, **kwargs):
+            captured.update(kwargs)
+            message = type("Message", (), {"content": "{}"})()
+            choice = type("Choice", (), {"message": message})()
+            return type("Response", (), {"choices": [choice]})()
 
-        def __exit__(self, exc_type, exc, tb):
-            return False
+    class _FakeOpenAI:
+        def __init__(self, **kwargs):
+            captured["client_kwargs"] = kwargs
+            self.chat = type("Chat", (), {"completions": _FakeCompletions()})()
 
-        def read(self) -> bytes:
-            return json.dumps({"message": {"content": "{}"}}).encode("utf-8")
-
-    class _FakeOpener:
-        def open(self, req, timeout=300):
-            captured["body"] = json.loads(req.data.decode("utf-8"))
-            return _FakeResponse()
-
-    monkeypatch.setattr("core.llm_backend.urllib_request.build_opener", lambda *_args: _FakeOpener())
+    monkeypatch.setattr("openai.OpenAI", _FakeOpenAI)
 
     backend = LLMBackend(
         {
-            "active_provider": "local_ollama",
-            "local_ollama": {
-                "provider": "local_ollama",
-                "model": "qwen2.5:7b",
+            "backend": {
+                "provider": "openai_compatible",
+                "base_url": "https://example.test/v1",
+                "api_key": "test-key",
+                "model": "test-model",
                 "temperature": 0.2,
                 "max_tokens": 1800,
-                "base_url": "http://127.0.0.1:11434/v1",
-                "api_key": "ollama",
+                "timeout_seconds": 30,
+                "json_output_tokens": 4096,
             },
             "fallback": {"max_format_retries": 3},
         }
@@ -305,4 +342,6 @@ def test_local_ollama_json_mode_uses_larger_output_budget(monkeypatch) -> None:
 
     backend.generate_json("只输出 JSON", "输出 {'ok': true}")
 
-    assert captured["body"]["options"]["num_predict"] == 4096
+    assert captured["max_tokens"] == 4096
+    assert captured["model"] == "test-model"
+    assert captured["response_format"] == {"type": "json_object"}

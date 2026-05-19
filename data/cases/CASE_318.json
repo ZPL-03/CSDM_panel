@@ -154,10 +154,10 @@
     "max_displacement_mm": null,
     "weight_kg_per_m2": null,
     "verdict": null,
-    "abaqus_odb": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C318\\C318.odb",
-    "abaqus_inp": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C318\\C318.inp",
+    "abaqus_odb": "D:\\Project\\VS_Code\\CSDM_panel\\data\\abaqus_runs\\C318\\C318.odb",
+    "abaqus_inp": "D:\\Project\\VS_Code\\CSDM_panel\\data\\abaqus_runs\\C318\\C318.inp",
     "visualization_json": null,
-    "artifact_dir": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C318",
+    "artifact_dir": "D:\\Project\\VS_Code\\CSDM_panel\\data\\abaqus_runs\\C318",
     "error_type": "blf_negative",
     "error_log": {
       "eigenvalues": [

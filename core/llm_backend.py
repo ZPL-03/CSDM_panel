@@ -1,135 +1,100 @@
-﻿"""统一的 LLM 后端适配层。"""
+"""单一 OpenAI 兼容 LLM 后端。"""
 
 from __future__ import annotations
 
 import json
 import os
-from typing import Dict, List
-from urllib import request as urllib_request
-from urllib.parse import urlparse
+from typing import Any, Dict, List
 
 from core.config_loader import load_llm_config
 
 
-def resolve_api_key(env_name: str | None, fallback_value: str = "") -> str:
-    if fallback_value:
-        return fallback_value
-    if not env_name:
-        return ""
-
-    env_value = os.getenv(env_name, "")
-    if env_value:
-        return env_value
-
-    if os.name == "nt":
-        try:
-            import winreg
-
-            with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as key:
-                return str(winreg.QueryValueEx(key, env_name)[0])
-        except Exception:
-            return ""
-    return ""
+def resolve_config_value(env_name: str | None, fallback_value: str = "") -> str:
+    """从环境变量或配置默认值读取 LLM 参数。"""
+    if env_name:
+        env_value = os.getenv(env_name, "").strip()
+        if env_value:
+            return env_value
+    return str(fallback_value or "").strip()
 
 
-def resolve_backend_config(config: Dict) -> Dict:
-    provider_name = os.getenv("CSDM_LLM_PROVIDER", config.get("active_provider", "ollama_cloud"))
-    provider_config = config.get(provider_name)
-    if isinstance(provider_config, dict):
-        return provider_config
-    return config.get("backend", {})
+def resolve_backend_config(config: Dict[str, Any]) -> Dict[str, Any]:
+    """返回当前唯一可用的 OpenAI 兼容后端配置。"""
+    backend = config.get("backend", {})
+    if not isinstance(backend, dict):
+        raise ValueError("llm_config.yaml 缺少 backend 配置")
+    provider = str(backend.get("provider") or "openai_compatible")
+    if provider != "openai_compatible":
+        raise ValueError("当前项目只支持 openai_compatible LLM 后端")
+    return backend
+
+
+def auto_llm_enabled() -> bool:
+    """控制业务对象是否自动初始化 LLM，测试环境可关闭外部调用。"""
+    return os.getenv("CSDM_panel_DISABLE_LLM_AUTO", "0").strip() != "1"
 
 
 class LLMBackend:
-    """面向 Ollama 云端或本地 OpenAI 兼容接口的最小封装。"""
+    """面向当前项目唯一 LLM 接口的最小封装。"""
 
-    def __init__(self, config: Dict | None = None) -> None:
+    def __init__(self, config: Dict[str, Any] | None = None) -> None:
         self.config = config or load_llm_config()
         backend = resolve_backend_config(self.config)
-        self.base_url = backend["base_url"]
-        self.model = backend["model"]
-        self.temperature = backend["temperature"]
-        self.max_tokens = backend["max_tokens"]
-        self.provider = backend.get("provider", "")
 
-        api_key_env = backend.get("api_key_env")
-        api_key = resolve_api_key(api_key_env, backend.get("api_key", ""))
-        if not api_key:
-            raise ValueError(f"未设置 LLM API Key，请配置环境变量 {api_key_env}")
+        self.base_url = resolve_config_value(backend.get("base_url_env"), backend.get("base_url", ""))
+        self.api_key = resolve_config_value(backend.get("api_key_env"), backend.get("api_key", ""))
+        self.model = resolve_config_value(backend.get("model_env"), backend.get("model", ""))
+        self.temperature = float(backend.get("temperature", 0.2))
+        self.max_tokens = int(backend.get("max_tokens", 1800))
+        self.timeout_seconds = int(backend.get("timeout_seconds", 180))
+        self.json_output_tokens = int(backend.get("json_output_tokens", max(self.max_tokens, 4096)))
 
-        self.client = None
-        if self.provider != "local_ollama":
-            try:
-                from openai import OpenAI
-            except Exception as exc:
-                raise ValueError("当前环境未安装 openai 依赖") from exc
-            self.client = OpenAI(base_url=self.base_url, api_key=api_key)
+        missing = []
+        if not self.base_url:
+            missing.append(str(backend.get("base_url_env") or "base_url"))
+        if not self.api_key:
+            missing.append(str(backend.get("api_key_env") or "api_key"))
+        if not self.model:
+            missing.append(str(backend.get("model_env") or "model"))
+        if missing:
+            raise ValueError(f"LLM 配置不完整，请设置：{', '.join(missing)}")
+
+        try:
+            from openai import OpenAI
+        except Exception as exc:
+            raise ValueError("当前环境未安装 openai 依赖") from exc
+
+        self.client = OpenAI(base_url=self.base_url, api_key=self.api_key, timeout=self.timeout_seconds)
 
     def _json_output_budget(self) -> int:
-        return max(int(self.max_tokens), 4096)
+        return max(int(self.json_output_tokens), int(self.max_tokens), 4096)
 
-    def _chat_local_ollama(
+    def chat(
         self,
         system_prompt: str,
         user_prompt: str,
-        json_mode: bool = False,
         max_tokens_override: int | None = None,
+        json_mode: bool = False,
     ) -> str:
-        native_base_url = self.base_url.rstrip("/")
-        if native_base_url.endswith("/v1"):
-            native_base_url = native_base_url[:-3].rstrip("/")
-        parsed_base_url = urlparse(native_base_url)
-        use_direct_connection = parsed_base_url.hostname in {"127.0.0.1", "localhost", "::1"}
-        num_predict = int(max_tokens_override or (self._json_output_budget() if json_mode else self.max_tokens))
-
-        payload = {
+        """调用当前 LLM 生成普通文本。"""
+        request_payload = {
             "model": self.model,
+            "temperature": self.temperature,
+            "max_tokens": int(max_tokens_override or self.max_tokens),
             "messages": [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            "stream": False,
-            "options": {
-                "temperature": self.temperature,
-                "num_predict": num_predict,
-            },
         }
         if json_mode:
-            payload["format"] = "json"
-
-        req = urllib_request.Request(
-            url=f"{native_base_url}/api/chat",
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        opener = (
-            urllib_request.build_opener(urllib_request.ProxyHandler({}))
-            if use_direct_connection
-            else urllib_request.build_opener()
-        )
-        with opener.open(req, timeout=300) as response:
-            body = json.loads(response.read().decode("utf-8"))
-        return body.get("message", {}).get("content", "")
-
-    def chat(self, system_prompt: str, user_prompt: str, max_tokens_override: int | None = None) -> str:
-        if self.provider == "local_ollama":
-            return self._chat_local_ollama(
-                system_prompt,
-                user_prompt,
-                json_mode=False,
-                max_tokens_override=max_tokens_override,
-            )
-
-        response = self.client.chat.completions.create(
-            model=self.model,
-            temperature=self.temperature,
-            max_tokens=int(max_tokens_override or self.max_tokens),
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
-        )
+            request_payload["response_format"] = {"type": "json_object"}
+        try:
+            response = self.client.chat.completions.create(**request_payload)
+        except Exception as exc:
+            if not json_mode or "response_format" not in str(exc):
+                raise
+            request_payload.pop("response_format", None)
+            response = self.client.chat.completions.create(**request_payload)
         return response.choices[0].message.content or ""
 
     def _extract_json_text(self, text: str) -> str:
@@ -163,52 +128,50 @@ class LLMBackend:
         repair_user = f"请修复为合法 JSON：\n{broken_text}"
         return self.chat(repair_system, repair_user, max_tokens_override=self._json_output_budget())
 
-    def _parse_json_robust(self, text: str) -> Dict | List:
-        """多级 JSON 解析：直接解析 → 修复解析 → 激进提取。全部失败则返回空结构。"""
+    def _parse_json_robust(self, text: str) -> Dict[str, Any] | List[Any]:
+        """多级解析 LLM 输出，确保候选生成链路得到结构化 JSON。"""
         extracted = self._extract_json_text(text)
         try:
             return json.loads(extracted)
         except json.JSONDecodeError:
             pass
+
         try:
             repaired = self._extract_json_text(self._repair_json(extracted))
             return json.loads(repaired)
         except Exception:
             pass
-        # 最终尝试：从文本中逐字符匹配最外层 {} 或 []
+
         for wrapper_start, wrapper_end in [("{", "}"), ("[", "]")]:
             depth = 0
             start = -1
             end = -1
-            for idx, ch in enumerate(text):
-                if ch == wrapper_start:
+            for index, char in enumerate(text):
+                if char == wrapper_start:
                     if depth == 0:
-                        start = idx
+                        start = index
                     depth += 1
-                elif ch == wrapper_end:
+                elif char == wrapper_end:
                     depth -= 1
                     if depth == 0:
-                        end = idx + 1
+                        end = index + 1
                         break
             if start != -1 and end != -1 and end > start:
                 candidate = text[start:end]
                 try:
-                    result = json.loads(candidate)
-                    if isinstance(result, (dict, list)):
-                        return result
+                    parsed = json.loads(candidate)
                 except json.JSONDecodeError:
                     continue
+                if isinstance(parsed, (dict, list)):
+                    return parsed
         return {}
 
-    def generate_json(self, system_prompt: str, user_prompt: str) -> Dict | List:
-        if self.provider == "local_ollama":
-            text = self._chat_local_ollama(
-                system_prompt,
-                user_prompt,
-                json_mode=True,
-                max_tokens_override=self._json_output_budget(),
-            )
-            return self._parse_json_robust(text)
-
-        text = self.chat(system_prompt, user_prompt)
+    def generate_json(self, system_prompt: str, user_prompt: str) -> Dict[str, Any] | List[Any]:
+        """调用当前 LLM 并解析 JSON 输出。"""
+        text = self.chat(
+            system_prompt,
+            user_prompt,
+            max_tokens_override=self._json_output_budget(),
+            json_mode=True,
+        )
         return self._parse_json_robust(text)

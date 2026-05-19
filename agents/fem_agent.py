@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 from pathlib import Path
 from typing import Dict
 
@@ -11,16 +10,12 @@ from jinja2 import Template
 from agents.base import BaseAgent
 from abaqus.job_utils import diagnose_failure, is_abaqus_available, read_tail_text, run_command, wait_for_result_file
 from core.config_loader import load_app_config
-from core.io_utils import read_json, write_json, write_text
+from core.io_utils import read_json, write_json
 from core.paths import ABAQUS_RUNS_DIR, ABAQUS_TEMPLATE_DIR, IO_DIR, ROOT_DIR
 from core.schema_validator import validate_or_raise
 from core.task_contract import (
-    boundary_stiffness_factor,
     describe_boundary_conditions,
     describe_load_conditions,
-    equivalent_in_plane_load,
-    normalize_boundary_conditions,
-    normalize_load_conditions,
 )
 
 
@@ -52,9 +47,6 @@ class FEMAgent(BaseAgent):
     def _odb_path(self, candidate_id: str) -> Path:
         return self._run_dir(candidate_id) / f"{candidate_id}.odb"
 
-    def _visualization_path(self, candidate_id: str) -> Path:
-        return self._run_dir(candidate_id) / f"{candidate_id}_mode1.json"
-
     def _cleanup_run_artifacts(self, candidate_id: str, keep_logs: bool = True) -> None:
         run_dir = self._run_dir(candidate_id)
         removable = [".lck", ".023", ".com", ".jnl", ".sta", ".prt", ".sim", ".log", ".env", ".odb_f"]
@@ -77,49 +69,17 @@ class FEMAgent(BaseAgent):
         if script_path.exists():
             script_path.unlink(missing_ok=True)
 
-    def generate_script(self, candidate: Dict, mock_mode: bool) -> Path:
+    def generate_script(self, candidate: Dict) -> Path:
         template_path = ABAQUS_TEMPLATE_DIR / "t_stiffener_buckle.py.j2"
         template = Template(template_path.read_text(encoding="utf-8"))
         script_content = template.render(
             project_root=str(ROOT_DIR),
             input_json=str(self._input_path(candidate["candidate_id"])),
             result_json=str(self._result_path(candidate["candidate_id"])),
-            mock_mode=mock_mode,
         )
         script_path = self._script_path(candidate["candidate_id"])
         script_path.write_text(script_content, encoding="utf-8")
         return script_path
-
-    def _write_mock_artifacts(self, candidate: Dict) -> None:
-        candidate_id = candidate["candidate_id"]
-        write_text(self._inp_path(candidate_id), f"*Heading\n** Mock input for {candidate_id}\n")
-        write_text(self._odb_path(candidate_id), f"mock odb placeholder for {candidate_id}\n")
-
-        geometry = candidate["geometry"]
-        panel_length = float(geometry["panel_length_mm"])
-        panel_width = float(geometry["panel_width_mm"])
-        equivalent_load = equivalent_in_plane_load(candidate.get("load_conditions", {})) or 850.0
-        stiffness_factor = boundary_stiffness_factor(candidate.get("boundary_conditions", {}))
-        points = [
-            [0.0, 0.0, 0.0],
-            [panel_length, 0.0, 0.0],
-            [panel_length, panel_width, 0.0],
-            [0.0, panel_width, 0.0],
-        ]
-        faces = [[4, 0, 1, 2, 3]]
-        amplitude = max(equivalent_load / 1800.0 / max(stiffness_factor, 0.1), 0.15)
-        scalars = [0.0, round(amplitude * 0.8, 4), round(amplitude * 1.1, 4), round(amplitude * 0.6, 4)]
-        write_json(
-            self._visualization_path(candidate_id),
-            {
-                "candidate_id": candidate_id,
-                "points": points,
-                "faces": faces,
-                "scalars": scalars,
-                "scalar_name": "MockModeMagnitude",
-                "title": "Mock First Buckling Mode",
-            },
-        )
 
     def _diagnosis_summary(self, result: Dict) -> str:
         if result.get("status") == "success":
@@ -141,6 +101,7 @@ class FEMAgent(BaseAgent):
             "convergence_fail": "特征值求解未稳定收敛，建议增加搜索模态数并收敛到更稳健的几何区间。",
             "blf_negative": "求得负特征值，通常意味着载荷方向或边界设置需要复核。",
             "process_crash": "ABAQUS 进程异常退出，建议检查运行环境、日志和临时文件。",
+            "abaqus_unavailable": "未找到 ABAQUS 命令，无法执行真实有限元求解。",
         }
         return mapping.get(error_type, "求解未完成，建议检查日志后重试。")
 
@@ -150,72 +111,6 @@ class FEMAgent(BaseAgent):
         annotated["boundary_summary"] = describe_boundary_conditions(candidate.get("boundary_conditions", {}))
         annotated["diagnosis_summary"] = self._diagnosis_summary(annotated)
         return annotated
-
-    def _run_mock(self, candidate: Dict, retry_count: int = 0) -> Dict:
-        geometry = candidate["geometry"]
-        stype = str(candidate.get("stiffener_type", "T"))
-        flange_w = float(geometry.get("flange_width_mm", 0.0))
-        flange_t = float(geometry.get("flange_thickness_mm", 0.0))
-        if stype == "HAT":
-            cap_w = float(geometry.get("cap_width_mm", 20.0))
-            cap_t = float(geometry.get("cap_thickness_mm", 2.0))
-            flange_factor = flange_w * 0.004 + cap_w * 0.002
-            flange_t_factor = flange_t * 0.11 + cap_t * 0.06
-        elif stype == "BLADE":
-            flange_factor = 0.0
-            flange_t_factor = 0.0
-        elif stype == "L":
-            flange_factor = flange_w * 0.002
-            flange_t_factor = flange_t * 0.055
-        else:  # T
-            flange_factor = flange_w * 0.004
-            flange_t_factor = flange_t * 0.11
-
-        load_conditions = normalize_load_conditions(candidate.get("load_conditions", {}))
-        boundary_conditions = normalize_boundary_conditions(candidate.get("boundary_conditions", {}))
-        equivalent_load = equivalent_in_plane_load(load_conditions) or 850.0
-        stiffness_factor = boundary_stiffness_factor(boundary_conditions)
-        blf = (
-            1.02
-            + geometry["skin_thickness_mm"] * 0.08
-            + geometry["stiffener_height_mm"] * 0.006
-            + geometry["web_thickness_mm"] * 0.03
-            + flange_factor
-        ) * stiffness_factor / max(equivalent_load / 850.0, 0.2)
-        weight = (
-            3.55
-            + geometry["skin_thickness_mm"] * 0.24
-            + geometry["stiffener_height_mm"] * 0.026
-            + geometry["web_thickness_mm"] * 0.15
-            + flange_t_factor
-        )
-        self._write_mock_artifacts(candidate)
-        failure_mode = {
-            "axial_compression": "整体屈曲",
-            "in_plane_shear": "剪切诱导屈曲",
-            "compression_shear": "压剪耦合屈曲",
-        }.get(load_conditions["type"], "整体屈曲")
-        result = {
-            "candidate_id": candidate["candidate_id"],
-            "status": "success",
-            "retry_count": retry_count,
-            "BLF_global": round(blf, 3),
-            "BLF_local": round(blf * 1.18, 3),
-            "failure_mode": failure_mode,
-            "max_displacement_mm": round(max(0.35, 4.8 / max(blf, 0.45)), 3),
-            "weight_kg_per_m2": round(weight, 3),
-            "verdict": "通过" if blf >= candidate.get("design_targets", {}).get("BLF_min", 1.2) else "不通过",
-            "abaqus_odb": str(self._odb_path(candidate["candidate_id"])),
-            "abaqus_inp": str(self._inp_path(candidate["candidate_id"])),
-            "visualization_json": str(self._visualization_path(candidate["candidate_id"])),
-            "artifact_dir": str(self._run_dir(candidate["candidate_id"])),
-            "error_type": None,
-            "error_log": None,
-            "mode_eigenvalues": [round(blf, 3), round(blf * 1.18, 3), round(blf * 1.32, 3)],
-        }
-        result = self._annotate_result(candidate, result)
-        write_json(self._result_path(candidate["candidate_id"]), result)
-        return result
 
     def apply_adjustment(self, candidate: Dict, failure_type: str, attempt: int) -> Dict:
         geometry = dict(candidate["geometry"])
@@ -258,7 +153,8 @@ class FEMAgent(BaseAgent):
         candidate_id = candidate["candidate_id"]
         run_dir = self._run_dir(candidate_id)
         self._cleanup_run_artifacts(candidate_id, keep_logs=False)
-        script_path = self.generate_script(candidate, mock_mode=False)
+        script_path = self.generate_script(candidate)
+        self.emit(f"{candidate_id} 脚本已生成：{script_path.name}")
 
         command = [self.abaqus_config["command"], "cae", f"noGUI={script_path.name}"]
         return_code, stdout, stderr = run_command(
@@ -308,6 +204,33 @@ class FEMAgent(BaseAgent):
             },
         )
 
+    def _abaqus_unavailable_result(self, candidate: Dict) -> Dict:
+        candidate_id = candidate["candidate_id"]
+        result = self._annotate_result(
+            candidate,
+            {
+                "candidate_id": candidate_id,
+                "status": "max_retries_exceeded",
+                "retry_count": 0,
+                "BLF_global": None,
+                "BLF_local": None,
+                "failure_mode": None,
+                "max_displacement_mm": None,
+                "weight_kg_per_m2": None,
+                "verdict": None,
+                "abaqus_odb": None,
+                "abaqus_inp": None,
+                "visualization_json": None,
+                "artifact_dir": str(self._run_dir(candidate_id)),
+                "error_type": "abaqus_unavailable",
+                "error_log": f"未找到 ABAQUS 命令：{self.abaqus_config['command']}",
+                "mode_eigenvalues": None,
+            },
+        )
+        write_json(self._result_path(candidate_id), result)
+        validate_or_raise("abaqus_result.schema.json", result)
+        return result
+
     def run(self, candidate: Dict) -> Dict:
         validate_or_raise("candidate.schema.json", candidate)
         retries = int(self.abaqus_config["max_retries"])
@@ -317,22 +240,17 @@ class FEMAgent(BaseAgent):
         run_dir = self._run_dir(candidate_id)
         write_json(run_dir / "candidate_input.json", current)
 
+        if not is_abaqus_available(self.abaqus_config["command"]):
+            self.emit(f"{candidate_id} 未找到 ABAQUS 命令，真实有限元求解无法启动")
+            return self._abaqus_unavailable_result(current)
+
         for attempt in range(retries):
             if result_path.exists():
                 result_path.unlink()
 
             write_json(self._input_path(candidate_id), current)
-            force_mock = os.getenv("CSDM_USE_MOCK_ABAQUS", "0") == "1"
-            mock_mode = bool(current.get("mock_mode", False) or force_mock)
-            if not mock_mode:
-                mock_mode = bool(
-                    self.abaqus_config.get("use_mock_when_unavailable", True)
-                    and not is_abaqus_available(self.abaqus_config["command"])
-                )
-
-            script_path = self.generate_script(current, mock_mode=mock_mode)
-            self.emit(f"{candidate_id} 第 {attempt + 1} 次尝试，脚本已生成：{script_path.name}")
-            result = self._run_mock(current, retry_count=attempt) if mock_mode else self._run_real(current, result_path)
+            self.emit(f"{candidate_id} 第 {attempt + 1} 次真实 ABAQUS 求解")
+            result = self._run_real(current, result_path)
             result["retry_count"] = attempt
 
             if result["status"] == "success":

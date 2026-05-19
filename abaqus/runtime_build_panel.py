@@ -704,7 +704,7 @@ def build_panel(input_json, result_json):
         except Exception:
             pass
 
-        model_name = str("CSDM_%s" % candidate_id)
+        model_name = str("CSDM_panel_%s" % candidate_id)
         model = mdb.Model(name=model_name)
 
         material_name = "MAT_T300_5208"

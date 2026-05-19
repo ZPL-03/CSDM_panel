@@ -1,9 +1,10 @@
-"""CSDM 环境自检脚本。"""
+"""CSDM_panel 环境自检脚本。"""
 
 from __future__ import annotations
 
 import importlib
 import importlib.metadata
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -12,7 +13,11 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from dotenv import load_dotenv
+
 from core.paths import ensure_project_dirs
+
+load_dotenv(ROOT / ".env")
 
 
 def check_module(name: str) -> tuple[bool, str]:
@@ -47,7 +52,15 @@ def main() -> int:
     checks = []
     checks.append(("Python", True, sys.version.split()[0]))
     checks.append(("ABAQUS", shutil.which("abaqus") is not None, shutil.which("abaqus") or "未找到"))
-    checks.append(("Ollama", True, "当前默认使用 Ollama 云端 API，本地 Ollama 是否拉模型不影响主流程"))
+    checks.append(
+        (
+            "LLM配置",
+            bool(os.getenv("URL") and os.getenv("API_KEY") and os.getenv("MODEL_NAME")),
+            f"base_url={'已设置' if os.getenv('URL') else '未设置'}, "
+            f"api_key={'已设置' if os.getenv('API_KEY') else '未设置'}, "
+            f"model={os.getenv('MODEL_NAME') or '未设置'}",
+        )
+    )
 
     for module_name in [
         "PyQt6",
@@ -56,8 +69,6 @@ def main() -> int:
         "jsonschema",
         "openai",
         "chromadb",
-        "langchain",
-        "langchain_community",
         "sentence_transformers",
         "torch",
         "sklearn",

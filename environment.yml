@@ -14,13 +14,11 @@ dependencies:
       - PyQt6==6.4.2
       - jinja2==3.1.6
       - PyYAML==6.0.3
+      - python-dotenv
       - jsonschema==4.25.1
       - openai==2.30.0
       - chromadb==1.5.5
-      - langchain==0.3.28
-      - langchain-community==0.3.31
       - sentence-transformers==2.6.1
-      - PyMuPDF==1.24.14
       - scikit-learn==1.6.1
       - matplotlib==3.9.2
       - pyvista==0.46.5

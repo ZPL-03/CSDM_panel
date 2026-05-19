@@ -154,8 +154,8 @@
   },
   "abaqus_results": {
     "status": "success",
-    "abaqus_odb": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C347\\C347.odb",
-    "visualization_json": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C347\\C347_mode1.json",
+    "abaqus_odb": "D:\\Project\\VS_Code\\CSDM_panel\\data\\abaqus_runs\\C347\\C347.odb",
+    "visualization_json": "D:\\Project\\VS_Code\\CSDM_panel\\data\\abaqus_runs\\C347\\C347_mode1.json",
     "failure_mode": "整体屈曲",
     "error_type": null,
     "max_displacement_mm": 1.000001,
@@ -172,7 +172,7 @@
       0.16759,
       0.17336
     ],
-    "abaqus_inp": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C347\\C347.inp",
+    "abaqus_inp": "D:\\Project\\VS_Code\\CSDM_panel\\data\\abaqus_runs\\C347\\C347.inp",
     "analysis_flags": {
       "first_positive_mode_index": 1,
       "negative_modes_skipped": 0
@@ -186,7 +186,7 @@
     ],
     "retry_count": 0,
     "weight_kg_per_m2": 5.104,
-    "artifact_dir": "D:\\Project\\VS_Code\\CSDM\\data\\abaqus_runs\\C347"
+    "artifact_dir": "D:\\Project\\VS_Code\\CSDM_panel\\data\\abaqus_runs\\C347"
   },
   "verdict": "不通过",
   "surrogate_BLF_error_pct": null,

@@ -1,8 +1,8 @@
-# CSDM
+﻿﻿# CSDM_panel
 
-复合材料加筋壁板智能设计系统（Composite Stiffened-panel Design Manager, CSDM）是一个面向复合材料加筋壁板的多智能体设计原型系统，目标是把"自然语言需求 -> 结构化任务 -> 候选生成 -> 代理模型初筛 -> ABAQUS 校核 -> 知识回流 -> 报告输出"这条工程链路自动化。
+复合材料加筋壁板智能设计系统（Composite Stiffened-panel Design Manager, CSDM_panel）是一个面向复合材料加筋壁板的多智能体设计原型系统，目标是把"自然语言需求 -> 结构化任务 -> 候选生成 -> 代理模型初筛 -> ABAQUS 校核 -> 知识回流 -> 报告输出"这条工程链路自动化。
 
-当前仓库已经具备可运行的 Windows 原型：前端为 PyQt6 对话式 GUI，后端由多智能体协同完成候选生成、有限元校核、知识回流和报告导出；候选生成链路已经拆分为三条职责清晰的来源：LLM + 文献 RAG、历史案例迁移、DOE 参数采样。
+当前仓库已经具备可运行的 Windows 原型：前端为 PyQt6 对话式 GUI，后端由多智能体协同完成候选生成、有限元校核、知识回流和报告导出；候选生成链路已经拆分为三条职责清晰的来源：LLM + 外部知识库/知识图谱、历史案例迁移、DOE 参数采样。
 
 ## 1. 项目目标
 
@@ -10,12 +10,12 @@
 
 - 自然语言需求解析与任务归一化
 - 候选方案生成
-  - LLM 生成：使用文献知识库做 RAG 增强
+  - LLM 生成：使用外部知识库/知识图谱做检索增强
   - 历史案例迁移：在归档案例和正式案例中做结构化相似检索，并用案例记忆向量库辅助排序
   - DOE 采样：在参数空间生成兜底与探索方案
 - 代理模型快速初筛
 - ABAQUS 建模、求解、后处理与失败重试
-- 案例归档、正式知识库写入与代理模型重训
+- 案例归档、正式案例库写入与代理模型重训
 - Markdown / PDF 工程报告生成
 
 ## 2. 支持的筋条类型
@@ -42,7 +42,7 @@
 - `knowledge/chroma_db/` 中当前 `csdm_case_memory` 案例记忆集合有 350 条索引记录
 - `data/abaqus_runs/` 中当前有 350 个样本工件目录
 - `models/surrogate_metrics.json` 当前选中模型为 `rf`，训练样本数 317，RF `MAPE = 0.1216`
-- `knowledge/literature/` 目录结构和 ingestion / RAG 代码已经就位
+- `knowledge/external/` 是外部知识库/知识图谱资产目录：知识库文本块 43651 条，知识图谱实体 1763 个，知识图谱关系 347609 条
 
 ## 4. 系统架构
 
@@ -51,7 +51,7 @@
 | 智能体 | 标识符 | 主要职责 |
 | --- | --- | --- |
 | 主控智能体 | `ORCHESTRATOR` | 解析用户需求、维护状态机、串联全流程 |
-| 候选生成智能体 | `CANDIDATE_GEN` | 协调 LLM 文献增强生成、案例迁移和 DOE 采样 |
+| 候选生成智能体 | `CANDIDATE_GEN` | 协调 LLM 外部知识库/知识图谱增强生成、案例迁移和 DOE 采样 |
 | 快速筛选智能体 | `SCREENER` | 使用代理模型预测 BLF / 重量并完成 Top-K 排序 |
 | 求解智能体 | `FEM_AGENT` | 驱动 ABAQUS 建模、求解、结果提取与自动重试 |
 | 知识回流智能体 | `KNOWLEDGE_AGENT` | 写回案例档案、正式案例库和案例记忆索引，并触发代理模型重训 |
@@ -65,7 +65,7 @@
 ORCHESTRATOR：任务解析 / 对话流程控制
         ↓
 CANDIDATE_GEN：候选生成
-  ├─ LLM + 文献 RAG
+  ├─ LLM + 外部知识库/知识图谱
   ├─ CASE_TRANSFER 结构化案例迁移 + 案例记忆向量排序
   └─ DOE 参数采样
         ↓
@@ -80,8 +80,8 @@ REPORT_GEN：工程报告输出
 
 ### 4.3 三条候选生成路径的边界
 
-- `LLM` 路径只使用文献知识库：`core/literature_corpus.py` 将任务转换为检索文本，从 `csdm_literature_corpus` 取回文献片段并注入 Prompt。
-- `CASE_TRANSFER` 路径不走文献 RAG：`core/case_retriever.py` 先按筋型、工况、边界、材料和通过结论做结构化硬过滤，再用 `core/case_memory.py` 中的 Case Memory 向量索引辅助相似案例排序；只迁移满足工程约束的历史设计。
+- `LLM` 路径直接使用外部知识库/知识图谱：`core/domain_knowledge.py` 将任务转换为检索文本，从 `knowledge/external/` 取回知识库片段和知识图谱关系并注入 Prompt；未就绪时不注入额外知识片段。
+- `CASE_TRANSFER` 路径不走外部知识库/知识图谱：`core/case_retriever.py` 先按筋型、工况、边界、材料和通过结论做结构化硬过滤，再用 `core/case_memory.py` 中的 Case Memory 向量索引辅助相似案例排序；只迁移满足工程约束的历史设计。
 - `DOE` 路径独立存在：`core/doe_sampler.py` 在参数范围内采样，提供兜底与探索候选。
 
 ### 4.4 筋型感知架构
@@ -102,18 +102,18 @@ REPORT_GEN：工程报告输出
 ## 5. 仓库结构
 
 ```text
-CSDM/
+CSDM_panel/
 ├─ agents/              # 六大智能体
 ├─ abaqus/              # ABAQUS 模板、建模脚本、结果提取与运行工具
 ├─ config/              # YAML 配置
-├─ core/                # 路径、配置、契约、筋型定义、RAG、LLM、DOE、代理模型等公共能力
+├─ core/                # 路径、配置、契约、筋型定义、知识检索、LLM、DOE、代理模型等公共能力
 ├─ data/                # IO、案例、Abaqus 工件、报告输出
 ├─ docs/                # 开发指南与接口约定
 ├─ gui/                 # PyQt6 对话式界面与可视化组件
-├─ knowledge/           # 正式案例库、案例向量库、文献知识库
+├─ knowledge/           # 正式案例库、案例向量库、外部知识库/知识图谱
 ├─ models/              # 代理模型文件与指标
 ├─ schemas/             # 任务 / 候选 / 结果 / 案例 JSON Schema
-├─ scripts/             # 自检、训练、迁移、清理、文献导入脚本
+├─ scripts/             # 自检、训练、迁移、清理脚本
 ├─ tests/               # 自动化测试
 ├─ environment.yml      # GPT Conda 环境定义
 └─ main.py              # GUI 启动入口
@@ -138,17 +138,15 @@ conda env create -f environment.yml
 
 ### 6.3 LLM 配置
 
-`config/llm_config.yaml` 当前默认启用的提供方为 `remote_vllm`：
-
-- 远程模型：`gpt-5.4`
-- 本地备选：`local_ollama`（`qwen2.5:7b`）
-- 云端备选：`ollama_cloud`
-
-如需切换到云端兼容接口，可在 `.env` 中配置密钥：
+`config/llm_config.yaml` 当前只保留一个 OpenAI 兼容 LLM 后端。运行配置来自项目根目录 `.env`：
 
 ```text
-OLLAMA_API_KEY=your_ollama_api_key
+URL=OpenAI兼容接口地址
+API_KEY=接口密钥
+MODEL_NAME=模型名称
 ```
+
+当前项目不再保留 Ollama、remote_vllm 或多后端切换逻辑。
 
 ## 7. 快速开始
 
@@ -170,66 +168,20 @@ D:/anaconda3/envs/GPT/python.exe main.py
 D:/anaconda3/envs/GPT/python.exe -m pytest tests -q
 ```
 
-### 7.4 强制 mock 模式回归
+### 7.4 真实 Abaqus 回归
 
 ```powershell
-$env:CSDM_USE_MOCK_ABAQUS = "1"
-D:/anaconda3/envs/GPT/python.exe -m pytest tests -q
-```
-
-### 7.5 文献库导入
-
-```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --seed --query-group composite_basics --max-results 20
-```
-
-也可以直接指定检索词：
-
-```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --query "stiffened composite panel buckling compression" --max-results 20
-```
-
-如需同步下载 OpenAlex 标注的开放获取 PDF，并在本地解析全文：
-
-```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --seed --query-group buckling_and_panels --max-results 20 --download-oa-pdfs --parse-pdfs
-```
-
-默认解析后端是 `pymupdf`，只能抽取文字层。需要公式 LaTeX、表格结构和图片文件时，安装 MinerU 后使用：
-
-```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --parse-existing-pdfs --parse-backend mineru --ocr --force-pdfs
-```
-
-对扫描版或公式密集型论文，可安装 Nougat 后使用：
-
-```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --parse-existing-pdfs --parse-backend nougat --force-pdfs
-```
-
-如需导入已通过学校账号合法下载到本地的 PDF，请先把文件集中放入一个目录，再执行：
-
-```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --import-pdf-dir D:/Project/VS_Code/CSDM/reference/authorized_pdfs --parse-pdfs --parse-backend mineru --ocr
-```
-
-脚本不保存学校账号，也不模拟出版社登录；授权 PDF 通过本地目录导入后进入 `knowledge/literature/imports/pdfs/`、`knowledge/literature/imports/texts/` 和文献向量库，与自动下载的开放获取 PDF 分开存放。
-
-### 7.6 文献记录重建向量索引
-
-```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --reindex
+D:/anaconda3/envs/GPT/python.exe -m pytest tests/test_fem_agent.py tests/test_e2e.py -q
 ```
 
 ## 8. 关键配置文件
 
 | 文件 | 作用 |
 | --- | --- |
-| `config/app_config.yaml` | 路径、ABAQUS、pipeline、RAG、case_memory、literature、报告输出等全局配置 |
-| `config/llm_config.yaml` | 本地 / 远程 / 云端 LLM 提供方与模型配置 |
+| `config/app_config.yaml` | 路径、ABAQUS、pipeline、外部知识库/知识图谱、case_memory、报告输出等全局配置 |
+| `config/llm_config.yaml` | 单一 OpenAI 兼容 LLM 后端配置 |
 | `config/material_db.yaml` | 材料数据库 |
 | `config/param_ranges.yaml` | 设计变量范围、铺层模板、规则检查阈值（按筋型分段） |
-| `config/literature_queries.yaml` | 文献检索主题分组 |
 
 ## 9. 常用脚本
 
@@ -242,8 +194,6 @@ D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --reindex
 | `D:/anaconda3/envs/GPT/python.exe scripts/rebuild_abaqus_artifacts.py --limit 10 --workers 1` | 重建缺失的 ABAQUS 工件 |
 | `D:/anaconda3/envs/GPT/python.exe scripts/build_initial_cases.py` | 批量生成/补齐初始案例集 |
 | `D:/anaconda3/envs/GPT/python.exe scripts/clean_debug_artifacts.py` | 清理 `__pycache__`、`.pytest_cache` 与 ABAQUS 临时文件 |
-| `D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --seed ...` | 导入文献记录并写入文献向量库 |
-| `D:/anaconda3/envs/GPT/python.exe scripts/test_all_types_abaqus.py` | 对四种筋型各运行一次 ABAQUS 屈曲分析，验证参数化建模 |
 
 ## 10. 标识与关联
 
@@ -258,26 +208,21 @@ D:/anaconda3/envs/GPT/python.exe scripts/ingest_literature.py --reindex
 ### 11.1 评估档案与正式案例
 
 - `data/cases/`：所有已校核样本的评估档案
-- `knowledge/case_library/`：仅保留当前规则下可进入正式知识库的案例
-- `knowledge/chroma_db/`：Chroma 向量库目录，包含案例记忆集合与文献集合；案例 JSON 仍以 `data/cases/` 和 `knowledge/case_library/` 为事实源
+- `knowledge/case_library/`：仅保留当前规则下可进入正式案例库的案例
+- `knowledge/chroma_db/`：Chroma 向量库目录，当前只用于案例记忆集合；案例 JSON 仍以 `data/cases/` 和 `knowledge/case_library/` 为事实源
 
-### 11.2 文献知识库
+### 11.2 外部知识库/知识图谱
 
-- `knowledge/literature/raw/`：原始 API 返回
-- `knowledge/literature/records/`：标准化文献记录
-- `knowledge/literature/pdfs/`：自动下载的开放获取 PDF
-- `knowledge/literature/texts/`：自动下载 PDF 解析后的纯文本
-- `knowledge/literature/markdown/`：自动下载 PDF 解析后的 Markdown，MinerU / Nougat 可保留 LaTeX
-- `knowledge/literature/json/`：自动下载 PDF 的结构化解析结果
-- `knowledge/literature/images/`：MinerU 提取的图片
-- `knowledge/literature/imports/pdfs/`：外部导入的授权 PDF
-- `knowledge/literature/imports/texts/`：外部导入 PDF 解析后的纯文本
-- `knowledge/literature/imports/markdown/`：外部导入 PDF 的 Markdown 解析结果
-- `knowledge/literature/imports/json/`：外部导入 PDF 的结构化解析结果
-- `knowledge/literature/imports/images/`：外部导入 PDF 中提取的图片
-- `knowledge/literature/manifests/`：最近一次 ingestion 摘要
+- `knowledge/external/rag/rag_chunks.jsonl`：复合材料知识库文本块
+- `knowledge/external/kg/entities.jsonl`：知识图谱实体
+- `knowledge/external/kg/relations.jsonl`：知识图谱关系
+- `knowledge/external/kg/kg_stats.json`：图谱统计
+- `knowledge/external/provenance/source_registry/`：源登记与来源分类
+- `knowledge/external/provenance/structured_text/documents.jsonl`：结构化文档清单
+- `knowledge/external/provenance/structured_text/markdown_documents/`：可审计 Markdown 全文
+- `knowledge/external/manifest.json`：知识资产清单
 
-当前文献链路基于 `OpenAlex` 实现 metadata + abstract ingestion，并支持开放获取 PDF 下载、授权 PDF 本地导入、PyMuPDF 文字层解析、MinerU Markdown/JSON/图片解析、Nougat 公式 OCR Markdown 解析、全文分块索引与任务时检索。
+LLM 当前只读取知识库文本块和知识图谱关系；`provenance/` 只用于人工核查检索命中的资料来源和完整上下文。该目录是本项目运行时读取的知识资产，不直接调用参考项目路径；目录已加入 `.gitignore`，避免提交大体量派生产物。
 
 ## 12. 回归验证
 
@@ -291,11 +236,11 @@ D:/anaconda3/envs/GPT/python.exe -m pytest tests -q
 ## 13. 已知边界
 
 - 真实 ABAQUS 求解依赖本机许可证与命令行环境
-- 文献知识库链路已落地，但仓库内当前尚未保留实际抓取数据
+- 当前 LLM 路径只使用 `knowledge/external/` 的外部知识库/知识图谱
 - 代理模型精度仍处于原型阶段，后续仍需持续积累真实案例
 - 代理模型特征向量为固定 22 维（含 8 个几何参数），HAT 型的 cap_width/cap_thickness 暂未纳入特征向量
 
 ## 14. 相关文档
 
-- [项目全流程梳理与开发指南](docs/CSDM_项目全流程梳理与开发指南.md)
+- [项目全流程梳理与开发指南](docs/CSDM_panel_项目全流程梳理与开发指南.md)
 - [接口约定](docs/接口约定.md)

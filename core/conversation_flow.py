@@ -7,7 +7,7 @@ from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional
 
 from agents.orchestrator import OrchestratorAgent
-from core.llm_backend import LLMBackend
+from core.llm_backend import LLMBackend, auto_llm_enabled
 from core.task_contract import (
     describe_boundary_conditions,
     describe_load_conditions,
@@ -50,10 +50,11 @@ class ConversationFlowController:
         self.orchestrator = orchestrator
         self.event_callback = event_callback
         self.llm_backend: LLMBackend | None = None
-        try:
-            self.llm_backend = LLMBackend()
-        except Exception:
-            self.llm_backend = None
+        if auto_llm_enabled():
+            try:
+                self.llm_backend = LLMBackend()
+            except Exception:
+                self.llm_backend = None
 
     def _emit(self, event_type: str, message: str, payload: Dict | None = None) -> None:
         if self.event_callback:
@@ -69,7 +70,7 @@ class ConversationFlowController:
     def _render_commentary(self, stage: str, payload: Dict) -> str:
         if self.llm_backend is not None:
             system_prompt = (
-                "你是 CSDM 图形界面里的中文设计助手。"
+                "你是 CSDM_panel 图形界面里的中文设计助手。"
                 "请根据当前阶段信息，用 1 到 2 句自然、专业、口语化的中文说明当前进度。"
                 "如果 payload 里有候选池目标、实际候选数、初筛目标等关键数量，请优先点明。"
                 "不要输出列表，不要复述全部字段，不要编造数值。"

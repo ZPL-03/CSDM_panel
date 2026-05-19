@@ -122,26 +122,6 @@ def _write_visualization(output_path: Path, points: List[List[float]], faces: Li
     )
 
 
-def _mock_visualization(candidate: Dict, odb_path: Path) -> Path:
-    geometry = dict(candidate.get("geometry", {}))
-    panel_length = _safe_float(geometry.get("panel_length_mm"), 700.0)
-    panel_width = _safe_float(geometry.get("panel_width_mm"), 600.0)
-    output_path = _visualization_path(odb_path)
-    _write_visualization(
-        output_path,
-        points=[
-            [0.0, 0.0, 0.0],
-            [panel_length, 0.0, 0.0],
-            [panel_length, panel_width, 6.0],
-            [0.0, panel_width, 4.0],
-        ],
-        faces=[[4, 0, 1, 2, 3]],
-        scalars=[0.0, 0.3, 1.0, 0.5],
-        title="Mock First Buckling Mode",
-    )
-    return output_path
-
-
 def _export_mode_visualization(odb, frame, odb_path: Path) -> Path | None:
     points: List[List[float]] = []
     faces: List[List[int]] = []
@@ -187,38 +167,6 @@ def _export_mode_visualization(odb, frame, odb_path: Path) -> Path | None:
     return output_path
 
 
-def _write_mock_result(odb_path: Path, result_json: Path, input_json: Path | None) -> None:
-    candidate_id = _candidate_id_from_paths(odb_path, input_json)
-    candidate = _load_candidate(input_json, candidate_id, result_json)
-    weight = round(_estimate_weight_kg_per_m2(candidate), 3)
-    visualization_path = _mock_visualization(candidate, odb_path)
-    verdict = "通过" if 1.40 >= candidate.get("design_targets", {}).get("BLF_min", 1.2) else "不通过"
-    write_json(
-        result_json,
-        {
-            "candidate_id": candidate_id,
-            "status": "success",
-            "retry_count": 0,
-            "BLF_global": 1.40,
-            "BLF_local": 1.78,
-            "failure_mode": "整体屈曲",
-            "max_displacement_mm": 2.5,
-            "weight_kg_per_m2": weight,
-            "verdict": verdict,
-            "abaqus_odb": str(odb_path),
-            "abaqus_inp": str(odb_path.with_suffix(".inp")),
-            "visualization_json": str(visualization_path),
-            "artifact_dir": str(odb_path.parent),
-            "error_type": None,
-            "error_log": None,
-            "mode_eigenvalues": [1.40, 1.78, 2.05],
-            "load_summary": describe_load_conditions(candidate.get("load_conditions", {})),
-            "boundary_summary": describe_boundary_conditions(candidate.get("boundary_conditions", {})),
-            "diagnosis_summary": f"mock 线性屈曲计算完成，当前结论为“{verdict}”。",
-        },
-    )
-
-
 def _write_failure_result(candidate_id: str, odb_path: Path, result_json: Path, error_type: str, error_log: object) -> None:
     candidate = _load_candidate(None, candidate_id, result_json)
     write_json(
@@ -246,11 +194,7 @@ def _write_failure_result(candidate_id: str, odb_path: Path, result_json: Path, 
     )
 
 
-def extract_blf(odb_path: Path, result_json: Path, input_json: Path | None = None, mock: bool = False) -> None:
-    if mock:
-        _write_mock_result(odb_path, result_json, input_json)
-        return
-
+def extract_blf(odb_path: Path, result_json: Path, input_json: Path | None = None) -> None:
     candidate_id = _candidate_id_from_paths(odb_path, input_json)
     candidate = _load_candidate(input_json, candidate_id, result_json)
 
@@ -345,13 +289,11 @@ def main() -> None:
     parser.add_argument("--odb", required=True)
     parser.add_argument("--result", required=True)
     parser.add_argument("--input")
-    parser.add_argument("--mock", action="store_true")
     args = parser.parse_args()
     extract_blf(
         odb_path=Path(args.odb),
         result_json=Path(args.result),
         input_json=Path(args.input) if args.input else None,
-        mock=args.mock,
     )
 
 

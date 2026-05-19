@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "cssm/case_record.schema.json",
-  "title": "CSDM Case Record Schema",
+  "title": "CSDM_panel Case Record Schema",
   "type": "object",
   "required": [
     "case_id",

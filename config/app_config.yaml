@@ -1,5 +1,5 @@
 project:
-  name: CSDM
+  name: CSDM_panel
   timezone: Asia/Shanghai
   default_language: zh-CN
 
@@ -25,7 +25,6 @@ abaqus:
     - "*.lck"
     - "*.023"
     - "*.com"
-  use_mock_when_unavailable: true
 
 pipeline:
   top_k: 5
@@ -51,22 +50,15 @@ case_memory:
   vector_top_k_multiplier: 4
   vector_rank_weight: 0.1
 
-literature:
+external_knowledge:
   enabled: true
-  collection_name: csdm_literature_corpus
+  base_dir: knowledge/external
+  rag_chunks_path: knowledge/external/rag/rag_chunks.jsonl
+  kg_dir: knowledge/external/kg
+  manifest_path: knowledge/external/manifest.json
   top_k: 5
-  chunk_chars: 1200
-  chunk_overlap: 150
-  metadata_only_default: true
-  download_oa_pdfs: false
-  parse_oa_pdfs: false
-  pdf_parse_backend: pymupdf
-  pdf_parse_ocr: false
-  max_results_per_query: 50
-  sources:
-    - openalex
-    - crossref
-    - unpaywall
+  kg_top_k: 8
+  max_snippet_chars: 1200
 
 conversation:
   confirmation_steps:

@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "cssm/task.schema.json",
-  "title": "CSDM Task Schema",
+  "title": "CSDM_panel Task Schema",
   "type": "object",
   "required": [
     "application",

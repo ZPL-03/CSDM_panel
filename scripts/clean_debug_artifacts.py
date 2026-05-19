@@ -99,8 +99,6 @@ def clean_abaqus_session_files() -> None:
             remove_path(path)
 
     for path in ABAQUS_DIR.glob("build_*.py"):
-        if path.name == "build_panel.py":
-            continue
         remove_path(path)
 
     for path in ABAQUS_RUNS_DIR.rglob("build_*.py"):
