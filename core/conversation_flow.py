@@ -82,10 +82,10 @@ class ConversationFlowController:
             return "我先把当前状态停在这里，后面的候选和结果都还保留着，你随时可以继续往下推。"
         return ""
 
-    def _emit_flow_note(self, stage: str, payload: Dict) -> None:
+    def _emit_commentary(self, stage: str, payload: Dict) -> None:
         note = self._render_commentary(stage, payload)
         if note:
-            self._emit("flow_note", note, {"stage": stage, **payload})
+            self._emit("assistant_commentary", note, {"stage": stage, **payload})
 
     def start(self, instruction: str) -> ConversationState:
         state = ConversationState(instruction=instruction, stage="parsing")
@@ -113,7 +113,7 @@ class ConversationFlowController:
             ),
             {"task": task},
         )
-        self._emit_flow_note("task_summary", {"task": task})
+        self._emit_commentary("task_summary", {"task": task})
         self._emit(
             "candidate_summary",
             (
@@ -126,7 +126,7 @@ class ConversationFlowController:
                 **target_counts,
             },
         )
-        self._emit_flow_note(
+        self._emit_commentary(
             "candidate_summary",
             {
                 "candidate_count": len(candidates),
@@ -182,7 +182,7 @@ class ConversationFlowController:
                     **target_counts,
                 },
             )
-            self._emit_flow_note(
+            self._emit_commentary(
                 "screening_summary",
                 {
                     "input_count": len(state.candidates),
@@ -200,7 +200,7 @@ class ConversationFlowController:
                 f"已跳过 DNN 初筛，将直接对全部 {len(state.candidates)} 个候选进入有限元校核。",
                 {"screened_candidates": state.candidates, "screen_skipped": True, **target_counts},
             )
-            self._emit_flow_note(
+            self._emit_commentary(
                 "screening_summary",
                 {
                     "input_count": len(state.candidates),
@@ -234,7 +234,7 @@ class ConversationFlowController:
                 "已暂停在有限元校核前。当前候选和 DNN 结果已保留，可稍后继续。",
                 {"stage": state.stage},
             )
-            self._emit_flow_note("conversation_paused", {"stage": state.stage})
+            self._emit_commentary("conversation_paused", {"stage": state.stage})
             return state
 
         results = [self.orchestrator.evaluate_candidate(state.task, candidate) for candidate in state.evaluated_candidates]
@@ -248,7 +248,7 @@ class ConversationFlowController:
             f"有限元校核完成：共 {len(results)} 个样本，其中通过 {passed_count} 个。",
             {"results": results, "passed_count": passed_count},
         )
-        self._emit_flow_note(
+        self._emit_commentary(
             "fem_summary",
             {
                 "result_count": len(results),
@@ -277,10 +277,10 @@ class ConversationFlowController:
                 ),
                 {"report": state.report},
             )
-            self._emit_flow_note("report_summary", {"report": state.report})
+            self._emit_commentary("report_summary", {"report": state.report})
         else:
             self._emit("report_summary", "已跳过报告导出。", {"report": None})
-            self._emit_flow_note("report_summary", {"report": None, "skipped": True})
+            self._emit_commentary("report_summary", {"report": None, "skipped": True})
 
         state.pending_confirmation = None
         state.stage = "completed"

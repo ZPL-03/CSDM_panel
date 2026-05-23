@@ -164,11 +164,12 @@ class PipelineWorker(QObject):
         self.message.emit(sender, message, event or {})
 
     def _emit_flow(self, event_type: str, message: str, payload: dict | None = None) -> None:
+        sender_name = "ASSISTANT" if event_type == "assistant_commentary" else "FLOW"
         self.message.emit(
-            "FLOW",
+            sender_name,
             message,
             {
-                "agent": "FLOW",
+                "agent": sender_name,
                 "event_type": event_type,
                 "message": message,
                 "payload": payload or {},
@@ -597,6 +598,8 @@ class MainWindow(QMainWindow):
             payload = {}
         if sender == "FLOW":
             sender_label = "SYSTEM"
+        elif sender == "ASSISTANT":
+            sender_label = "助手"
         else:
             sender_label = sender
         self.chat_widget.add_message(sender_label, message)

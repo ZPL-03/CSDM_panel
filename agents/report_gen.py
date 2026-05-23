@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, List
 from xml.sax.saxutils import escape
@@ -20,11 +21,12 @@ class ReportGenAgent(BaseAgent):
     def __init__(self, progress_callback=None) -> None:
         super().__init__(progress_callback=progress_callback)
         self.llm_backend: LLMBackend | None = None
+        self._last_llm_explanation_used = False
         if auto_llm_enabled():
             try:
                 self.llm_backend = LLMBackend()
-            except Exception:
-                self.llm_backend = None
+            except Exception as exc:
+                self.emit(f"报告解释 LLM 后端初始化失败，将使用确定性工程解释：{exc}")
 
     def _safe_float(self, value: Any, default: float = 0.0) -> float:
         try:
@@ -108,36 +110,6 @@ class ReportGenAgent(BaseAgent):
         }
 
     def _render_narrative(self, summary: Dict) -> str:
-        if self.llm_backend is not None:
-            system_prompt = (
-                "你是复合材料加筋壁板工程报告助手。"
-                "请根据结构化摘要生成专业详尽的中文工程说明，确保分析全面、数据准确。"
-                "输出 3 个段落：总体判断、候选对比、建议动作。"
-                "只使用输入 JSON 已给出的数字和结论，不要编造未出现的材料、工况、编号或实验事实。"
-            )
-            # 精简输入，去掉重复的 screening/selection 字段以减少 prompt 长度
-            compact = dict(summary)
-            compact.pop("screened_candidates", None)
-            compact["results_summary"] = [
-                {
-                    "candidate_id": r["candidate_id"],
-                    "BLF_global": r.get("BLF_global"),
-                    "weight_kg_per_m2": r.get("weight_kg_per_m2"),
-                    "verdict": r.get("verdict"),
-                    "failure_mode": r.get("failure_mode"),
-                }
-                for r in summary.get("results", [])
-            ]
-            compact.pop("results", None)
-            user_prompt = json.dumps(compact, ensure_ascii=False, indent=2)
-            try:
-                return self.llm_backend.chat(
-                    system_prompt, user_prompt,
-                    max_tokens_override=4096,
-                ).strip()
-            except Exception:
-                pass
-
         if summary["passed_count"] > 0:
             overall = (
                 f"本轮共完成 {summary['result_count']} 个样本校核，其中 {summary['passed_count']} 个满足 "
@@ -179,7 +151,7 @@ class ReportGenAgent(BaseAgent):
         parts = [f"{key}={geometry.get(key)}" for key in keys if geometry.get(key) is not None]
         return "，".join(parts) if parts else "暂无几何字段"
 
-    def _render_engineering_explanation(self, summary: Dict[str, Any]) -> str:
+    def _render_deterministic_engineering_explanation(self, summary: Dict[str, Any]) -> str:
         candidates = summary.get("screened_candidates") or []
         results = summary.get("results") or []
         materials = sorted({str(item.get("material")) for item in candidates if item.get("material")})
@@ -213,6 +185,241 @@ class ReportGenAgent(BaseAgent):
                 "- 未通过样本应先区分全局屈曲、局部屈曲、求解失败或几何装配问题，再决定是否进入下一轮候选生成。",
             ]
         )
+
+    def _material_codes(self, text: str) -> set[str]:
+        codes = re.findall(r"\b(?:T|M|IM)[0-9]+[A-Z0-9/-]*\b", text, flags=re.IGNORECASE)
+        return {code.upper() for code in codes}
+
+    def _qualitative_text(self, value: Any) -> str:
+        text = str(value or "").strip()
+        if not text:
+            return ""
+        material_codes = sorted(self._material_codes(text))
+        placeholders: Dict[str, str] = {}
+        for index, code in enumerate(material_codes):
+            placeholder = f"__MAT_CODE_{chr(65 + index)}__"
+            placeholders[placeholder] = code
+            text = re.sub(re.escape(code), placeholder, text, flags=re.IGNORECASE)
+
+        text = re.sub(r"\b(?:CASE|TMP|CAND|C)\s*[_-]?\d+\b", "候选", text, flags=re.IGNORECASE)
+        text = re.sub(
+            r"[-+]?[0-9]+(?:\.[0-9]+)?\s*(?:kN\s*/\s*m|mm|kg\s*/\s*m\^?2|kg/m²|kg/m2|%|deg|°|MPa|GPa)",
+            "对应工程量",
+            text,
+            flags=re.IGNORECASE,
+        )
+        text = re.sub(r"[-+]?[0-9]+(?:\.[0-9]+)?", "", text)
+        text = re.sub(r"\s+", " ", text).strip()
+
+        for placeholder, code in placeholders.items():
+            text = text.replace(placeholder, code)
+        return text
+
+    def _layup_qualitative_description(self, layup: Any) -> str:
+        text = str(layup or "")
+        if not text:
+            return "当前结构化数据未提供铺层表达式"
+        if "90" in text and "45" in text and "0" in text:
+            return "含轴向、正负角和直角层的对称均衡铺层"
+        if "45" in text:
+            return "含正负角层的均衡铺层"
+        return "结构化候选提供的复合材料铺层"
+
+    def _build_llm_explanation_payload(self, summary: Dict[str, Any]) -> Dict[str, Any]:
+        candidates = []
+        for candidate in summary.get("screened_candidates", []):
+            candidates.append(
+                {
+                    "source": candidate.get("source"),
+                    "stiffener_type": candidate.get("stiffener_type"),
+                    "material": candidate.get("material"),
+                    "layup_family": self._layup_qualitative_description(candidate.get("skin_layup")),
+                    "rationale": self._qualitative_text(candidate.get("rationale")),
+                    "screening_summary": self._qualitative_text(candidate.get("screening_summary")),
+                    "selection_reason": self._qualitative_text(candidate.get("selection_reason")),
+                }
+            )
+
+        results = []
+        for result in summary.get("results", []):
+            results.append(
+                {
+                    "verdict": result.get("verdict"),
+                    "failure_mode": result.get("failure_mode"),
+                    "diagnosis_summary": self._qualitative_text(result.get("diagnosis_summary")),
+                }
+            )
+
+        passed_count = int(summary.get("passed_count") or 0)
+        result_count = int(summary.get("result_count") or 0)
+        if result_count <= 0:
+            overall = "当前未提供有限元校核结果"
+        elif passed_count <= 0:
+            overall = "当前校核样本未满足设计目标"
+        elif passed_count == result_count:
+            overall = "当前校核样本均满足设计目标"
+        else:
+            overall = "当前校核样本中存在满足设计目标的方案"
+
+        return {
+            "task": {
+                "application": summary.get("application"),
+                "load_case": self._qualitative_text(summary.get("load_conditions")),
+                "boundary_conditions": self._qualitative_text(summary.get("boundary_conditions")),
+                "stiffener_type": summary.get("stiffener_type"),
+                "primary_objective": summary.get("primary_objective"),
+            },
+            "screened_candidates": candidates,
+            "results": results,
+            "aggregate": {"overall": overall},
+        }
+
+    def _numeric_tokens(self, text: str) -> List[float]:
+        values: List[float] = []
+        for token in re.findall(r"[-+]?[0-9]+(?:\.[0-9]+)?", text):
+            try:
+                values.append(float(token))
+            except ValueError:
+                continue
+        return values
+
+    def _engineering_numeric_tokens(self, text: str) -> List[float]:
+        values: List[float] = []
+        pattern = (
+            r"([-+]?[0-9]+(?:\.[0-9]+)?)\s*"
+            r"(?:kN\s*/\s*m|mm|kg\s*/\s*m\^?2|kg/m²|kg/m2|%|deg|°|MPa|GPa)"
+        )
+        for match in re.finditer(pattern, text, flags=re.IGNORECASE):
+            try:
+                values.append(float(match.group(1)))
+            except ValueError:
+                continue
+        return values
+
+    def _llm_text_uses_only_known_numbers(self, text: str, payload: Dict[str, Any]) -> bool:
+        serialized_payload = json.dumps(payload, ensure_ascii=False, default=str)
+        allowed_values = self._engineering_numeric_tokens(serialized_payload) + self._numeric_tokens(
+            serialized_payload
+        )
+        if not allowed_values:
+            return not self._engineering_numeric_tokens(text)
+        for value in self._engineering_numeric_tokens(text):
+            if not any(abs(value - allowed) <= max(1e-6, abs(allowed) * 1e-6) for allowed in allowed_values):
+                return False
+        return True
+
+    def _llm_text_uses_only_known_material_codes(self, text: str, payload: Dict[str, Any]) -> bool:
+        known_codes = self._material_codes(json.dumps(payload, ensure_ascii=False, default=str))
+        return self._material_codes(text).issubset(known_codes)
+
+    def _validate_llm_engineering_text(self, text: str, payload: Dict[str, Any]) -> None:
+        if not str(text or "").strip():
+            raise ValueError("LLM 报告解释为空")
+        if not self._llm_text_uses_only_known_numbers(text, payload):
+            raise ValueError("LLM 报告解释包含结构化数据之外的数值")
+        if not self._llm_text_uses_only_known_material_codes(text, payload):
+            raise ValueError("LLM 报告解释包含结构化数据之外的材料牌号")
+        forbidden_structure_terms = ["夹芯", "蜂窝", "金属衬套", "圆柱壳", "耐压壳", "缠绕成型"]
+        if any(term in text for term in forbidden_structure_terms):
+            raise ValueError("LLM 报告解释包含当前设计变量域之外的结构或工艺")
+
+    def _deterministic_clean_llm_engineering_text(self, text: str, payload: Dict[str, Any]) -> str:
+        known_codes = self._material_codes(json.dumps(payload, ensure_ascii=False, default=str))
+        forbidden_structure_terms = ["夹芯", "蜂窝", "金属衬套", "圆柱壳", "耐压壳", "缠绕成型"]
+        cleaned_lines: List[str] = []
+        measurement_pattern = (
+            r"[-+]?[0-9]+(?:\.[0-9]+)?\s*"
+            r"(?:kN\s*/\s*m|mm|kg\s*/\s*m\^?2|kg/m²|kg/m2|%|deg|°|MPa|GPa)"
+        )
+        for raw_line in text.splitlines():
+            line = raw_line.strip()
+            if not line:
+                cleaned_lines.append("")
+                continue
+            if any(term in line for term in forbidden_structure_terms):
+                continue
+            line_codes = self._material_codes(line)
+            if not line_codes.issubset(known_codes):
+                continue
+            line = re.sub(r"^\s*[0-9]+[.、]\s*", "", line)
+            line = re.sub(measurement_pattern, "结构化结果中的对应工程量", line, flags=re.IGNORECASE)
+            cleaned_lines.append(line)
+        return "\n".join(cleaned_lines).strip()
+
+    def _sanitize_llm_engineering_text(self, text: str, payload: Dict[str, Any]) -> str:
+        if self.llm_backend is None:
+            return text
+        known_material_codes = sorted(self._material_codes(json.dumps(payload, ensure_ascii=False, default=str)))
+        system_prompt = (
+            "你是报告解释文本约束清理器。只改写用户给出的中文说明，不新增事实。"
+            "删除所有数字、单位、阈值、候选编号、排序编号、替代材料牌号和具体设备参数；"
+            "可以保留允许材料牌号列表中的材料牌号。"
+            "优化建议只保留当前壁板变量域内的材料、铺层、厚度、筋条几何、边界、有限元和试验复核，"
+            "不保留新增结构型式或当前任务对象之外的工艺。"
+            "保留制造与装配关注点、铺层与刚度分配、屈曲与重量权衡、有限元结果解读、后续验证建议五类定性内容。"
+            "输出 Markdown，只使用三级标题和短横线项目；不要输出表格、JSON、编号列表或代码块。"
+        )
+        user_prompt = (
+            f"允许保留的材料牌号：{', '.join(known_material_codes) if known_material_codes else '无'}\n\n"
+            "请清理以下报告解释文本：\n"
+            f"{text}"
+        )
+        return self.llm_backend.chat(
+            system_prompt,
+            user_prompt,
+            max_tokens_override=2400,
+        ).strip()
+
+    def _render_llm_engineering_explanation(self, summary: Dict[str, Any]) -> str:
+        if self.llm_backend is None:
+            return ""
+        payload = self._build_llm_explanation_payload(summary)
+        system_prompt = (
+            "你是复合材料加筋壁板设计报告解释助手。"
+            "只能基于用户提供的 JSON 定性结构化数据撰写中文工程解释。"
+            "不得新增候选编号、数值、材料名、工况或有限元结论；不得改写 verdict、BLF、面密度和排序。"
+            "可以从复合材料加筋壁板常用制造评审角度讨论铺放、共固化、胶接、筋条端部过渡、边界夹持和无损检测，"
+            "但不能把 JSON 中没有的设备、厂家、具体固化温度、检验阈值或替代材料牌号写成事实。"
+            "优化建议限定在当前候选变量域内，只讨论材料、铺层、厚度、筋条几何、边界、有限元和试验复核，"
+            "不要引入夹芯、蜂窝、金属衬套、圆柱壳或其他未在输入中出现的结构型式。"
+            "数值事实已经由报告模板输出，解释段禁止出现数字、角度、单位、阈值和候选编号，只做定性解释。"
+            "输出 Markdown，只使用三级标题和短横线项目；不要输出表格、JSON、编号列表或代码块。"
+        )
+        user_prompt = (
+            "请生成报告中的“工程解释与制造建议”段落，必须覆盖：制造与装配关注点、铺层与刚度分配、"
+            "屈曲与重量权衡、有限元结果解读、后续验证建议。只做定性解释，不要复述 JSON 中的数字，"
+            "不要给出新的数字、阈值、候选编号或替代材料牌号；如果结构化数据缺少某项，请明确说明当前结构化数据未提供。\n\n"
+            f"结构化定性数据 JSON：\n{json.dumps(payload, ensure_ascii=False, indent=2, default=str)}"
+        )
+        answer = self.llm_backend.chat(
+            system_prompt,
+            user_prompt,
+            max_tokens_override=2600,
+        ).strip()
+        if not answer:
+            return ""
+        try:
+            self._validate_llm_engineering_text(answer, payload)
+        except ValueError:
+            answer = self._sanitize_llm_engineering_text(answer, payload)
+            try:
+                self._validate_llm_engineering_text(answer, payload)
+            except ValueError:
+                answer = self._deterministic_clean_llm_engineering_text(answer, payload)
+                self._validate_llm_engineering_text(answer, payload)
+        return answer
+
+    def _render_engineering_explanation(self, summary: Dict[str, Any]) -> str:
+        self._last_llm_explanation_used = False
+        if self.llm_backend is not None:
+            try:
+                llm_text = self._render_llm_engineering_explanation(summary)
+                if llm_text:
+                    self._last_llm_explanation_used = True
+                    return llm_text
+            except Exception as exc:
+                self.emit(f"报告 LLM 工程解释生成失败，已使用确定性解释：{exc}")
+        return self._render_deterministic_engineering_explanation(summary)
 
     def _render_markdown(self, task: Dict, results: List[Dict], candidates: List[Dict]) -> str:
         task_payload = task_payload_from_request(task)
@@ -463,4 +670,5 @@ class ReportGenAgent(BaseAgent):
             "markdown_path": str(markdown_path),
             "pdf_path": str(pdf_path) if pdf_generated else None,
             "content": markdown_text,
+            "llm_explanation_used": self._last_llm_explanation_used,
         }
