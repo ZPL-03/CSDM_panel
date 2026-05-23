@@ -104,6 +104,23 @@ def clean_abaqus_session_files() -> None:
     for path in ABAQUS_RUNS_DIR.rglob("build_*.py"):
         remove_path(path)
 
+    residual_patterns = (
+        "*.lck",
+        "*.023",
+        "*.com",
+        "*.jnl",
+        "*.sta",
+        "*.prt",
+        "*.sim",
+        "*.log",
+        "*.env",
+        "*.odb_f",
+        "candidate_retry_*.json",
+    )
+    for pattern in residual_patterns:
+        for path in ABAQUS_RUNS_DIR.rglob(pattern):
+            remove_path(path)
+
 
 def main() -> int:
     parser = argparse.ArgumentParser()

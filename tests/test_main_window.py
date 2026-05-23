@@ -166,6 +166,42 @@ def test_flow_fem_summary_updates_results_immediately() -> None:
         app.processEvents()
 
 
+def test_report_button_allows_partial_evaluated_results() -> None:
+    app = _app()
+    window = MainWindow()
+    try:
+        window.session.task = {
+            "task_id": "TASK_9",
+            "task": {
+                "application": "复合材料加筋壁板",
+                "load_conditions": {"type": "axial_compression", "Nx_kN_per_m": 850},
+                "boundary_conditions": {"type": "SSSS"},
+                "material_system": {"name": "T300/5208"},
+                "design_targets": {"BLF_min": 1.2, "primary_objective": "最小重量"},
+            },
+        }
+        window.session.evaluated_candidates = [_candidate("TMP_1"), _candidate("TMP_2")]
+        window.session.results_by_session_id = {"TMP_1": {"candidate_id": "C1", "session_candidate_id": "TMP_1"}}
+
+        window._update_button_states()
+
+        assert window.report_button.isEnabled() is True
+        assert [item["candidate_id"] for item in window._report_candidate_set()] == ["TMP_1"]
+
+        captured = {}
+        window._run_action = lambda action, payload, status_text: captured.update(
+            {"action": action, "payload": payload, "status_text": status_text}
+        )
+        window._start_report()
+
+        assert captured["action"] == "report"
+        assert [item["candidate_id"] for item in captured["payload"]["candidates"]] == ["TMP_1"]
+        assert [item["candidate_id"] for item in captured["payload"]["results"]] == ["C1"]
+    finally:
+        window.close()
+        app.processEvents()
+
+
 def test_close_event_tolerates_deleted_worker_thread() -> None:
     from PyQt6 import sip
     from PyQt6.QtCore import QThread

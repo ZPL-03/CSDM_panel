@@ -601,8 +601,14 @@ class CandidateGenAgent(BaseAgent):
             f"{source_targets['source_ratio']['llm']:g}:"
             f"{source_targets['source_ratio']['case_transfer']:g}:"
             f"{source_targets['source_ratio']['doe']:g}，"
-            f"LLM 原始 {len(llm_candidates)} / 保留 {len(valid_llm_candidates)}，"
-            f"案例迁移 原始 {len(transfer_candidates)} / 保留 {len(valid_transfer_candidates)}，"
-            f"DOE {len(doe_candidates)}"
+            f"初始配额 LLM={source_targets['llm']} / 案例迁移={source_targets['case_transfer']} / DOE={source_targets['doe']}；"
+            f"有效进入候选池 LLM={len(valid_llm_candidates)}，"
+            f"案例迁移={len(valid_transfer_candidates)}，"
+            f"DOE补足={len(doe_candidates)}"
+            + (
+                "；案例迁移为 0 表示当前案例库没有满足筋型、工况、边界、材料与通过结论硬条件的可迁移案例"
+                if source_targets["case_transfer"] > 0 and not valid_transfer_candidates
+                else ""
+            )
         )
         return candidates

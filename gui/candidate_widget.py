@@ -161,7 +161,7 @@ class CandidateWidget(QWidget):
         load_conditions = candidate.get("load_conditions", {})
         design_targets = candidate.get("design_targets", {})
         rule_check = candidate.get("rule_check", {})
-        screening_summary = candidate.get("screening_summary") or "尚未完成 DNN 初筛。"
+        screening_summary = candidate.get("screening_summary") or "尚未完成代理模型初筛。"
         selection_reason = candidate.get("selection_reason") or "当前样本尚未进入优先校核队列。"
 
         ply_items = "".join(
@@ -204,7 +204,7 @@ class CandidateWidget(QWidget):
             f"<p><b>代理预测：</b> BLF={_format_number(candidate.get('surrogate_BLF'))}，"
             f"重量={_format_number(candidate.get('surrogate_weight'))}，"
             f"评分={_format_number(candidate.get('rank_score'), 4)}</p>"
-            f"<p><b>DNN 初筛摘要：</b>{screening_summary}</p>"
+            f"<p><b>代理模型初筛摘要：</b>{screening_summary}</p>"
             f"<p><b>优先校核原因：</b>{selection_reason}</p>"
             "<h4>几何设计参数</h4><ul>"
             f"{geometry_items}</ul>"

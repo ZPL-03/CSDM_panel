@@ -1,4 +1,4 @@
-﻿﻿# CSDM_panel
+# CSDM_panel
 
 复合材料加筋壁板智能设计系统（Composite Stiffened-panel Design Manager, CSDM_panel）是一个面向复合材料加筋壁板的多智能体设计原型系统，目标是把"自然语言需求 -> 结构化任务 -> 候选生成 -> 代理模型初筛 -> ABAQUS 校核 -> 知识回流 -> 报告输出"这条工程链路自动化。
 
@@ -43,6 +43,7 @@
 - `data/abaqus_runs/` 中当前有 350 个样本工件目录
 - `models/surrogate_metrics.json` 当前选中模型为 `mlp`，训练样本数 350，MLP `MAPE = 0.2608`
 - `knowledge/external/` 是外部知识库/知识图谱资产目录：知识库文本块 43651 条，知识图谱实体 1763 个，知识图谱关系 347609 条
+- 报告导出以已有有限元校核结果为范围，可生成阶段报告；未校核候选保留在待校核状态，不进入有限元结论
 
 ## 4. 系统架构
 
@@ -96,7 +97,7 @@ REPORT_GEN：工程报告输出
 
 - 左侧为聊天主区，支持自然语言输入和流程事件回显
 - 右侧包含候选方案、ABAQUS 结果、知识库、日志等标签页
-- 主流程内置 3 个确认节点：DNN 初筛前、FEM 校核前、报告导出前
+- 主流程内置 3 个确认节点：代理模型初筛前、FEM 校核前、报告导出前
 - `core/conversation_flow.py` 提供 UI 无关的对话流程控制器，GUI 只是其中一种承载方式
 
 ## 5. 仓库结构
@@ -202,7 +203,7 @@ candidate_source_ratio:
 | `python scripts/migrate_contracts.py --case-memory-only` | 仅重建 `csdm_case_memory` 案例记忆集合 |
 | `python scripts/rebuild_abaqus_artifacts.py --limit 10 --workers 1` | 重建缺失的 ABAQUS 工件 |
 | `python scripts/build_initial_cases.py` | 批量生成/补齐初始案例集 |
-| `python scripts/clean_debug_artifacts.py` | 清理 `__pycache__`、`.pytest_cache` 与 ABAQUS 临时文件 |
+| `python scripts/clean_artifacts.py` | 清理 `__pycache__`、`.pytest_cache` 与 ABAQUS 临时文件 |
 
 ## 10. 标识与关联
 

@@ -210,7 +210,7 @@ class MainWindow(QMainWindow):
         self.refresh_button = QPushButton("刷新知识库")
         self.open_report_button = QPushButton("打开最新报告")
 
-        self.screen_button = QPushButton("手动：DNN初筛")
+        self.screen_button = QPushButton("手动：代理模型初筛")
         self.evaluate_selected_button = QPushButton("手动：校核所选样本")
         self.evaluate_all_button = QPushButton("手动：校核当前候选")
         self.report_button = QPushButton("手动：导出报告")
@@ -417,7 +417,6 @@ class MainWindow(QMainWindow):
 
     def _update_button_states(self) -> None:
         has_candidates = bool(self.session.candidates)
-        has_results = bool(self.session.results_by_session_id)
         has_pending_current = bool(self._pending_candidates(self.session.current_candidates)) if has_candidates else False
 
         self.confirm_yes_button.setEnabled(self.session.pending_confirmation is not None)
@@ -425,7 +424,7 @@ class MainWindow(QMainWindow):
         self.screen_button.setEnabled(has_candidates and self.session.pending_confirmation is None)
         self.evaluate_selected_button.setEnabled(has_pending_current and self.session.pending_confirmation is None)
         self.evaluate_all_button.setEnabled(has_pending_current and self.session.pending_confirmation is None)
-        self.report_button.setEnabled(has_results and self.session.pending_confirmation is None)
+        self.report_button.setEnabled(bool(self.session.results_by_session_id) and self.session.pending_confirmation is None)
         self.reset_button.setEnabled(True)
         self.example_button.setEnabled(self.session.pending_confirmation is None)
         self.refresh_button.setEnabled(True)
@@ -523,6 +522,27 @@ class MainWindow(QMainWindow):
         evaluated = set(self.session.results_by_session_id.keys())
         return [candidate for candidate in candidates if candidate.get("candidate_id") not in evaluated]
 
+    def _report_candidate_set(self) -> list[dict]:
+        evaluated = set(self.session.results_by_session_id.keys())
+        return [
+            candidate
+            for candidate in self.session.current_candidates
+            if str(candidate.get("candidate_id")) in evaluated
+        ]
+
+    def _ordered_report_results(self) -> list[dict]:
+        ordered_results: list[dict] = []
+        used_keys: set[str] = set()
+        for candidate in self.session.current_candidates:
+            candidate_id = str(candidate.get("candidate_id") or "")
+            if candidate_id in self.session.results_by_session_id:
+                ordered_results.append(self.session.results_by_session_id[candidate_id])
+                used_keys.add(candidate_id)
+        for key, result in self.session.results_by_session_id.items():
+            if key not in used_keys:
+                ordered_results.append(result)
+        return ordered_results
+
     def _start_screen(self) -> None:
         if not self.session.task or not self.session.candidates:
             return
@@ -530,7 +550,7 @@ class MainWindow(QMainWindow):
         self._run_action(
             "screen",
             {"task": self.session.task, "candidates": self.session.candidates},
-            "正在执行 DNN 初筛",
+            "正在执行代理模型初筛",
         )
 
     def _start_evaluate_selected(self) -> None:
@@ -564,12 +584,16 @@ class MainWindow(QMainWindow):
     def _start_report(self) -> None:
         if not self.session.task or not self.session.results_by_session_id:
             return
+        report_candidates = self._report_candidate_set()
+        ordered_results = self._ordered_report_results()
+        if not ordered_results:
+            return
         self._run_action(
             "report",
             {
                 "task": self.session.task,
-                "results": list(self.session.results_by_session_id.values()),
-                "candidates": self.session.evaluated_candidates or self.session.current_candidates,
+                "results": ordered_results,
+                "candidates": report_candidates,
             },
             "正在生成报告",
         )
@@ -682,7 +706,7 @@ class MainWindow(QMainWindow):
             requested_top_k = requested_screen_top_k(self.session.task)
             self.chat_widget.add_message(
                 "SYSTEM",
-                f"手动入口：DNN 初筛完成，请求 Top-{requested_top_k}，当前实际展示 {len(self.session.screened_candidates)} 个候选。",
+                f"手动入口：代理模型初筛完成，请求 Top-{requested_top_k}，当前实际展示 {len(self.session.screened_candidates)} 个候选。",
             )
 
         elif action == "evaluate":
@@ -721,7 +745,7 @@ class MainWindow(QMainWindow):
         return (
             "<h3>对话流程</h3>"
             "<p>1. 输入一句自然语言需求，系统自动生成任务摘要和初始候选；你可以分别指定候选池总数和初筛保留数</p>"
-            "<p>2. 系统询问是否进行 DNN 初筛，并解释当前评分机制、候选池目标和 Top-K 目标</p>"
+            "<p>2. 系统询问是否进行代理模型初筛，并解释当前评分机制、候选池目标和 Top-K 目标</p>"
             "<p>3. 系统询问是否进行有限元校核，并展示入选原因</p>"
             "<p>4. 校核完成后展示 BLF、失效模式、结论，并询问是否导出报告</p>"
             "<p>5. 聊天区会同时显示结构化进度和自然语言说明；辅助与手动入口可随时介入</p>"

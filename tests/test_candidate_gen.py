@@ -173,6 +173,27 @@ def test_candidate_gen_respects_total_candidate_target_and_two_one_one_ratio() -
     assert sum(1 for item in candidates if item["source"] == "DOE") == 3
 
 
+def test_candidate_generation_summary_reports_quota_and_effective_counts() -> None:
+    messages: list[str] = []
+    agent = CandidateGenAgent(progress_callback=lambda _agent, message, _event=None: messages.append(message))
+    agent.llm_backend = _FakeNaturalBackend(count=6)
+    agent.knowledge_base = type("FakeKnowledge", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
+    agent.case_retriever = type(
+        "EmptyCaseRetriever",
+        (),
+        {"retrieve_transferable_cases": staticmethod(lambda _task, top_k=5: [])},
+    )()
+
+    candidates = agent.run(_build_task())
+
+    assert len(candidates) == 10
+    summary = messages[-1]
+    assert "初始配额 LLM=5 / 案例迁移=3 / DOE=2" in summary
+    assert "有效进入候选池 LLM=5，案例迁移=0，DOE补足=5" in summary
+    assert "原始" not in summary
+    assert "案例迁移为 0" in summary
+
+
 def test_candidate_gen_uses_two_one_one_source_ratio() -> None:
     agent = CandidateGenAgent()
     task = _build_task()

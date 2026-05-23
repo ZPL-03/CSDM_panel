@@ -110,6 +110,15 @@ def test_report_falls_back_to_structured_engineering_explanation() -> None:
     assert agent._last_llm_explanation_used is False
 
 
+def test_report_places_engineering_explanation_after_fem_results() -> None:
+    task, results, candidates = _report_sample()
+    agent = ReportGenAgent()
+
+    markdown = agent._render_markdown(task, results, candidates)
+
+    assert markdown.index("## 有限元校核结果") < markdown.index("## 工程解释与制造建议")
+
+
 def test_report_uses_llm_only_for_grounded_engineering_explanation() -> None:
     task, results, candidates = _report_sample()
     agent = ReportGenAgent()

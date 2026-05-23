@@ -466,14 +466,10 @@ class ReportGenAgent(BaseAgent):
                     ]
                 )
         else:
-            lines.extend(["", "- 本轮未提供 DNN 初筛上下文。"])
+            lines.extend(["", "- 本轮未提供代理模型初筛上下文。"])
 
         lines.extend(
             [
-                "",
-                "## 工程解释与制造建议",
-                "",
-                engineering_explanation,
                 "",
                 "## 有限元校核结果",
             ]
@@ -493,6 +489,14 @@ class ReportGenAgent(BaseAgent):
                     f"- 工程说明：{result.get('diagnosis_summary')}",
                 ]
             )
+        lines.extend(
+            [
+                "",
+                "## 工程解释与制造建议",
+                "",
+                engineering_explanation,
+            ]
+        )
         return "\n".join(lines)
 
     def _reportlab(self):

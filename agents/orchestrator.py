@@ -138,7 +138,7 @@ class OrchestratorAgent(BaseAgent):
         self.emit_event(
             "screening_started",
             (
-                f"开始执行 DNN 初筛，输入候选 {len(candidates)} 个，"
+                f"开始执行代理模型初筛，输入候选 {len(candidates)} 个，"
                 f"目标保留 Top-{requested_top_k}，"
                 f"当前最多保留 {effective_top_k} 个，"
                 f"评分公式：{score_formula}"
@@ -154,7 +154,7 @@ class OrchestratorAgent(BaseAgent):
         screened = self.screener.run({"task": task, "candidates": candidates})
         self.emit_event(
             "screening_completed",
-            f"DNN 初筛完成，请求 Top-{requested_top_k}，实际输出 {len(screened)} 个。",
+            f"代理模型初筛完成，请求 Top-{requested_top_k}，实际输出 {len(screened)} 个。",
             {
                 **self._task_event_context(task),
                 "input_count": len(candidates),

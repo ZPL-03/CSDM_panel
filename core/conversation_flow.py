@@ -140,7 +140,7 @@ class ConversationFlowController:
         self._emit(
             "confirmation_requested",
             (
-                f"是否进行 DNN 初筛？系统将按 {self.orchestrator.screener.score_formula_text} 对候选排序，"
+                f"是否进行代理模型初筛？系统将按 {self.orchestrator.screener.score_formula_text} 对候选排序，"
                 f"目标保留 Top-{target_counts['requested_top_k']}。"
                 f"{screen_note}"
             ),
@@ -174,7 +174,7 @@ class ConversationFlowController:
             self._emit(
                 "screening_summary",
                 (
-                    f"DNN 初筛已完成：{len(state.candidates)} -> {len(screened_candidates)}，"
+                    f"代理模型初筛已完成：{len(state.candidates)} -> {len(screened_candidates)}，"
                     f"请求 Top-{target_counts['requested_top_k']}。"
                 ),
                 {
@@ -197,7 +197,7 @@ class ConversationFlowController:
             state.evaluated_candidates = list(state.candidates)
             self._emit(
                 "screening_summary",
-                f"已跳过 DNN 初筛，将直接对全部 {len(state.candidates)} 个候选进入有限元校核。",
+                f"已跳过代理模型初筛，将直接对全部 {len(state.candidates)} 个候选进入有限元校核。",
                 {"screened_candidates": state.candidates, "screen_skipped": True, **target_counts},
             )
             self._emit_commentary(
@@ -231,7 +231,7 @@ class ConversationFlowController:
             state.stage = "paused_before_fem"
             self._emit(
                 "conversation_paused",
-                "已暂停在有限元校核前。当前候选和 DNN 结果已保留，可稍后继续。",
+                "已暂停在有限元校核前。当前候选和代理模型结果已保留，可稍后继续。",
                 {"stage": state.stage},
             )
             self._emit_commentary("conversation_paused", {"stage": state.stage})
@@ -258,7 +258,7 @@ class ConversationFlowController:
         )
         self._emit(
             "confirmation_requested",
-            "是否导出设计报告？报告将包含工况摘要、DNN 选择理由、有限元结果解读和工程建议。",
+            "是否导出设计报告？报告将包含工况摘要、代理模型选择理由、有限元结果解读和工程建议。",
             {"confirmation_id": "export_report", "default": True},
         )
         return state
