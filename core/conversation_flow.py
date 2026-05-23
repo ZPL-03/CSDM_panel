@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from typing import Callable, Dict, List, Optional
 
 from agents.orchestrator import OrchestratorAgent
-from core.llm_backend import LLMBackend, auto_llm_enabled
 from core.task_contract import (
     describe_boundary_conditions,
     describe_load_conditions,
@@ -49,12 +47,6 @@ class ConversationFlowController:
     def __init__(self, orchestrator: OrchestratorAgent, event_callback: ConversationEventCallback = None) -> None:
         self.orchestrator = orchestrator
         self.event_callback = event_callback
-        self.llm_backend: LLMBackend | None = None
-        if auto_llm_enabled():
-            try:
-                self.llm_backend = LLMBackend()
-            except Exception:
-                self.llm_backend = None
 
     def _emit(self, event_type: str, message: str, payload: Dict | None = None) -> None:
         if self.event_callback:
@@ -68,21 +60,6 @@ class ConversationFlowController:
         }
 
     def _render_commentary(self, stage: str, payload: Dict) -> str:
-        if self.llm_backend is not None:
-            system_prompt = (
-                "你是 CSDM_panel 图形界面里的中文设计助手。"
-                "请根据当前阶段信息，用 1 到 2 句自然、专业、口语化的中文说明当前进度。"
-                "如果 payload 里有候选池目标、实际候选数、初筛目标等关键数量，请优先点明。"
-                "不要输出列表，不要复述全部字段，不要编造数值。"
-            )
-            user_prompt = json.dumps({"stage": stage, "payload": payload}, ensure_ascii=False, indent=2)
-            try:
-                commentary = self.llm_backend.chat(system_prompt, user_prompt).strip()
-                if commentary:
-                    return commentary
-            except Exception:
-                pass
-
         if stage == "task_summary":
             task = payload.get("task", {})
             task_payload = task_payload_from_request(task)
@@ -92,65 +69,6 @@ class ConversationFlowController:
                 f"我已经把你的需求整理成结构化任务了，当前按 {describe_load_conditions(task_payload.get('load_conditions', {}))} "
                 f"和 {describe_boundary_conditions(task_payload.get('boundary_conditions', {}))} 来生成方案，候选池先按 {target_total} 个目标展开，后续初筛会保留 Top-{top_k}。"
             )
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         if stage == "candidate_summary":
             return "我先把初始方案池铺开，再用代理模型做一轮便宜但有解释性的预筛选；如果实际生成数小于目标值，通常说明有一部分方案在规则约束下被提前拦住了。"
@@ -164,10 +82,10 @@ class ConversationFlowController:
             return "我先把当前状态停在这里，后面的候选和结果都还保留着，你随时可以继续往下推。"
         return ""
 
-    def _emit_commentary(self, stage: str, payload: Dict) -> None:
-        commentary = self._render_commentary(stage, payload)
-        if commentary:
-            self._emit("assistant_commentary", commentary, {"stage": stage, **payload})
+    def _emit_flow_note(self, stage: str, payload: Dict) -> None:
+        note = self._render_commentary(stage, payload)
+        if note:
+            self._emit("flow_note", note, {"stage": stage, **payload})
 
     def start(self, instruction: str) -> ConversationState:
         state = ConversationState(instruction=instruction, stage="parsing")
@@ -195,7 +113,7 @@ class ConversationFlowController:
             ),
             {"task": task},
         )
-        self._emit_commentary("task_summary", {"task": task})
+        self._emit_flow_note("task_summary", {"task": task})
         self._emit(
             "candidate_summary",
             (
@@ -208,7 +126,7 @@ class ConversationFlowController:
                 **target_counts,
             },
         )
-        self._emit_commentary(
+        self._emit_flow_note(
             "candidate_summary",
             {
                 "candidate_count": len(candidates),
@@ -264,7 +182,7 @@ class ConversationFlowController:
                     **target_counts,
                 },
             )
-            self._emit_commentary(
+            self._emit_flow_note(
                 "screening_summary",
                 {
                     "input_count": len(state.candidates),
@@ -282,7 +200,7 @@ class ConversationFlowController:
                 f"已跳过 DNN 初筛，将直接对全部 {len(state.candidates)} 个候选进入有限元校核。",
                 {"screened_candidates": state.candidates, "screen_skipped": True, **target_counts},
             )
-            self._emit_commentary(
+            self._emit_flow_note(
                 "screening_summary",
                 {
                     "input_count": len(state.candidates),
@@ -316,7 +234,7 @@ class ConversationFlowController:
                 "已暂停在有限元校核前。当前候选和 DNN 结果已保留，可稍后继续。",
                 {"stage": state.stage},
             )
-            self._emit_commentary("conversation_paused", {"stage": state.stage})
+            self._emit_flow_note("conversation_paused", {"stage": state.stage})
             return state
 
         results = [self.orchestrator.evaluate_candidate(state.task, candidate) for candidate in state.evaluated_candidates]
@@ -330,7 +248,7 @@ class ConversationFlowController:
             f"有限元校核完成：共 {len(results)} 个样本，其中通过 {passed_count} 个。",
             {"results": results, "passed_count": passed_count},
         )
-        self._emit_commentary(
+        self._emit_flow_note(
             "fem_summary",
             {
                 "result_count": len(results),
@@ -359,10 +277,10 @@ class ConversationFlowController:
                 ),
                 {"report": state.report},
             )
-            self._emit_commentary("report_summary", {"report": state.report})
+            self._emit_flow_note("report_summary", {"report": state.report})
         else:
             self._emit("report_summary", "已跳过报告导出。", {"report": None})
-            self._emit_commentary("report_summary", {"report": None, "skipped": True})
+            self._emit_flow_note("report_summary", {"report": None, "skipped": True})
 
         state.pending_confirmation = None
         state.stage = "completed"

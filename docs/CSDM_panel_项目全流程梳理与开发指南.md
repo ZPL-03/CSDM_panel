@@ -209,7 +209,7 @@ CSDM_panel/
 ### 6.3 DOE 路径
 
 - `DOESampler` 按参数范围采样
-- 作为兜底与探索来源；LLM 或案例迁移有效候选不足时，由 DOE 补足候选池
+- 作为补足与探索来源；LLM 或案例迁移有效候选不足时，由 DOE 补足候选池
 - 所有候选仍需通过 `RuleChecker`
 
 ### 6.4 候选来源比例
@@ -374,7 +374,7 @@ LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料�
 - 代理模型指标
 - 外部知识库/知识图谱文本块、实体、关系数量
 - 源登记、结构化文档和 Markdown 全文数量
-- 知识资产清单路径、溯源资料目录和更新时间
+- 知识资产清单路径、溯源资料目录和时间信息
 
 ## 12. 常用脚本
 
@@ -439,9 +439,9 @@ python scripts/migrate_contracts.py --retrain-surrogate
 15. `abaqus/runtime_build_panel.py`
 16. `abaqus/runtime_extract_blf.py`
 
-## 14. 当前容易踩的坑
+## 14. 当前边界说明
 
-### 坑 1：把案例迁移当成 LLM 检索增强
+### 14.1 案例迁移不是 LLM 检索增强
 
 当前实现已经明确拆分：
 
@@ -449,11 +449,11 @@ python scripts/migrate_contracts.py --retrain-surrogate
 - 案例迁移走结构化硬过滤和案例记忆向量排序
 - 直接迁移不得把历史案例原文拼进 LLM Prompt
 
-### 坑 2：把参考项目路径当成运行时依赖
+### 14.2 知识资产只读取项目内目录
 
-当前项目已经复制需要的知识资产，运行时只读取 `knowledge/external/`。参考项目不是 CSDM_panel 的运行时依赖。
+运行时只读取 `knowledge/external/` 中的知识资产，不依赖项目外路径。
 
-### 坑 3：以为所有成功样本都会进入正式案例库
+### 14.3 评估档案与正式案例库不是同一层
 
 只有满足正式入库条件的案例才进入 `knowledge/case_library/`；全部校核结果仍会保存在 `data/cases/`。
 

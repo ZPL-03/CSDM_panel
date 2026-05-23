@@ -12,7 +12,7 @@
 - 候选方案生成
   - LLM 生成：使用外部知识库/知识图谱做检索增强，由 LLM 给出工程自然语言候选表，再由系统解析为结构化候选
   - 历史案例迁移：在归档案例和正式案例中做结构化相似检索，并用案例记忆向量库辅助排序
-  - DOE 采样：在参数空间生成兜底与探索方案
+  - DOE 采样：在参数空间生成补足与探索方案
 - 代理模型快速初筛
 - ABAQUS 建模、求解、后处理与失败重试
 - 案例归档、正式案例库写入与代理模型重训
@@ -82,7 +82,7 @@ REPORT_GEN：工程报告输出
 
 - `LLM` 路径直接使用外部知识库/知识图谱：`core/domain_knowledge.py` 将任务转换为检索文本，从 `knowledge/external/` 取回知识库片段和知识图谱关系并注入 Prompt；LLM 输出工程自然语言候选表，`CandidateGenAgent` 解析为结构化候选并执行规则检查；未就绪时不注入额外知识片段。
 - `CASE_TRANSFER` 路径不走外部知识库/知识图谱：`core/case_retriever.py` 先按筋型、工况、边界、材料和通过结论做结构化硬过滤，再用 `core/case_memory.py` 中的 Case Memory 向量索引辅助相似案例排序；只迁移满足工程约束的历史设计。
-- `DOE` 路径独立存在：`core/doe_sampler.py` 在参数范围内采样，提供兜底与探索候选。
+- `DOE` 路径独立存在：`core/doe_sampler.py` 在参数范围内采样，提供补足与探索候选。
 
 ### 4.4 筋型感知架构
 
@@ -231,7 +231,7 @@ candidate_source_ratio:
 - `knowledge/external/provenance/structured_text/markdown_documents/`：可审计 Markdown 全文
 - `knowledge/external/manifest.json`：知识资产清单
 
-LLM 当前只读取知识库文本块和知识图谱关系；`provenance/` 只用于人工核查检索命中的资料来源和完整上下文。该目录是本项目运行时读取的知识资产，不直接调用参考项目路径；目录已加入 `.gitignore`，避免提交大体量派生产物。
+LLM 当前只读取知识库文本块和知识图谱关系；`provenance/` 只用于人工核查检索命中的资料来源和完整上下文。该目录是本项目运行时读取的知识资产，目录已加入 `.gitignore`，避免提交大体量派生产物。
 
 ## 12. 回归验证
 

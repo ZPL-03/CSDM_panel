@@ -164,12 +164,11 @@ class PipelineWorker(QObject):
         self.message.emit(sender, message, event or {})
 
     def _emit_flow(self, event_type: str, message: str, payload: dict | None = None) -> None:
-        sender_name = "ASSISTANT" if event_type == "assistant_commentary" else "FLOW"
         self.message.emit(
-            sender_name,
+            "FLOW",
             message,
             {
-                "agent": sender_name,
+                "agent": "FLOW",
                 "event_type": event_type,
                 "message": message,
                 "payload": payload or {},
@@ -210,10 +209,10 @@ class MainWindow(QMainWindow):
         self.refresh_button = QPushButton("刷新知识库")
         self.open_report_button = QPushButton("打开最新报告")
 
-        self.screen_button = QPushButton("调试：DNN初筛")
-        self.evaluate_selected_button = QPushButton("调试：校核所选样本")
-        self.evaluate_all_button = QPushButton("调试：校核当前候选")
-        self.report_button = QPushButton("调试：导出报告")
+        self.screen_button = QPushButton("手动：DNN初筛")
+        self.evaluate_selected_button = QPushButton("手动：校核所选样本")
+        self.evaluate_all_button = QPushButton("手动：校核当前候选")
+        self.report_button = QPushButton("手动：导出报告")
         self.reset_button = QPushButton("重置会话")
 
         self.stage_card = QLabel("阶段：idle")
@@ -268,16 +267,16 @@ class MainWindow(QMainWindow):
         stats_layout.addWidget(self.pending_card, 1, 0)
         stats_layout.addWidget(self.pass_card, 1, 1)
 
-        debug_header = QLabel("调试入口")
-        debug_header.setObjectName("sectionTitle")
-        debug_button_layout = QGridLayout()
-        debug_button_layout.setHorizontalSpacing(10)
-        debug_button_layout.setVerticalSpacing(10)
-        debug_button_layout.addWidget(self.screen_button, 0, 0)
-        debug_button_layout.addWidget(self.evaluate_selected_button, 0, 1)
-        debug_button_layout.addWidget(self.evaluate_all_button, 0, 2)
-        debug_button_layout.addWidget(self.report_button, 1, 0)
-        debug_button_layout.addWidget(self.reset_button, 1, 1, 1, 2)
+        manual_header = QLabel("人工操作")
+        manual_header.setObjectName("sectionTitle")
+        manual_button_layout = QGridLayout()
+        manual_button_layout.setHorizontalSpacing(10)
+        manual_button_layout.setVerticalSpacing(10)
+        manual_button_layout.addWidget(self.screen_button, 0, 0)
+        manual_button_layout.addWidget(self.evaluate_selected_button, 0, 1)
+        manual_button_layout.addWidget(self.evaluate_all_button, 0, 2)
+        manual_button_layout.addWidget(self.report_button, 1, 0)
+        manual_button_layout.addWidget(self.reset_button, 1, 1, 1, 2)
 
         left_layout = QVBoxLayout()
         left_layout.setSpacing(10)
@@ -292,8 +291,8 @@ class MainWindow(QMainWindow):
         left_layout.addLayout(utility_button_layout)
         left_layout.addWidget(stats_header)
         left_layout.addLayout(stats_layout)
-        left_layout.addWidget(debug_header)
-        left_layout.addLayout(debug_button_layout)
+        left_layout.addWidget(manual_header)
+        left_layout.addLayout(manual_button_layout)
 
         right_layout = QVBoxLayout()
         right_layout.addWidget(self.tabs)
@@ -341,7 +340,7 @@ class MainWindow(QMainWindow):
                 background: #f3f6fb;
                 color: #1f2937;
             }
-            QTextBrowser, QListWidget, QTableWidget, QLineEdit {
+            QTextBrowser, QTableWidget, QLineEdit {
                 background: white;
                 border: 1px solid #d8e1ee;
                 border-radius: 10px;
@@ -475,6 +474,12 @@ class MainWindow(QMainWindow):
         self.knowledge_widget.refresh()
         self._update_overview_cards()
 
+    def _refresh_design_views(self) -> None:
+        self.task_browser.setHtml(self._task_summary_html())
+        self.candidate_widget.update_candidates(self.session.current_candidates, self.session.results_by_session_id)
+        self.abaqus_widget.update_results(list(self.session.results_by_session_id.values()))
+        self._update_overview_cards()
+
     def _start_conversation(self) -> None:
         instruction = self.input_line.text().strip()
         if not instruction:
@@ -524,7 +529,7 @@ class MainWindow(QMainWindow):
         self._run_action(
             "screen",
             {"task": self.session.task, "candidates": self.session.candidates},
-            "正在执行调试模式 DNN 初筛",
+            "正在执行 DNN 初筛",
         )
 
     def _start_evaluate_selected(self) -> None:
@@ -587,20 +592,65 @@ class MainWindow(QMainWindow):
     def _handle_message(self, sender: str, message: str, event: object) -> None:
         event_payload = event if isinstance(event, dict) else {}
         event_type = str(event_payload.get("event_type", "info"))
+        payload = event_payload.get("payload")
+        if not isinstance(payload, dict):
+            payload = {}
         if sender == "FLOW":
             sender_label = "SYSTEM"
-        elif sender == "ASSISTANT":
-            sender_label = "助手"
         else:
             sender_label = sender
         self.chat_widget.add_message(sender_label, message)
         self.log_widget.append_log(sender_label, f"[{event_type}] {message}")
 
-        if event_type == "candidate_summary":
+        if sender == "FLOW" and event_type == "task_summary":
+            task = payload.get("task")
+            if isinstance(task, dict):
+                self.session.task = task
+                self._refresh_design_views()
+
+        elif sender == "FLOW" and event_type == "candidate_summary":
+            candidates = payload.get("candidates")
+            if isinstance(candidates, list):
+                self.session.candidates = candidates
+                self.session.screened_candidates = []
+                self.session.evaluated_candidates = []
+                self.session.results_by_session_id = {}
+                self.session.report = None
+                self.session.stage = "awaiting_screen_confirmation"
+                self.session.pending_confirmation = "screen_candidates"
+                self._refresh_design_views()
             self.tabs.setCurrentWidget(self.candidate_widget)
-        elif event_type == "fem_summary":
+
+        elif sender == "FLOW" and event_type == "screening_summary":
+            screened_candidates = payload.get("screened_candidates")
+            if isinstance(screened_candidates, list):
+                self.session.screened_candidates = screened_candidates
+                self.session.evaluated_candidates = screened_candidates
+                self.session.stage = "awaiting_fem_confirmation"
+                self.session.pending_confirmation = "fem_evaluation"
+                self._refresh_design_views()
+            self.tabs.setCurrentWidget(self.candidate_widget)
+
+        elif sender == "FLOW" and event_type == "fem_summary":
+            results = payload.get("results")
+            if isinstance(results, list):
+                for result in results:
+                    if not isinstance(result, dict):
+                        continue
+                    session_candidate_id = result.get("session_candidate_id", result.get("candidate_id"))
+                    if session_candidate_id:
+                        self.session.results_by_session_id[str(session_candidate_id)] = result
+                self.session.stage = "awaiting_report_confirmation"
+                self.session.pending_confirmation = "export_report"
+                self._refresh_design_views()
             self.tabs.setCurrentWidget(self.abaqus_widget)
-        elif event_type == "report_summary":
+
+        elif sender == "FLOW" and event_type == "report_summary":
+            report = payload.get("report")
+            if isinstance(report, dict):
+                self.session.report = report
+            self.session.stage = "completed"
+            self.session.pending_confirmation = None
             self.tabs.setCurrentWidget(self.log_widget)
 
     def _handle_finished(self, action: str, payload: dict) -> None:
@@ -619,7 +669,7 @@ class MainWindow(QMainWindow):
             target_total = requested_candidate_pool_size(self.session.task)
             self.chat_widget.add_message(
                 "SYSTEM",
-                f"调试入口：候选池目标 {target_total} 个，当前实际生成 {len(self.session.candidates)} 个候选样本。",
+                f"手动入口：候选池目标 {target_total} 个，当前实际生成 {len(self.session.candidates)} 个候选样本。",
             )
 
         elif action == "screen":
@@ -629,7 +679,7 @@ class MainWindow(QMainWindow):
             requested_top_k = requested_screen_top_k(self.session.task)
             self.chat_widget.add_message(
                 "SYSTEM",
-                f"调试入口：DNN 初筛完成，请求 Top-{requested_top_k}，当前实际展示 {len(self.session.screened_candidates)} 个候选。",
+                f"手动入口：DNN 初筛完成，请求 Top-{requested_top_k}，当前实际展示 {len(self.session.screened_candidates)} 个候选。",
             )
 
         elif action == "evaluate":
@@ -641,14 +691,14 @@ class MainWindow(QMainWindow):
             passed_count = sum(1 for item in payload["results"] if item.get("verdict") == "通过")
             self.chat_widget.add_message(
                 "SYSTEM",
-                f"调试入口：本轮 ABAQUS 校核完成，新增结果 {len(payload['results'])} 个，其中通过 {passed_count} 个。",
+                f"手动入口：本轮 ABAQUS 校核完成，新增结果 {len(payload['results'])} 个，其中通过 {passed_count} 个。",
             )
 
         elif action == "report":
             self.session.report = payload["report"]
             self.chat_widget.add_message(
                 "SYSTEM",
-                f"调试入口：报告已生成：{payload['report'].get('markdown_path')} / {payload['report'].get('pdf_path')}",
+                f"手动入口：报告已生成：{payload['report'].get('markdown_path')} / {payload['report'].get('pdf_path')}",
             )
 
         self._update_button_states()
@@ -671,7 +721,7 @@ class MainWindow(QMainWindow):
             "<p>2. 系统询问是否进行 DNN 初筛，并解释当前评分机制、候选池目标和 Top-K 目标</p>"
             "<p>3. 系统询问是否进行有限元校核，并展示入选原因</p>"
             "<p>4. 校核完成后展示 BLF、失效模式、结论，并询问是否导出报告</p>"
-            "<p>5. 聊天区会同时显示结构化进度和更自然的助手说明；辅助与调试入口可随时介入</p>"
+            "<p>5. 聊天区会同时显示结构化进度和自然语言说明；辅助与手动入口可随时介入</p>"
         )
 
     def _task_summary_html(self) -> str:
