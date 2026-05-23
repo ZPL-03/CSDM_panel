@@ -115,19 +115,17 @@ CSDM_panel/
 ├─ schemas/             # 任务 / 候选 / 结果 / 案例 JSON Schema
 ├─ scripts/             # 自检、训练、迁移、清理脚本
 ├─ tests/               # 自动化测试
-├─ environment.yml      # GPT Conda 环境定义
+├─ environment.yml      # Python / Conda 环境定义
 └─ main.py              # GUI 启动入口
 ```
 
 ## 6. 运行环境
 
-### 6.1 约定环境
+### 6.1 运行环境
 
 - Windows 11
-- Anaconda
 - Python 3.9
-- Conda 环境名：`GPT`
-- 推荐统一执行器：`D:/anaconda3/envs/GPT/python.exe`
+- 可使用 Conda 或等价 Python 环境安装依赖
 - ABAQUS 2023
 
 ### 6.2 创建环境
@@ -153,25 +151,25 @@ MODEL_NAME=模型名称
 ### 7.1 环境自检
 
 ```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/check_env.py
+python scripts/check_env.py
 ```
 
 ### 7.2 启动图形界面
 
 ```powershell
-D:/anaconda3/envs/GPT/python.exe main.py
+python main.py
 ```
 
 ### 7.3 运行测试
 
 ```powershell
-D:/anaconda3/envs/GPT/python.exe -m pytest tests -q
+python -m pytest tests -q
 ```
 
 ### 7.4 真实 Abaqus 回归
 
 ```powershell
-D:/anaconda3/envs/GPT/python.exe -m pytest tests/test_fem_agent.py tests/test_e2e.py -q
+python -m pytest tests/test_fem_agent.py tests/test_e2e.py -q
 ```
 
 ## 8. 关键配置文件
@@ -198,13 +196,13 @@ candidate_source_ratio:
 
 | 命令 | 说明 |
 | --- | --- |
-| `D:/anaconda3/envs/GPT/python.exe scripts/check_env.py` | 检查 Python、ABAQUS、LLM 连接与核心依赖是否可用 |
-| `D:/anaconda3/envs/GPT/python.exe scripts/train_screener.py` | 依据案例库重训 `SCREENER` 代理模型 |
-| `D:/anaconda3/envs/GPT/python.exe scripts/migrate_contracts.py --retrain-surrogate` | 迁移案例、IO 与工件契约，重建案例记忆索引并可选重训模型 |
-| `D:/anaconda3/envs/GPT/python.exe scripts/migrate_contracts.py --case-memory-only` | 仅重建 `csdm_case_memory` 案例记忆集合 |
-| `D:/anaconda3/envs/GPT/python.exe scripts/rebuild_abaqus_artifacts.py --limit 10 --workers 1` | 重建缺失的 ABAQUS 工件 |
-| `D:/anaconda3/envs/GPT/python.exe scripts/build_initial_cases.py` | 批量生成/补齐初始案例集 |
-| `D:/anaconda3/envs/GPT/python.exe scripts/clean_debug_artifacts.py` | 清理 `__pycache__`、`.pytest_cache` 与 ABAQUS 临时文件 |
+| `python scripts/check_env.py` | 检查 Python、ABAQUS、LLM 连接与核心依赖是否可用 |
+| `python scripts/train_screener.py` | 依据案例库重训 `SCREENER` 代理模型 |
+| `python scripts/migrate_contracts.py --retrain-surrogate` | 迁移案例、IO 与工件契约，重建案例记忆索引并可选重训模型 |
+| `python scripts/migrate_contracts.py --case-memory-only` | 仅重建 `csdm_case_memory` 案例记忆集合 |
+| `python scripts/rebuild_abaqus_artifacts.py --limit 10 --workers 1` | 重建缺失的 ABAQUS 工件 |
+| `python scripts/build_initial_cases.py` | 批量生成/补齐初始案例集 |
+| `python scripts/clean_debug_artifacts.py` | 清理 `__pycache__`、`.pytest_cache` 与 ABAQUS 临时文件 |
 
 ## 10. 标识与关联
 
@@ -240,8 +238,8 @@ LLM 当前只读取知识库文本块和知识图谱关系；`provenance/` 只�
 当前推荐使用如下命令进行统一验证：
 
 ```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/check_env.py
-D:/anaconda3/envs/GPT/python.exe -m pytest tests -q
+python scripts/check_env.py
+python -m pytest tests -q
 ```
 
 ## 13. 已知边界

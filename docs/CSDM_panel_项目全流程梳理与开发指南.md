@@ -39,18 +39,12 @@ CSDM_panel 是面向复合材料加筋壁板的多智能体设计原型系统，
 
 主链路已经贯通，LLM 路径使用外部知识库/知识图谱做检索增强，输出工程自然语言候选表后由系统解析为结构化候选；案例迁移路径使用案例库与案例记忆索引；DOE 路径提供参数空间采样。
 
-## 3. 统一运行环境
+## 3. 运行环境
 
-项目约定环境为 Conda `GPT`，推荐统一执行器为：
-
-```text
-D:/anaconda3/envs/GPT/python.exe
-```
-
-推荐先运行环境自检：
+项目依赖以 `environment.yml` 为准，可使用 Conda 或等价 Python 环境安装。推荐先运行环境自检：
 
 ```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/check_env.py
+python scripts/check_env.py
 ```
 
 当前 `environment.yml` 约定：
@@ -277,7 +271,7 @@ LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料�
 
 ### 9.1 双环境分离
 
-主程序走 `GPT` 环境，Abaqus 脚本走 Abaqus 自带 Python，两边只通过 JSON 文件通信，不直接跨环境导入业务对象。
+主程序走项目 Python 环境，Abaqus 脚本走 Abaqus 自带 Python，两边只通过 JSON 文件通信，不直接跨环境导入业务对象。
 
 ### 9.2 真实运行脚本
 
@@ -387,43 +381,43 @@ LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料�
 ### 12.1 环境自检
 
 ```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/check_env.py
+python scripts/check_env.py
 ```
 
 ### 12.2 启动 GUI
 
 ```powershell
-D:/anaconda3/envs/GPT/python.exe main.py
+python main.py
 ```
 
 ### 12.3 运行测试
 
 ```powershell
-D:/anaconda3/envs/GPT/python.exe -m pytest tests -q
+python -m pytest tests -q
 ```
 
 ### 12.4 构建初始案例
 
 ```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/build_initial_cases.py --count 20 --task-count 4 --workers 2 --reset
+python scripts/build_initial_cases.py --count 20 --task-count 4 --workers 2 --reset
 ```
 
 ### 12.5 重训代理模型
 
 ```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/train_screener.py
+python scripts/train_screener.py
 ```
 
 ### 12.6 案例记忆索引
 
 ```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/migrate_contracts.py --case-memory-only
+python scripts/migrate_contracts.py --case-memory-only
 ```
 
 ### 12.7 契约迁移与重建
 
 ```powershell
-D:/anaconda3/envs/GPT/python.exe scripts/migrate_contracts.py --retrain-surrogate
+python scripts/migrate_contracts.py --retrain-surrogate
 ```
 
 ## 13. 推荐阅读顺序
@@ -447,15 +441,7 @@ D:/anaconda3/envs/GPT/python.exe scripts/migrate_contracts.py --retrain-surrogat
 
 ## 14. 当前容易踩的坑
 
-### 坑 1：没有使用 `GPT` 环境执行
-
-当前项目依赖集中在 `GPT` 环境里，建议直接使用：
-
-```text
-D:/anaconda3/envs/GPT/python.exe
-```
-
-### 坑 2：把案例迁移当成 LLM 检索增强
+### 坑 1：把案例迁移当成 LLM 检索增强
 
 当前实现已经明确拆分：
 
@@ -463,11 +449,11 @@ D:/anaconda3/envs/GPT/python.exe
 - 案例迁移走结构化硬过滤和案例记忆向量排序
 - 直接迁移不得把历史案例原文拼进 LLM Prompt
 
-### 坑 3：把参考项目路径当成运行时依赖
+### 坑 2：把参考项目路径当成运行时依赖
 
 当前项目已经复制需要的知识资产，运行时只读取 `knowledge/external/`。参考项目不是 CSDM_panel 的运行时依赖。
 
-### 坑 4：以为所有成功样本都会进入正式案例库
+### 坑 3：以为所有成功样本都会进入正式案例库
 
 只有满足正式入库条件的案例才进入 `knowledge/case_library/`；全部校核结果仍会保存在 `data/cases/`。
 
