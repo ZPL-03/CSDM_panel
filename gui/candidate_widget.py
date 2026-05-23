@@ -108,8 +108,9 @@ class CandidateWidget(QWidget):
             source_counter[generation_label] = source_counter.get(generation_label, 0) + 1
             result = self._result_for_candidate(candidate)
             archive_id = candidate.get("persistent_candidate_id") or (result or {}).get("candidate_id", "-")
+            display_label = candidate.get("display_name") or candidate.get("candidate_id") or "-"
             values = [
-                candidate.get("display_name", candidate.get("candidate_id", "")),
+                display_label,
                 generation_label,
                 _format_number(candidate.get("surrogate_BLF")),
                 _format_number(candidate.get("surrogate_weight")),
@@ -192,9 +193,10 @@ class CandidateWidget(QWidget):
 
         stype = str(candidate.get("stiffener_type", "T"))
         stype_display = TYPE_DISPLAY_NAMES.get(stype, stype)
+        display_label = candidate.get("display_name") or candidate.get("candidate_id") or "-"
 
         html = (
-            f"<h3>{candidate.get('display_name', candidate.get('candidate_id'))} | {_format_generation_label(candidate.get('source'))} | {stype_display}</h3>"
+            f"<h3>{display_label} | {_format_generation_label(candidate.get('source'))} | {stype_display}</h3>"
             f"<p><b>会话编号：</b>{candidate.get('candidate_id', '-')}<br>"
             f"<b>正式编号：</b>{archive_id}</p>"
             f"<p><b>生成说明：</b>{candidate.get('rationale', '-')}</p>"

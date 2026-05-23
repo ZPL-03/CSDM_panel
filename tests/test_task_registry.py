@@ -1,9 +1,8 @@
 from agents.orchestrator import OrchestratorAgent
 
 
-def test_parse_instruction_returns_session_task_without_persisting_registry() -> None:
+def test_parse_instruction_returns_session_task_record() -> None:
     agent = OrchestratorAgent()
-    agent.task_parser.llm_backend = None
 
     task = agent.parse_instruction("请设计一个T形加筋方案，压缩荷载为1200kN/m")
 

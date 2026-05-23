@@ -61,7 +61,13 @@
       "top_k_candidates": 5
     },
     "candidate_generation_preferences": {
-      "total_candidates": 10
+      "total_candidates": 10,
+      "source_allocation_mode": "ratio",
+      "source_ratio": {
+        "llm": 2.0,
+        "case_transfer": 1.0,
+        "doe": 1.0
+      }
     }
   },
   "design": {
@@ -142,7 +148,11 @@
       }
     },
     "surrogate_BLF": null,
-    "rationale": "DOE 拉丁超立方探索生成 | 材料=AS4/3501-6 | 铺层=QI_14"
+    "rationale": "DOE 拉丁超立方探索生成 | 材料=AS4/3501-6 | 铺层=QI_14",
+    "origin_summary": "",
+    "screening_summary": null,
+    "selection_reason": null,
+    "display_name": "C28"
   },
   "abaqus_results": {
     "candidate_id": "C28",
@@ -173,5 +183,6 @@
   },
   "verdict": "通过",
   "surrogate_BLF_error_pct": null,
-  "fem_agent_retry_count": 0
+  "fem_agent_retry_count": 0,
+  "candidate_id": "C28"
 }

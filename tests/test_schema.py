@@ -24,6 +24,7 @@ def test_task_schema_passes() -> None:
 def test_candidate_schema_passes_without_task_identity() -> None:
     payload = {
         "candidate_id": "TMP_1",
+        "display_name": "TMP_1",
         "source": "LLM",
         "stiffener_type": "T",
         "geometry": {

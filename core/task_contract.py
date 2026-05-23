@@ -22,6 +22,12 @@ DEFAULT_SCREENING_PREFERENCES = {
 }
 DEFAULT_CANDIDATE_GENERATION_PREFERENCES = {
     "total_candidates": 10,
+    "source_allocation_mode": "ratio",
+    "source_ratio": {
+        "llm": 2.0,
+        "case_transfer": 1.0,
+        "doe": 1.0,
+    },
 }
 DEFAULT_LAYUP_CONSTRAINTS = {
     "allowed_angles": DEFAULT_ALLOWED_ANGLES,
@@ -242,6 +248,16 @@ def normalize_candidate_generation_preferences(preferences: Dict[str, Any] | Non
         return normalized
     total_value = preferences.get("total_candidates", normalized["total_candidates"])
     normalized["total_candidates"] = int(max(1, min(_safe_float(total_value, normalized["total_candidates"]), 60.0)))
+    allocation_mode = str(preferences.get("source_allocation_mode") or normalized["source_allocation_mode"]).strip().lower()
+    normalized["source_allocation_mode"] = allocation_mode if allocation_mode == "ratio" else "ratio"
+    ratio = dict(preferences.get("source_ratio") or {})
+    normalized_ratio = {
+        key: max(_safe_float(ratio.get(key), value), 0.0)
+        for key, value in normalized["source_ratio"].items()
+    }
+    if sum(normalized_ratio.values()) <= 0.0:
+        normalized_ratio = deepcopy(DEFAULT_CANDIDATE_GENERATION_PREFERENCES["source_ratio"])
+    normalized["source_ratio"] = normalized_ratio
     return normalized
 
 

@@ -51,6 +51,13 @@ class OrchestratorAgent(BaseAgent):
         task_payload = self._task_payload(task)
         enriched = dict(candidate)
         enriched.pop("task_id", None)
+        candidate_id = str(enriched.get("candidate_id") or "").strip()
+        if not candidate_id:
+            raise ValueError("候选缺少 candidate_id，无法进入主流程")
+        enriched["candidate_id"] = candidate_id
+        enriched["display_name"] = str(enriched.get("display_name") or candidate_id)
+        if not enriched.get("persistent_candidate_id"):
+            enriched.pop("persistent_candidate_id", None)
         enriched["design_targets"] = dict(candidate.get("design_targets") or task_payload["design_targets"])
         enriched["load_conditions"] = dict(candidate.get("load_conditions") or task_payload["load_conditions"])
         enriched["boundary_conditions"] = dict(candidate.get("boundary_conditions") or task_payload["boundary_conditions"])
@@ -69,6 +76,8 @@ class OrchestratorAgent(BaseAgent):
         promoted = dict(enriched_candidate)
         promoted["session_candidate_id"] = session_candidate_id
         promoted["candidate_id"] = persistent_candidate_id
+        promoted["display_name"] = persistent_candidate_id
+        promoted.pop("persistent_candidate_id", None)
         return promoted
 
     def parse_instruction(self, text: str) -> Dict:
@@ -168,7 +177,7 @@ class OrchestratorAgent(BaseAgent):
         )
         result = self.fem_agent.run(fem_candidate)
         result["session_candidate_id"] = fem_candidate.get("session_candidate_id")
-        result["display_name"] = candidate.get("display_name", fem_candidate.get("session_candidate_id"))
+        result["display_name"] = candidate.get("display_name") or fem_candidate.get("session_candidate_id")
         self.knowledge_agent.run({"task": task, "design": fem_candidate, "abaqus_results": result})
         return result
 

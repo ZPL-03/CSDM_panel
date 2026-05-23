@@ -61,7 +61,13 @@
       "top_k_candidates": 5
     },
     "candidate_generation_preferences": {
-      "total_candidates": 10
+      "total_candidates": 10,
+      "source_allocation_mode": "ratio",
+      "source_ratio": {
+        "llm": 2.0,
+        "case_transfer": 1.0,
+        "doe": 1.0
+      }
     }
   },
   "design": {
@@ -140,7 +146,11 @@
       }
     },
     "surrogate_BLF": 0.26,
-    "rationale": "参考历史案例 CASE_218 微调生成"
+    "rationale": "参考历史案例 CASE_218 微调生成",
+    "origin_summary": "",
+    "screening_summary": null,
+    "selection_reason": null,
+    "display_name": "C311"
   },
   "abaqus_results": {
     "candidate_id": "C311",
@@ -171,5 +181,6 @@
   },
   "verdict": "不通过",
   "surrogate_BLF_error_pct": 228.341,
-  "fem_agent_retry_count": 0
+  "fem_agent_retry_count": 0,
+  "candidate_id": "C311"
 }

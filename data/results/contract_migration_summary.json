@@ -1,8 +1,22 @@
 {
-  "mode": "case_memory_only",
-  "case_memory": {
-    "indexed_records": 350,
-    "archive_records": 309,
-    "formal_records": 41
+  "cases": {
+    "updated": 350,
+    "skipped": 0,
+    "failed": 0
+  },
+  "case_library": {
+    "updated": 41,
+    "skipped": 0,
+    "failed": 0
+  },
+  "io": {
+    "updated": 688,
+    "skipped": 0,
+    "failed": 0
+  },
+  "abaqus_runs": {
+    "updated": 344,
+    "skipped": 0,
+    "failed": 0
   }
 }

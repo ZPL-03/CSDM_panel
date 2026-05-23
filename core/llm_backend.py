@@ -2,9 +2,8 @@
 
 from __future__ import annotations
 
-import json
 import os
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from core.config_loader import load_llm_config
 
@@ -47,8 +46,6 @@ class LLMBackend:
         self.temperature = float(backend.get("temperature", 0.2))
         self.max_tokens = int(backend.get("max_tokens", 1800))
         self.timeout_seconds = int(backend.get("timeout_seconds", 180))
-        self.json_output_tokens = int(backend.get("json_output_tokens", max(self.max_tokens, 4096)))
-
         missing = []
         if not self.base_url:
             missing.append(str(backend.get("base_url_env") or "base_url"))
@@ -66,15 +63,11 @@ class LLMBackend:
 
         self.client = OpenAI(base_url=self.base_url, api_key=self.api_key, timeout=self.timeout_seconds)
 
-    def _json_output_budget(self) -> int:
-        return max(int(self.json_output_tokens), int(self.max_tokens), 4096)
-
     def chat(
         self,
         system_prompt: str,
         user_prompt: str,
         max_tokens_override: int | None = None,
-        json_mode: bool = False,
     ) -> str:
         """调用当前 LLM 生成普通文本。"""
         request_payload = {
@@ -86,92 +79,5 @@ class LLMBackend:
                 {"role": "user", "content": user_prompt},
             ],
         }
-        if json_mode:
-            request_payload["response_format"] = {"type": "json_object"}
-        try:
-            response = self.client.chat.completions.create(**request_payload)
-        except Exception as exc:
-            if not json_mode or "response_format" not in str(exc):
-                raise
-            request_payload.pop("response_format", None)
-            response = self.client.chat.completions.create(**request_payload)
+        response = self.client.chat.completions.create(**request_payload)
         return response.choices[0].message.content or ""
-
-    def _extract_json_text(self, text: str) -> str:
-        cleaned = text.strip()
-        if cleaned.startswith("```"):
-            cleaned = cleaned.strip("`")
-            cleaned = cleaned.replace("json\n", "", 1).replace("JSON\n", "", 1)
-            cleaned = cleaned.strip()
-
-        candidates = [cleaned]
-        array_start = cleaned.find("[")
-        array_end = cleaned.rfind("]")
-        if array_start != -1 and array_end != -1 and array_end > array_start:
-            candidates.append(cleaned[array_start : array_end + 1])
-
-        object_start = cleaned.find("{")
-        object_end = cleaned.rfind("}")
-        if object_start != -1 and object_end != -1 and object_end > object_start:
-            candidates.append(cleaned[object_start : object_end + 1])
-
-        for candidate in candidates:
-            try:
-                json.loads(candidate)
-                return candidate
-            except json.JSONDecodeError:
-                continue
-        return cleaned
-
-    def _repair_json(self, broken_text: str) -> str:
-        repair_system = "你是 JSON 修复器。请把用户提供的内容修复成合法 JSON，除 JSON 外不要输出任何说明。"
-        repair_user = f"请修复为合法 JSON：\n{broken_text}"
-        return self.chat(repair_system, repair_user, max_tokens_override=self._json_output_budget())
-
-    def _parse_json_robust(self, text: str) -> Dict[str, Any] | List[Any]:
-        """多级解析 LLM 输出，确保候选生成链路得到结构化 JSON。"""
-        extracted = self._extract_json_text(text)
-        try:
-            return json.loads(extracted)
-        except json.JSONDecodeError:
-            pass
-
-        try:
-            repaired = self._extract_json_text(self._repair_json(extracted))
-            return json.loads(repaired)
-        except Exception:
-            pass
-
-        for wrapper_start, wrapper_end in [("{", "}"), ("[", "]")]:
-            depth = 0
-            start = -1
-            end = -1
-            for index, char in enumerate(text):
-                if char == wrapper_start:
-                    if depth == 0:
-                        start = index
-                    depth += 1
-                elif char == wrapper_end:
-                    depth -= 1
-                    if depth == 0:
-                        end = index + 1
-                        break
-            if start != -1 and end != -1 and end > start:
-                candidate = text[start:end]
-                try:
-                    parsed = json.loads(candidate)
-                except json.JSONDecodeError:
-                    continue
-                if isinstance(parsed, (dict, list)):
-                    return parsed
-        return {}
-
-    def generate_json(self, system_prompt: str, user_prompt: str) -> Dict[str, Any] | List[Any]:
-        """调用当前 LLM 并解析 JSON 输出。"""
-        text = self.chat(
-            system_prompt,
-            user_prompt,
-            max_tokens_override=self._json_output_budget(),
-            json_mode=True,
-        )
-        return self._parse_json_robust(text)

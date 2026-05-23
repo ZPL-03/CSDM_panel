@@ -28,9 +28,11 @@ abaqus:
 
 pipeline:
   top_k: 5
-  llm_candidates: 4
-  case_transfer_candidates: 2
-  doe_candidates: 4
+  default_total_candidates: 10
+  candidate_source_ratio:
+    llm: 2
+    case_transfer: 1
+    doe: 1
   min_case_records_for_retrain: 50
   random_seed: 42
   screening_score:

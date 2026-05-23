@@ -56,7 +56,13 @@
       "min_ratio_per_angle": 0.1
     },
     "candidate_generation_preferences": {
-      "total_candidates": 30
+      "total_candidates": 30,
+      "source_allocation_mode": "ratio",
+      "source_ratio": {
+        "llm": 2.0,
+        "case_transfer": 1.0,
+        "doe": 1.0
+      }
     },
     "screening_preferences": {
       "top_k_candidates": 10
@@ -147,7 +153,11 @@
       }
     },
     "surrogate_BLF": 1.757,
-    "rationale": "DOE 拉丁超立方探索生成 | 材料=AS4/3501-6 | 铺层=QI_14"
+    "rationale": "DOE 拉丁超立方探索生成 | 材料=AS4/3501-6 | 铺层=QI_14",
+    "origin_summary": "",
+    "screening_summary": null,
+    "selection_reason": null,
+    "display_name": "C336"
   },
   "abaqus_results": {
     "candidate_id": "C336",
@@ -181,5 +191,6 @@
   },
   "verdict": "不通过",
   "surrogate_BLF_error_pct": 1722.368,
-  "fem_agent_retry_count": 0
+  "fem_agent_retry_count": 0,
+  "candidate_id": "C336"
 }

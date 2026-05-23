@@ -141,8 +141,10 @@ class DOESampler:
                 candidate_index = start_index + len(valid_candidates)
                 material_system = self._select_material(task, candidate_index)
                 task_payload = self._task_payload(task)
+                candidate_id = candidate_id_factory(candidate_index)
                 candidate = {
-                    "candidate_id": candidate_id_factory(candidate_index),
+                    "candidate_id": candidate_id,
+                    "display_name": candidate_id,
                     "source": "DOE",
                     "stiffener_type": stype,
                     "geometry": geometry,

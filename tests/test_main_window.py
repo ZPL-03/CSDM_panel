@@ -33,6 +33,30 @@ def test_pending_candidates_filter_out_evaluated_samples() -> None:
         app.processEvents()
 
 
+def test_candidate_table_uses_contract_display_name() -> None:
+    app = _app()
+    window = MainWindow()
+    try:
+        window.candidate_widget.update_candidates(
+            [
+                {
+                    "candidate_id": "TMP_1",
+                    "display_name": "TMP_1",
+                    "source": "DOE",
+                    "stiffener_type": "T",
+                    "geometry": {},
+                    "layup": {},
+                    "rule_check": {},
+                }
+            ]
+        )
+
+        assert window.candidate_widget.table.item(0, 0).text() == "TMP_1"
+    finally:
+        window.close()
+        app.processEvents()
+
+
 def test_task_summary_uses_session_task_wording() -> None:
     app = _app()
     window = MainWindow()

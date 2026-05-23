@@ -5,6 +5,7 @@
   "type": "object",
   "required": [
     "candidate_id",
+    "display_name",
     "source",
     "stiffener_type",
     "geometry",
@@ -106,8 +107,8 @@
     "origin_summary": {"type": ["string", "null"]},
     "screening_summary": {"type": ["string", "null"]},
     "selection_reason": {"type": ["string", "null"]},
-    "display_name": {"type": ["string", "null"]},
-    "persistent_candidate_id": {"type": ["string", "null"]}
+    "display_name": {"type": "string", "minLength": 1},
+    "persistent_candidate_id": {"type": "string", "minLength": 1}
   },
   "additionalProperties": true
 }

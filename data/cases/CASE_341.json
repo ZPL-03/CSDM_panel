@@ -56,7 +56,13 @@
       "min_ratio_per_angle": 0.1
     },
     "candidate_generation_preferences": {
-      "total_candidates": 30
+      "total_candidates": 30,
+      "source_allocation_mode": "ratio",
+      "source_ratio": {
+        "llm": 2.0,
+        "case_transfer": 1.0,
+        "doe": 1.0
+      }
     },
     "screening_preferences": {
       "top_k_candidates": 10
@@ -145,7 +151,11 @@
       }
     },
     "surrogate_BLF": 1.65,
-    "rationale": "参考历史案例 CASE_28 微调生成"
+    "rationale": "参考历史案例 CASE_28 微调生成",
+    "origin_summary": "",
+    "screening_summary": null,
+    "selection_reason": null,
+    "display_name": "C341"
   },
   "abaqus_results": {
     "candidate_id": "C341",
@@ -179,5 +189,6 @@
   },
   "verdict": "不通过",
   "surrogate_BLF_error_pct": 808.69,
-  "fem_agent_retry_count": 0
+  "fem_agent_retry_count": 0,
+  "candidate_id": "C341"
 }

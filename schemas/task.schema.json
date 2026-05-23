@@ -95,6 +95,19 @@
           "type": "integer",
           "minimum": 1,
           "maximum": 60
+        },
+        "source_allocation_mode": {
+          "type": "string",
+          "enum": ["ratio"]
+        },
+        "source_ratio": {
+          "type": "object",
+          "properties": {
+            "llm": {"type": "number", "minimum": 0},
+            "case_transfer": {"type": "number", "minimum": 0},
+            "doe": {"type": "number", "minimum": 0}
+          },
+          "additionalProperties": false
         }
       },
       "additionalProperties": true
@@ -143,6 +156,16 @@
       "properties": {
         "BLF_min": {"type": "number", "minimum": 0},
         "primary_objective": {"type": "string"}
+      },
+      "additionalProperties": true
+    },
+    "user_input_facts": {
+      "type": "object",
+      "properties": {
+        "explicit_fields": {
+          "type": "array",
+          "items": {"type": "string"}
+        }
       },
       "additionalProperties": true
     }

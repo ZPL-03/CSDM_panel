@@ -4,6 +4,7 @@ from agents.screener import ScreenerAgent
 def _candidate(index: int) -> dict:
     return {
         "candidate_id": f"TMP_{index}",
+        "display_name": f"TMP_{index}",
         "task_id": "TASK_1",
         "source": "DOE",
         "stiffener_type": "T",

@@ -27,17 +27,17 @@ CSDM_panel 是面向复合材料加筋壁板的多智能体设计原型系统，
 
 ## 2. 当前实现状态
 
-截至 2026-05-17，仓库内可直接确认：
+截至 2026-05-23，仓库内可直接确认：
 
 - `data/cases/` 中当前有 350 个评估档案
 - `knowledge/case_library/` 中当前有 41 个正式案例
 - `knowledge/chroma_db/` 中当前 `csdm_case_memory` 案例记忆集合有 350 条索引记录
 - `data/abaqus_runs/` 中当前有 350 个样本工件目录
-- `models/surrogate_metrics.json` 当前选中模型为 `rf`
-- 当前代理模型训练样本数为 317
+- `models/surrogate_metrics.json` 当前选中模型为 `mlp`
+- 当前代理模型训练样本数为 350
 - `knowledge/external/` 中的外部知识库/知识图谱包含知识库文本块 43651 条、知识图谱实体 1763 个、知识图谱关系 347609 条
 
-主链路已经贯通，LLM 路径使用外部知识库/知识图谱做检索增强；案例迁移路径使用案例库与案例记忆索引；DOE 路径提供参数空间采样。
+主链路已经贯通，LLM 路径使用外部知识库/知识图谱做检索增强，输出工程自然语言候选表后由系统解析为结构化候选；案例迁移路径使用案例库与案例记忆索引；DOE 路径提供参数空间采样。
 
 ## 3. 统一运行环境
 
@@ -158,7 +158,7 @@ CSDM_panel/
   -> ORCHESTRATOR.parse_instruction()
   -> ORCHESTRATOR.generate_candidates()
   -> CANDIDATE_GEN.run()
-       -> LLM 路径（外部知识库/知识图谱增强）
+       -> LLM 路径（外部知识库/知识图谱增强，自然语言候选表解析）
        -> CASE_TRANSFER 路径
        -> DOE 路径
   -> ORCHESTRATOR.screen_candidates()
@@ -199,8 +199,10 @@ CSDM_panel/
 - `DomainKnowledgeBase` 将任务转换为检索文本
 - 从 `knowledge/external/` 检索知识库片段与知识图谱关系
 - 外部知识库/知识图谱未就绪时，不注入额外知识片段
-- Prompt 中包含任务、工况说明、边界说明、材料选项、检索依据和 JSON 输出约束
-- 只输出候选设计字段，不输出历史案例字段
+- Prompt 中包含规范化任务约束、用户明确输入事实、工况说明、边界说明、材料选项、检索依据和自然语言候选表约束
+- LLM 输出工程自然语言候选表，`CandidateGenAgent` 从表格解析 `geometry`、`layup`、`material_system` 和 `rationale`
+- 候选进入下游前必须通过 `RuleChecker`
+- 不输出历史案例字段，也不要求 LLM 直接输出 JSON
 
 ### 6.2 CASE_TRANSFER 路径
 
@@ -213,8 +215,20 @@ CSDM_panel/
 ### 6.3 DOE 路径
 
 - `DOESampler` 按参数范围采样
-- 作为兜底与探索来源
+- 作为兜底与探索来源；LLM 或案例迁移有效候选不足时，由 DOE 补足候选池
 - 所有候选仍需通过 `RuleChecker`
+
+### 6.4 候选来源比例
+
+`pipeline.default_total_candidates` 控制未显式指定候选数量时的默认候选池总数，当前为 10。`pipeline.candidate_source_ratio` 控制三条来源的初始配额，当前为：
+
+```yaml
+llm: 2
+case_transfer: 1
+doe: 1
+```
+
+候选池目标为 10 时，初始配额为 LLM 5 个、案例迁移 3 个、DOE 2 个。配额只决定优先尝试数量；若 LLM 自然语言表格解析失败、规则检查失败，或案例迁移没有足够可迁移样本，DOE 会继续补足总数。
 
 ## 7. 知识回流
 
@@ -288,14 +302,14 @@ LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料�
 - `source`
 - `task`
 
-其中 `task` 仅保留任务语义字段。
+其中 `task` 仅保留任务语义字段。任务解析阶段同步写入 `user_input_facts`，把用户明确给出的筋型、载荷、边界、目标、候选数量等事实与系统默认补全字段分开；后续候选生成优先保留这些明确事实。
 
 ### 10.2 候选 `candidate`
 
 当前候选包含：
 
 - `candidate_id`
-- `task_id`
+- `display_name`
 - `source`
 - `stiffener_type`
 - `geometry`
@@ -312,8 +326,8 @@ LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料�
 - `origin_summary`
 - `screening_summary`
 - `selection_reason`
-- `display_name`
-- `persistent_candidate_id`
+
+`display_name` 是必填显示编号，会话候选与 `TMP_<n>` 一致，正式 FEM 输入和案例设计与 `C<n>` 一致。`persistent_candidate_id` 只在候选进入 FEM 并分配正式 `C<n>` 编号后写入会话候选，FEM 前不保留空字段，也不写入正式 FEM 输入和案例设计。
 
 ### 10.3 Abaqus 结果 `abaqus_result`
 
@@ -342,7 +356,6 @@ LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料�
 一个 `CASE_x.json` 包含：
 
 - `case_id`
-- `task_id`
 - `candidate_id`
 - `created_at`
 - `source`
@@ -352,6 +365,8 @@ LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料�
 - `verdict`
 - `surrogate_BLF_error_pct`
 - `fem_agent_retry_count`
+
+`task_id` 是可选追溯字段。新回流样本在任务上下文存在时可以写入它，但案例编号、样本编号和案例迁移不依赖该字段。
 
 ## 11. GUI 知识库页
 
@@ -461,5 +476,5 @@ D:/anaconda3/envs/GPT/python.exe
 - 验证外部知识库/知识图谱在加筋壁板候选生成中的命中质量
 - 持续积累真实 Abaqus 校核样本，提升代理模型精度
 - 扩展更多筋型、边界条件和多目标优化逻辑
-- 增强报告的对比深度与工程解释能力
+- 继续校核 LLM 工程候选表在不同筋型和不同表达方式下的解析稳健性
 - 继续完善 GUI 的交互反馈和异常处理

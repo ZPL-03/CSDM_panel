@@ -42,6 +42,7 @@ class KnowledgeAgent(BaseAgent):
             "layup_constraints": dict(normalized.get("layup_constraints", {})),
             "candidate_generation_preferences": dict(normalized.get("candidate_generation_preferences", {})),
             "screening_preferences": dict(normalized.get("screening_preferences", {})),
+            "user_input_facts": dict(normalized.get("user_input_facts", {})),
             "stiffener_type": normalized.get("stiffener_type", "T"),
             "design_targets": dict(normalized.get("design_targets", {})),
         }
@@ -94,7 +95,6 @@ class KnowledgeAgent(BaseAgent):
         verdict = clean_results.get("verdict") or ("失败" if clean_results.get("status") != "success" else "未知")
         record = {
             "case_id": case_id,
-            "task_id": task.get("task_id"),
             "created_at": datetime.utcnow().isoformat(),
             "source": "abaqus_auto",
             "task": clean_task,
@@ -111,6 +111,9 @@ class KnowledgeAgent(BaseAgent):
             ),
             "fem_agent_retry_count": int(clean_results.get("retry_count", 0) or 0),
         }
+        task_id = str(task.get("task_id") or "").strip()
+        if task_id:
+            record["task_id"] = task_id
         validate_or_raise("case_record.schema.json", record)
         return record
 

@@ -74,8 +74,13 @@ def normalize_candidate_document(candidate: Dict, task: Dict | None = None) -> D
     normalized.setdefault("origin_summary", "")
     normalized.setdefault("screening_summary", None)
     normalized.setdefault("selection_reason", None)
-    normalized.setdefault("display_name", normalized.get("candidate_id"))
-    normalized.setdefault("persistent_candidate_id", None)
+    candidate_id = str(normalized.get("candidate_id") or "").strip()
+    normalized["display_name"] = str(normalized.get("display_name") or candidate_id)
+    persistent_candidate_id = str(normalized.get("persistent_candidate_id") or "").strip()
+    if not persistent_candidate_id or persistent_candidate_id == candidate_id:
+        normalized.pop("persistent_candidate_id", None)
+    else:
+        normalized["persistent_candidate_id"] = persistent_candidate_id
     return normalized
 
 

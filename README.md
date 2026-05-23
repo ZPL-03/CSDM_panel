@@ -10,7 +10,7 @@
 
 - 自然语言需求解析与任务归一化
 - 候选方案生成
-  - LLM 生成：使用外部知识库/知识图谱做检索增强
+  - LLM 生成：使用外部知识库/知识图谱做检索增强，由 LLM 给出工程自然语言候选表，再由系统解析为结构化候选
   - 历史案例迁移：在归档案例和正式案例中做结构化相似检索，并用案例记忆向量库辅助排序
   - DOE 采样：在参数空间生成兜底与探索方案
 - 代理模型快速初筛
@@ -35,13 +35,13 @@
 - 支持 3 类工况：`axial_compression`、`in_plane_shear`、`compression_shear`
 - 支持 3 类边界：`SSSS`、`CCCC`、`SSCC`
 - 支持 4 种筋条类型：`BLADE`、`T`、`HAT`、`L`，均可走通完整设计流程
-- 候选生成已经按三条路径解耦：`LLM`、`CASE_TRANSFER`、`DOE`
+- 候选生成已经按三条路径解耦：`LLM`、`CASE_TRANSFER`、`DOE`，默认来源比例为 `2:1:1`
 - 历史案例迁移采用"结构化硬过滤 + Case Memory 向量排序"混合检索；向量库不替代工程约束，也不把历史案例原文直接注入 LLM Prompt
 - `data/cases/` 中当前有 350 个评估档案（T 型 344 个，BLADE/HAT/L 各 2 个）
 - `knowledge/case_library/` 中当前有 41 个正式案例
 - `knowledge/chroma_db/` 中当前 `csdm_case_memory` 案例记忆集合有 350 条索引记录
 - `data/abaqus_runs/` 中当前有 350 个样本工件目录
-- `models/surrogate_metrics.json` 当前选中模型为 `rf`，训练样本数 317，RF `MAPE = 0.1216`
+- `models/surrogate_metrics.json` 当前选中模型为 `mlp`，训练样本数 350，MLP `MAPE = 0.2608`
 - `knowledge/external/` 是外部知识库/知识图谱资产目录：知识库文本块 43651 条，知识图谱实体 1763 个，知识图谱关系 347609 条
 
 ## 4. 系统架构
@@ -65,7 +65,7 @@
 ORCHESTRATOR：任务解析 / 对话流程控制
         ↓
 CANDIDATE_GEN：候选生成
-  ├─ LLM + 外部知识库/知识图谱
+  ├─ LLM + 外部知识库/知识图谱（工程自然语言候选表 -> 本地解析）
   ├─ CASE_TRANSFER 结构化案例迁移 + 案例记忆向量排序
   └─ DOE 参数采样
         ↓
@@ -80,7 +80,7 @@ REPORT_GEN：工程报告输出
 
 ### 4.3 三条候选生成路径的边界
 
-- `LLM` 路径直接使用外部知识库/知识图谱：`core/domain_knowledge.py` 将任务转换为检索文本，从 `knowledge/external/` 取回知识库片段和知识图谱关系并注入 Prompt；未就绪时不注入额外知识片段。
+- `LLM` 路径直接使用外部知识库/知识图谱：`core/domain_knowledge.py` 将任务转换为检索文本，从 `knowledge/external/` 取回知识库片段和知识图谱关系并注入 Prompt；LLM 输出工程自然语言候选表，`CandidateGenAgent` 解析为结构化候选并执行规则检查；未就绪时不注入额外知识片段。
 - `CASE_TRANSFER` 路径不走外部知识库/知识图谱：`core/case_retriever.py` 先按筋型、工况、边界、材料和通过结论做结构化硬过滤，再用 `core/case_memory.py` 中的 Case Memory 向量索引辅助相似案例排序；只迁移满足工程约束的历史设计。
 - `DOE` 路径独立存在：`core/doe_sampler.py` 在参数范围内采样，提供兜底与探索候选。
 
@@ -138,7 +138,7 @@ conda env create -f environment.yml
 
 ### 6.3 LLM 配置
 
-`config/llm_config.yaml` 当前只保留一个 OpenAI 兼容 LLM 后端。运行配置来自项目根目录 `.env`：
+`config/llm_config.yaml` 当前只保留一个 OpenAI 兼容 LLM 后端。LLM 接口只承担自然语言生成，不要求模型直接输出 JSON。运行配置来自项目根目录 `.env`：
 
 ```text
 URL=OpenAI兼容接口地址
@@ -183,6 +183,17 @@ D:/anaconda3/envs/GPT/python.exe -m pytest tests/test_fem_agent.py tests/test_e2
 | `config/material_db.yaml` | 材料数据库 |
 | `config/param_ranges.yaml` | 设计变量范围、铺层模板、规则检查阈值（按筋型分段） |
 
+`pipeline.default_total_candidates` 控制未显式指定候选数量时的默认候选池总数，当前为 10。`pipeline.candidate_source_ratio` 控制初始候选来源比例，当前为：
+
+```yaml
+candidate_source_ratio:
+  llm: 2
+  case_transfer: 1
+  doe: 1
+```
+
+例如候选池目标为 10 时，初始配额为 LLM 5 个、案例迁移 3 个、DOE 2 个；若 LLM 或案例迁移有效候选不足，DOE 负责补足候选池。
+
 ## 9. 常用脚本
 
 | 命令 | 说明 |
@@ -201,7 +212,7 @@ D:/anaconda3/envs/GPT/python.exe -m pytest tests/test_fem_agent.py tests/test_e2
 - `candidate_id`：设计候选标识，候选阶段使用 `TMP_<n>`，进入 FEM 后切换为正式样本编号 `C<n>`
 - `case_id`：归档案例标识，对应 `data/cases/` 与 `knowledge/case_library/` 中的案例记录
 
-`data/cases/`、`data/io/`、`data/abaqus_runs/` 与 `knowledge/case_library/` 构成主数据层，围绕 `candidate_id` 与 `case_id` 组织。会话任务编号只存在于运行时任务对象、界面摘要与报告展示中，不参与主数据编号分配与关联。
+`data/cases/`、`data/io/`、`data/abaqus_runs/` 与 `knowledge/case_library/` 构成主数据层，围绕 `candidate_id` 与 `case_id` 组织。会话任务编号可作为案例追溯字段保存，但不参与主数据编号分配与关联。
 
 ## 11. 数据与知识资产
 

@@ -61,7 +61,13 @@
       "primary_objective": "最小重量"
     },
     "candidate_generation_preferences": {
-      "total_candidates": 10
+      "total_candidates": 10,
+      "source_allocation_mode": "ratio",
+      "source_ratio": {
+        "llm": 2.0,
+        "case_transfer": 1.0,
+        "doe": 1.0
+      }
     },
     "screening_preferences": {
       "top_k_candidates": 5
@@ -145,7 +151,11 @@
       }
     },
     "surrogate_BLF": 0.241,
-    "rationale": "参考历史案例 CASE_57 微调生成"
+    "rationale": "参考历史案例 CASE_57 微调生成",
+    "origin_summary": "",
+    "screening_summary": null,
+    "selection_reason": null,
+    "display_name": "C328"
   },
   "abaqus_results": {
     "candidate_id": "C328",
@@ -179,5 +189,6 @@
   },
   "verdict": "不通过",
   "surrogate_BLF_error_pct": 7.106,
-  "fem_agent_retry_count": 0
+  "fem_agent_retry_count": 0,
+  "candidate_id": "C328"
 }

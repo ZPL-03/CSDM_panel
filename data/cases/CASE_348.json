@@ -7,7 +7,7 @@
     "load_conditions": {
       "type": "axial_compression",
       "label": "单轴压缩",
-      "Nx_kN_per_m": -850.0,
+      "Nx_kN_per_m": 0.0,
       "Nxy_kN_per_m": 0.0
     },
     "boundary_conditions": {
@@ -62,7 +62,13 @@
       "top_k_candidates": 5
     },
     "candidate_generation_preferences": {
-      "total_candidates": 10
+      "total_candidates": 10,
+      "source_allocation_mode": "ratio",
+      "source_ratio": {
+        "llm": 2.0,
+        "case_transfer": 1.0,
+        "doe": 1.0
+      }
     }
   },
   "design": {
@@ -99,7 +105,7 @@
     "load_conditions": {
       "type": "axial_compression",
       "label": "单轴压缩",
-      "Nx_kN_per_m": -850.0,
+      "Nx_kN_per_m": 0.0,
       "Nxy_kN_per_m": 0.0
     },
     "boundary_conditions": {
@@ -150,7 +156,11 @@
       }
     },
     "surrogate_BLF": null,
-    "rationale": "多筋型验证样本 | 材料=T300/5208 | 铺层=[45/-45/0/90/0/-45/45]s"
+    "rationale": "多筋型验证样本 | 材料=T300/5208 | 铺层=[45/-45/0/90/0/-45/45]s",
+    "origin_summary": "",
+    "screening_summary": null,
+    "selection_reason": null,
+    "display_name": "C348"
   },
   "abaqus_results": {
     "status": "success",
@@ -186,9 +196,13 @@
     ],
     "retry_count": 0,
     "weight_kg_per_m2": 6.322286,
-    "artifact_dir": "D:\\Project\\VS_Code\\CSDM_panel\\data\\abaqus_runs\\C348"
+    "artifact_dir": "D:\\Project\\VS_Code\\CSDM_panel\\data\\abaqus_runs\\C348",
+    "load_summary": "单轴压缩：Nx=0.0 kN/m",
+    "boundary_summary": "加载边简支、侧边固支（SSCC）",
+    "diagnosis_summary": "历史结果已迁移，当前结论为“不通过”。"
   },
   "verdict": "不通过",
   "surrogate_BLF_error_pct": null,
-  "fem_agent_retry_count": 0
+  "fem_agent_retry_count": 0,
+  "candidate_id": "C348"
 }

@@ -10,6 +10,7 @@ from core.paths import ABAQUS_RUNS_DIR, IO_DIR
 def _real_fem_candidate(candidate_id: str) -> dict:
     return {
         "candidate_id": candidate_id,
+        "display_name": candidate_id,
         "source": "DOE",
         "stiffener_type": "T",
         "geometry": {

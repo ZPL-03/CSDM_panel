@@ -63,8 +63,9 @@ class AbaqusWidget(QWidget):
         self.results = list(results)
         self.table.setRowCount(len(self.results))
         for row, result in enumerate(self.results):
+            display_label = result.get("display_name") or result.get("session_candidate_id") or "-"
             values = [
-                result.get("display_name", result.get("session_candidate_id", "-")),
+                display_label,
                 result.get("candidate_id", ""),
                 result.get("status", ""),
                 _fmt(result.get("BLF_global")),
@@ -105,8 +106,9 @@ class AbaqusWidget(QWidget):
             return
 
         result = self.results[rows[0].row()]
+        display_label = result.get("display_name") or result.get("session_candidate_id") or "-"
         html = (
-            f"<h3>{result.get('display_name', result.get('session_candidate_id', '-'))}</h3>"
+            f"<h3>{display_label}</h3>"
             f"<p><b>正式编号：</b>{result.get('candidate_id')}<br>"
             f"<b>状态：</b>{result.get('status')}<br>"
             f"<b>工况：</b>{result.get('load_summary', '-')}<br>"

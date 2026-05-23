@@ -4,6 +4,8 @@ from scripts.migrate_contracts import normalize_case_record, normalize_candidate
 def test_normalize_candidate_document_upgrades_legacy_boundary_and_load() -> None:
     candidate = {
         "candidate_id": "C1",
+        "display_name": None,
+        "persistent_candidate_id": None,
         "source": "MANUAL",
         "stiffener_type": "T",
         "geometry": {},
@@ -19,6 +21,8 @@ def test_normalize_candidate_document_upgrades_legacy_boundary_and_load() -> Non
     assert "task_fingerprint" not in normalized
     assert normalized["load_conditions"]["type"] == "axial_compression"
     assert normalized["boundary_conditions"]["type"] == "SSSS"
+    assert normalized["display_name"] == "C1"
+    assert "persistent_candidate_id" not in normalized
 
 
 def test_normalize_result_document_adds_human_readable_summaries() -> None:

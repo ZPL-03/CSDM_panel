@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from agents.candidate_gen import CandidateGenAgent
 from core.llm_backend import LLMBackend
 
@@ -8,7 +10,12 @@ def _build_task() -> dict:
         "source": "test",
         "task": {
             "application": "复合材料加筋壁板",
-            "load_conditions": {"type": "compression_shear", "label": "压剪组合", "Nx_kN_per_m": 1000.0, "Nxy_kN_per_m": 180.0},
+            "load_conditions": {
+                "type": "compression_shear",
+                "label": "压剪组合",
+                "Nx_kN_per_m": 1000.0,
+                "Nxy_kN_per_m": 180.0,
+            },
             "boundary_conditions": {
                 "type": "SSCC",
                 "label": "X 向简支 + Y 向固支（SSCC）",
@@ -21,7 +28,11 @@ def _build_task() -> dict:
                 "panel_width_mm": [500, 700],
                 "max_stiffener_height_mm": 50,
             },
-            "candidate_generation_preferences": {"total_candidates": 10},
+            "candidate_generation_preferences": {
+                "total_candidates": 10,
+                "source_allocation_mode": "ratio",
+                "source_ratio": {"llm": 2.0, "case_transfer": 1.0, "doe": 1.0},
+            },
             "screening_preferences": {"top_k_candidates": 5},
             "material_system": {
                 "name": "T300/5208",
@@ -43,188 +54,54 @@ def _build_task() -> dict:
     }
 
 
-def test_candidate_gen_tolerates_string_items_from_llm() -> None:
+def _candidate_table(count: int) -> str:
+    rows = [
+        "| 编号 | 材料 | 壁板长度(mm) | 壁板宽度(mm) | 蒙皮厚度(mm) | 筋距(mm) | 筋高(mm) | 腹板厚度(mm) | 翼缘宽度(mm) | 翼缘厚度(mm) | 帽顶宽度(mm) | 帽顶厚度(mm) | 铺层 | f0 | f45 | f90 | 推荐理由 |",
+        "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- | ---: | ---: | ---: | --- |",
+    ]
+    for index in range(count):
+        rows.append(
+            f"| A{index + 1} | T300/5208 | {700 + index} | {600 + index} | 2.5 | 120 | 28 | 2.0 | 16 | 2.0 | - | - | [45/-45/0/90/0/-45/45]s | 0.286 | 0.571 | 0.143 | 结构性能与制造风险均衡 |"
+        )
+    return "\n".join(rows)
+
+
+class _FakeNaturalBackend:
+    def __init__(self, count: int = 6, sink: dict[str, str] | None = None) -> None:
+        self.max_tokens = 1800
+        self.count = count
+        self.sink = sink if sink is not None else {}
+
+    def chat(self, system_prompt: str, user_prompt: str, max_tokens_override: int | None = None) -> str:
+        self.sink["system_prompt"] = system_prompt
+        self.sink["user_prompt"] = user_prompt
+        self.sink["max_tokens_override"] = str(max_tokens_override)
+        return "以下为候选方案表：\n\n" + _candidate_table(self.count)
+
+
+def test_candidate_gen_parses_natural_language_table_from_llm() -> None:
+    captured: dict[str, str] = {}
     agent = CandidateGenAgent()
-    agent.llm_backend = type(
-        "FakeBackend",
-        (),
-        {
-            "generate_json": staticmethod(
-                lambda _system, _user: {
-                    "candidates": [
-                        '{"geometry": {"panel_length_mm": 700, "panel_width_mm": 600}, "layup": {"skin_layup": "[45/-45/0/90/0/-45/45]s"}, "rationale": "string item"}',
-                        {
-                            "geometry": {
-                                "panel_length_mm": 720,
-                                "panel_width_mm": 580,
-                                "skin_thickness_mm": 2.6,
-                                "pitch_mm": 118,
-                                "stiffener_height_mm": 27,
-                                "web_thickness_mm": 2.0,
-                                "flange_width_mm": 16,
-                                "flange_thickness_mm": 2.0,
-                            },
-                            "layup": {
-                                "skin_layup": "[45/-45/0/90/0/-45/45]s",
-                                "skin_f0": 0.286,
-                                "skin_f45": 0.571,
-                                "skin_f90": 0.143,
-                            },
-                            "rationale": "dict item",
-                        },
-                    ]
-                }
-            )
-        },
-    )()
+    agent.llm_backend = _FakeNaturalBackend(count=6, sink=captured)
     agent.knowledge_base = type("FakeKnowledge", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
 
     candidates = agent.run(_build_task())
 
-    assert len(candidates) >= 2
+    assert len(candidates) == 10
+    assert sum(1 for item in candidates if item["source"] == "LLM") == 5
     assert all(candidate["candidate_id"].startswith("TMP_") for candidate in candidates)
-    assert candidates[0]["source"] in ["LLM", "CASE_TRANSFER", "DOE"]
+    assert all(candidate["display_name"] == candidate["candidate_id"] for candidate in candidates)
+    assert all("persistent_candidate_id" not in candidate for candidate in candidates)
     assert candidates[0]["load_conditions"]["type"] == "compression_shear"
     assert candidates[0]["boundary_conditions"]["type"] == "SSCC"
+    assert candidates[0]["layup"]["skin_layup"] == "[45/-45/0/90/0/-45/45]s"
+    assert "不要输出 JSON" in captured["system_prompt"]
+    assert "Markdown 表格" in captured["system_prompt"]
 
 
-def test_candidate_gen_tolerates_list_layup_from_llm() -> None:
+def test_candidate_gen_respects_total_candidate_target_and_two_one_one_ratio() -> None:
     agent = CandidateGenAgent()
-    agent.llm_backend = type(
-        "FakeBackend",
-        (),
-        {
-            "generate_json": staticmethod(
-                lambda _system, _user: {
-                    "candidates": [
-                        {
-                            "geometry": {
-                                "panel_length_mm": 700,
-                                "panel_width_mm": 600,
-                                "skin_thickness_mm": 2.5,
-                                "pitch_mm": 120,
-                                "stiffener_height_mm": 28,
-                                "web_thickness_mm": 2.0,
-                                "flange_width_mm": 16,
-                                "flange_thickness_mm": 2.0,
-                            },
-                            "layup": {
-                                "skin_layup": [45, -45, 0, 90, 0, -45, 45, "s"],
-                                "skin_f0": 0.286,
-                                "skin_f45": 0.571,
-                                "skin_f90": 0.143,
-                            },
-                            "rationale": "list layup",
-                        }
-                    ]
-                }
-            )
-        },
-    )()
-    agent.knowledge_base = type("FakeKnowledge", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
-
-    candidates = agent.run(_build_task())
-
-    assert len(candidates) >= 1
-    llm_candidate = candidates[0]
-    assert llm_candidate["source"] == "LLM"
-    assert llm_candidate["layup"]["skin_layup"] == "[45/-45/0/90/0/-45/45]s"
-    assert llm_candidate["rule_check"]["is_valid"] is True
-
-
-def test_candidate_gen_tolerates_alternate_llm_candidate_keys() -> None:
-    agent = CandidateGenAgent()
-    agent.llm_backend = type(
-        "FakeBackend",
-        (),
-        {
-            "generate_json": staticmethod(
-                lambda _system, _user: {
-                    "候选方案": {
-                        "方案1": {
-                            "geometry": {
-                                "panel_length_mm": 700,
-                                "panel_width_mm": 600,
-                                "skin_thickness_mm": 2.5,
-                                "pitch_mm": 120,
-                                "stiffener_height_mm": 28,
-                                "web_thickness_mm": 2.0,
-                                "flange_width_mm": 16,
-                                "flange_thickness_mm": 2.0,
-                            },
-                            "layup": {
-                                "skin_layup": "[45/-45/0/90/0/-45/45]s",
-                                "skin_f0": 0.286,
-                                "skin_f45": 0.571,
-                                "skin_f90": 0.143,
-                            },
-                            "rationale": "alternate key",
-                        }
-                    }
-                }
-            )
-        },
-    )()
-    agent.knowledge_base = type("FakeKnowledge", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
-
-    candidates = agent.run(_build_task())
-
-    assert candidates[0]["source"] == "LLM"
-    assert candidates[0]["rationale"] == "alternate key"
-
-
-def test_candidate_gen_respects_total_candidate_target() -> None:
-    agent = CandidateGenAgent()
-    agent.llm_backend = type(
-        "FakeBackend",
-        (),
-        {
-            "generate_json": staticmethod(
-                lambda _system, _user: {
-                    "candidates": [
-                        {
-                            "geometry": {
-                                "panel_length_mm": 700,
-                                "panel_width_mm": 600,
-                                "skin_thickness_mm": 2.5,
-                                "pitch_mm": 120,
-                                "stiffener_height_mm": 28,
-                                "web_thickness_mm": 2.0,
-                                "flange_width_mm": 16,
-                                "flange_thickness_mm": 2.0,
-                            },
-                            "layup": {
-                                "skin_layup": "[45/-45/0/90/0/-45/45]s",
-                                "skin_f0": 0.286,
-                                "skin_f45": 0.571,
-                                "skin_f90": 0.143,
-                            },
-                            "rationale": "llm candidate 1",
-                        },
-                        {
-                            "geometry": {
-                                "panel_length_mm": 720,
-                                "panel_width_mm": 620,
-                                "skin_thickness_mm": 2.6,
-                                "pitch_mm": 118,
-                                "stiffener_height_mm": 29,
-                                "web_thickness_mm": 2.1,
-                                "flange_width_mm": 17,
-                                "flange_thickness_mm": 2.1,
-                            },
-                            "layup": {
-                                "skin_layup": "[45/-45/0/90/0/-45/45]s",
-                                "skin_f0": 0.286,
-                                "skin_f45": 0.571,
-                                "skin_f90": 0.143,
-                            },
-                            "rationale": "llm candidate 2",
-                        },
-                    ]
-                }
-            )
-        },
-    )()
+    agent.llm_backend = _FakeNaturalBackend(count=6)
     agent.knowledge_base = type("FakeKnowledge", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
 
     def _fake_doe_candidates(task: dict, n_samples: int, start_index: int = 1, **_kwargs) -> list[dict]:
@@ -252,8 +129,6 @@ def test_candidate_gen_respects_total_candidate_target() -> None:
             candidates.append(agent._normalize_candidate(task, raw, start_index + offset, "DOE"))
         return candidates
 
-    agent.doe_sampler = type("FakeDOE", (), {"sample_candidates": staticmethod(_fake_doe_candidates)})()
-
     def _fake_retrieve_transferable_cases(task: dict, top_k: int = 5) -> list[dict]:
         return [
             {
@@ -261,10 +136,14 @@ def test_candidate_gen_respects_total_candidate_target() -> None:
                 "design": {
                     "stiffener_type": task.get("stiffener_type", "T"),
                     "geometry": {
-                        "panel_length_mm": 700, "panel_width_mm": 600,
-                        "skin_thickness_mm": 2.5, "pitch_mm": 120,
-                        "stiffener_height_mm": 28, "web_thickness_mm": 2.0,
-                        "flange_width_mm": 16, "flange_thickness_mm": 2.0,
+                        "panel_length_mm": 700,
+                        "panel_width_mm": 600,
+                        "skin_thickness_mm": 2.5,
+                        "pitch_mm": 120,
+                        "stiffener_height_mm": 28,
+                        "web_thickness_mm": 2.0,
+                        "flange_width_mm": 16,
+                        "flange_thickness_mm": 2.0,
                     },
                     "layup": {"skin_layup": "[45/-45/0/90/0/-45/45]s"},
                     "rationale": f"case transfer candidate {idx + 1}",
@@ -274,23 +153,41 @@ def test_candidate_gen_respects_total_candidate_target() -> None:
                 },
                 "abaqus_results": {"status": "success", "verdict": "通过"},
             }
-            for idx in range(2)
+            for idx in range(3)
         ]
 
+    agent.doe_sampler = type("FakeDOE", (), {"sample_candidates": staticmethod(_fake_doe_candidates)})()
     agent.case_retriever = type(
         "FakeCaseRetriever",
         (),
         {"retrieve_transferable_cases": staticmethod(_fake_retrieve_transferable_cases)},
     )()
     task = _build_task()
-    task["task"]["candidate_generation_preferences"] = {"total_candidates": 12}
+    task["task"]["candidate_generation_preferences"]["total_candidates"] = 12
 
     candidates = agent.run(task)
 
     assert len(candidates) == 12
-    assert sum(1 for item in candidates if item["source"] == "LLM") == 2
-    assert sum(1 for item in candidates if item["source"] == "CASE_TRANSFER") == 2
-    assert sum(1 for item in candidates if item["source"] == "DOE") == 8
+    assert sum(1 for item in candidates if item["source"] == "LLM") == 6
+    assert sum(1 for item in candidates if item["source"] == "CASE_TRANSFER") == 3
+    assert sum(1 for item in candidates if item["source"] == "DOE") == 3
+
+
+def test_candidate_gen_uses_two_one_one_source_ratio() -> None:
+    agent = CandidateGenAgent()
+    task = _build_task()
+    task["task"]["candidate_generation_preferences"] = {
+        "total_candidates": 12,
+        "source_allocation_mode": "ratio",
+        "source_ratio": {"llm": 2.0, "case_transfer": 1.0, "doe": 1.0},
+    }
+
+    source_targets = agent._resolve_source_targets(task)
+
+    assert source_targets["llm"] == 6
+    assert source_targets["case_transfer"] == 3
+    assert source_targets["doe"] == 3
+    assert source_targets["source_ratio"] == {"llm": 2.0, "case_transfer": 1.0, "doe": 1.0}
 
 
 def test_candidate_gen_build_prompt_uses_knowledge_base_guidance() -> None:
@@ -304,16 +201,17 @@ def test_candidate_gen_build_prompt_uses_knowledge_base_guidance() -> None:
     assert "外部知识库/知识图谱依据" in user_prompt
     assert "Composite buckling study" in user_prompt
     assert "参考案例" not in user_prompt
-    assert "只输出合法 JSON" in system_prompt
+    assert "不要输出 JSON" in system_prompt
+    assert "只输出合法 JSON" not in system_prompt
 
 
-def test_openai_compatible_json_mode_uses_larger_output_budget(monkeypatch) -> None:
+def test_openai_compatible_chat_uses_plain_text_request(monkeypatch) -> None:
     captured: dict[str, object] = {}
 
     class _FakeCompletions:
         def create(self, **kwargs):
             captured.update(kwargs)
-            message = type("Message", (), {"content": "{}"})()
+            message = type("Message", (), {"content": "plain text"})()
             choice = type("Choice", (), {"message": message})()
             return type("Response", (), {"choices": [choice]})()
 
@@ -334,14 +232,13 @@ def test_openai_compatible_json_mode_uses_larger_output_budget(monkeypatch) -> N
                 "temperature": 0.2,
                 "max_tokens": 1800,
                 "timeout_seconds": 30,
-                "json_output_tokens": 4096,
             },
             "fallback": {"max_format_retries": 3},
         }
     )
 
-    backend.generate_json("只输出 JSON", "输出 {'ok': true}")
+    assert backend.chat("system", "user") == "plain text"
 
-    assert captured["max_tokens"] == 4096
+    assert captured["max_tokens"] == 1800
     assert captured["model"] == "test-model"
-    assert captured["response_format"] == {"type": "json_object"}
+    assert "response_format" not in captured
