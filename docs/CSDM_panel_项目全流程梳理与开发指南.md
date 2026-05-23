@@ -196,7 +196,7 @@ CSDM_panel/
 - 从 `knowledge/external/` 检索知识库片段与知识图谱关系
 - 外部知识库/知识图谱未就绪时，不注入额外知识片段
 - Prompt 中包含规范化任务约束、用户明确输入事实、工况说明、边界说明、材料选项、检索依据和自然语言候选表约束
-- LLM 输出工程自然语言候选表，`CandidateGenAgent` 从表格解析 `geometry`、`layup`、`material_system` 和 `rationale`
+- LLM 输出工程自然语言候选表，`CandidateGenAgent` 从表格解析 `geometry`、`layup`、`material_system` 和 `rationale`，并保存候选行 `origin_summary` 与回答片段 `llm_output_excerpt`
 - 候选进入下游前必须通过 `RuleChecker`
 - 不输出历史案例字段，也不要求 LLM 直接输出 JSON
 
@@ -213,10 +213,11 @@ CSDM_panel/
 - `DOESampler` 按参数范围采样
 - 作为补足与探索来源；LLM 或案例迁移有效候选不足时，由 DOE 补足候选池
 - 所有候选仍需通过 `RuleChecker`
+- 三路候选按材料、几何变量和铺层表达式形成结构等价签名；签名重复的候选不进入候选池，候选池缺口由 DOE 继续补足
 
 ### 6.4 候选来源比例
 
-`pipeline.default_total_candidates` 控制未显式指定候选数量时的默认候选池总数，当前为 10。`pipeline.candidate_source_ratio` 控制三条来源的初始配额，当前为：
+候选池总数和初筛保留数量由自然语言需求明确给出。`pipeline.candidate_source_ratio` 控制三条来源的初始配额，当前为：
 
 ```yaml
 llm: 2
@@ -224,7 +225,7 @@ case_transfer: 1
 doe: 1
 ```
 
-候选池目标为 10 时，初始配额为 LLM 5 个、案例迁移 3 个、DOE 2 个。配额只决定优先尝试数量；若 LLM 自然语言表格解析失败、规则检查失败，或案例迁移没有足够可迁移样本，DOE 会继续补足总数。
+候选池目标为 12 时，初始配额为 LLM 6 个、案例迁移 3 个、DOE 3 个。配额只决定优先尝试数量；若 LLM 自然语言表格解析失败、规则检查失败，或案例迁移没有足够可迁移样本，DOE 会继续补足总数。
 
 ## 7. 知识回流
 
@@ -298,7 +299,7 @@ LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料�
 - `source`
 - `task`
 
-其中 `task` 仅保留任务语义字段。任务解析阶段同步写入 `user_input_facts`，把用户明确给出的筋型、载荷、边界、目标、候选数量等事实与系统默认补全字段分开；后续候选生成优先保留这些明确事实。
+其中 `task` 仅保留任务语义字段。任务解析阶段同步写入 `user_input_facts`，把用户明确给出的筋型、载荷、边界、目标、候选数量等事实与系统规范化字段分开；后续候选生成优先保留这些明确事实。
 
 ### 10.2 候选 `candidate`
 
@@ -320,6 +321,7 @@ LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料�
 - `rank_score`
 - `rationale`
 - `origin_summary`
+- `llm_output_excerpt`
 - `screening_summary`
 - `selection_reason`
 

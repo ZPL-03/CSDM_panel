@@ -35,7 +35,7 @@ def test_orchestrator_end_to_end_with_real_abaqus() -> None:
     try:
         orchestrator = OrchestratorAgent()
         result = orchestrator.run(
-            "请为机翼下蒙皮壁板生成1个T型筋方案，压缩载荷120kN/m，"
+            "请为机翼下蒙皮壁板设计T型筋方案，压缩载荷120kN/m，生成1个候选，"
             "长度360mm，宽度300mm，BLF目标0.1，初筛保留1个"
         )
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from html import escape
 from typing import Iterable
 
 from PyQt6.QtWidgets import (
@@ -177,6 +178,13 @@ class CandidateWidget(QWidget):
         rule_errors = rule_check.get("errors") or ["无"]
         rule_suggestions = rule_check.get("suggestions") or ["无"]
         archive_id = candidate.get("persistent_candidate_id") or (result or {}).get("candidate_id", "-")
+        llm_excerpt = str(candidate.get("llm_output_excerpt") or "").strip()
+        llm_excerpt_html = ""
+        if candidate.get("source") == "LLM" and llm_excerpt:
+            llm_excerpt_html = (
+                "<h4>LLM 回答片段</h4>"
+                f"<p>{escape(llm_excerpt).replace(chr(10), '<br>')}</p>"
+            )
 
         result_html = ""
         if result:
@@ -222,6 +230,7 @@ class CandidateWidget(QWidget):
             f"<p>是否通过校验：{rule_check.get('is_valid', False)}</p>"
             f"<p>问题：{'；'.join(rule_errors)}</p>"
             f"<p>建议：{'；'.join(rule_suggestions)}</p>"
+            f"{llm_excerpt_html}"
             f"{result_html}"
         )
         self.detail_browser.setHtml(html)

@@ -61,6 +61,27 @@ def test_candidate_table_uses_contract_display_name() -> None:
         app.processEvents()
 
 
+def test_candidate_detail_shows_llm_answer_excerpt() -> None:
+    app = _app()
+    window = MainWindow()
+    try:
+        candidate = _candidate()
+        candidate.update({
+            "source": "LLM",
+            "origin_summary": "| A1 | T300/5208 |",
+            "llm_output_excerpt": "## 候选方案\n<raw table>",
+        })
+
+        window.candidate_widget.update_candidates([candidate])
+        html = window.candidate_widget.detail_browser.toHtml()
+
+        assert "LLM 回答片段" in html
+        assert "&lt;raw table&gt;" in html
+    finally:
+        window.close()
+        app.processEvents()
+
+
 def test_task_summary_uses_session_task_wording() -> None:
     app = _app()
     window = MainWindow()

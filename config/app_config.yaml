@@ -28,7 +28,6 @@ abaqus:
 
 pipeline:
   top_k: 5
-  default_total_candidates: 10
   candidate_source_ratio:
     llm: 2
     case_transfer: 1

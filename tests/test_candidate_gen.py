@@ -95,6 +95,8 @@ def test_candidate_gen_parses_natural_language_table_from_llm() -> None:
     assert candidates[0]["load_conditions"]["type"] == "compression_shear"
     assert candidates[0]["boundary_conditions"]["type"] == "SSCC"
     assert candidates[0]["layup"]["skin_layup"] == "[45/-45/0/90/0/-45/45]s"
+    assert "以下为候选方案表" in candidates[0]["llm_output_excerpt"]
+    assert "A1" in candidates[0]["origin_summary"]
     assert "不要输出 JSON" in captured["system_prompt"]
     assert "Markdown 表格" in captured["system_prompt"]
 
@@ -109,8 +111,8 @@ def test_candidate_gen_respects_total_candidate_target_and_two_one_one_ratio() -
         for offset in range(n_samples):
             raw = {
                 "geometry": {
-                    "panel_length_mm": 700 + offset,
-                    "panel_width_mm": 600 + offset,
+                    "panel_length_mm": 820 + offset,
+                    "panel_width_mm": 720 + offset,
                     "skin_thickness_mm": 2.5,
                     "pitch_mm": 120,
                     "stiffener_height_mm": 28,
@@ -136,8 +138,8 @@ def test_candidate_gen_respects_total_candidate_target_and_two_one_one_ratio() -
                 "design": {
                     "stiffener_type": task.get("stiffener_type", "T"),
                     "geometry": {
-                        "panel_length_mm": 700,
-                        "panel_width_mm": 600,
+                        "panel_length_mm": 760 + idx,
+                        "panel_width_mm": 660 + idx,
                         "skin_thickness_mm": 2.5,
                         "pitch_mm": 120,
                         "stiffener_height_mm": 28,
@@ -224,6 +226,43 @@ def test_candidate_gen_build_prompt_uses_knowledge_base_guidance() -> None:
     assert "参考案例" not in user_prompt
     assert "不要输出 JSON" in system_prompt
     assert "只输出合法 JSON" not in system_prompt
+
+
+def test_candidate_generation_deduplicates_equivalent_designs() -> None:
+    messages: list[str] = []
+    agent = CandidateGenAgent(progress_callback=lambda _agent, message, _event=None: messages.append(message))
+
+    class _DuplicateBackend(_FakeNaturalBackend):
+        def chat(self, system_prompt: str, user_prompt: str, max_tokens_override: int | None = None) -> str:
+            return "\n".join(
+                [
+                    "以下为候选方案表：",
+                    "",
+                    "| 编号 | 材料 | 壁板长度(mm) | 壁板宽度(mm) | 蒙皮厚度(mm) | 筋距(mm) | 筋高(mm) | 腹板厚度(mm) | 翼缘宽度(mm) | 翼缘厚度(mm) | 帽顶宽度(mm) | 帽顶厚度(mm) | 铺层 | f0 | f45 | f90 | 推荐理由 |",
+                    "| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | --- | --- | --- | ---: | ---: | ---: | --- |",
+                    "| A1 | T300/5208 | 700 | 600 | 2.5 | 120 | 28 | 2.0 | 16 | 2.0 | - | - | [45/-45/0/90/0/-45/45]s | 0.286 | 0.571 | 0.143 | 结构性能与制造风险均衡 |",
+                    "| A2 | T300/5208 | 700 | 600 | 2.5 | 120 | 28 | 2.0 | 16 | 2.0 | - | - | [45/-45/0/90/0/-45/45]s | 0.286 | 0.571 | 0.143 | 结构性能与制造风险均衡 |",
+                    "| A3 | T300/5208 | 700 | 600 | 2.5 | 120 | 28 | 2.0 | 16 | 2.0 | - | - | [45/-45/0/90/0/-45/45]s | 0.286 | 0.571 | 0.143 | 结构性能与制造风险均衡 |",
+                ]
+            )
+
+    agent.llm_backend = _DuplicateBackend(count=3)
+    agent.knowledge_base = type("FakeKnowledge", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
+    agent.case_retriever = type(
+        "EmptyCaseRetriever",
+        (),
+        {"retrieve_transferable_cases": staticmethod(lambda _task, top_k=5: [])},
+    )()
+
+    task = _build_task()
+    task["task"]["candidate_generation_preferences"]["total_candidates"] = 6
+    candidates = agent.run(task)
+    signatures = [agent._candidate_signature(candidate) for candidate in candidates]
+
+    assert len(candidates) == 6
+    assert len(signatures) == len(set(signatures))
+    assert [candidate["candidate_id"] for candidate in candidates] == [f"TMP_{index}" for index in range(1, 7)]
+    assert any("候选去重过滤" in message for message in messages)
 
 
 def test_openai_compatible_chat_uses_plain_text_request(monkeypatch) -> None:

@@ -10,7 +10,6 @@ from core.id_utils import next_task_id
 from core.schema_validator import validate_or_raise
 from core.stiffener_profile import TYPE_DISPLAY_NAMES
 from core.task_contract import (
-    DEFAULT_CANDIDATE_GENERATION_PREFERENCES,
     DEFAULT_DESIGN_TARGETS,
     DEFAULT_GEOMETRY_ENVELOPE,
     DEFAULT_LAYUP_CONSTRAINTS,
@@ -30,12 +29,8 @@ class TaskParser:
     def __init__(self) -> None:
         self.app_config = load_app_config()
         self.material_db = load_material_db()
-        self.default_top_k = int(self.app_config.get("pipeline", {}).get("top_k", 5))
-        pipeline = self.app_config.get("pipeline", {})
-        self.default_total_candidates = int(
-            pipeline.get("default_total_candidates", DEFAULT_CANDIDATE_GENERATION_PREFERENCES["total_candidates"])
-        )
         self.default_source_ratio = self._configured_source_ratio()
+
     def _configured_source_ratio(self) -> Dict[str, float]:
         pipeline = dict(self.app_config.get("pipeline", {}))
         ratio = pipeline.get("candidate_source_ratio")
@@ -86,19 +81,35 @@ class TaskParser:
         mapping = [
             ("板式筋", "BLADE"), ("板式", "BLADE"), ("blade", "BLADE"),
             ("平板筋", "BLADE"), ("刀型筋", "BLADE"), ("刀型", "BLADE"),
-            ("帽型筋", "HAT"), ("帽型", "HAT"), ("帽形", "HAT"),
-            ("hat", "HAT"), ("槽型筋", "HAT"), ("槽型", "HAT"),
+            ("帽型筋", "HAT"), ("帽形筋", "HAT"), ("帽型", "HAT"), ("帽形", "HAT"),
+            ("帽加筋", "HAT"), ("帽筋", "HAT"), ("hat", "HAT"), ("hat型", "HAT"),
+            ("槽型筋", "HAT"), ("槽型", "HAT"),
             ("L型角材", "L"), ("L 型角材", "L"), ("角材", "L"),
             ("角型筋", "L"), ("角型", "L"), ("l型", "L"),
+            ("l stiffener", "L"), ("l-stiffener", "L"),
             ("T型筋", "T"), ("T 型筋", "T"), ("T型", "T"),
             ("T 型", "T"), ("T形筋", "T"), ("T形", "T"),
             ("t型", "T"), ("t 型", "T"),
+            ("t stiffener", "T"), ("t-stiffener", "T"),
         ]
         lowered = text.lower()
         for keyword, stype in mapping:
             if keyword.lower() in lowered:
                 return stype
+        if re.search(r"帽\s*(?:型|形|式|状)?\s*(?:加筋|筋条|筋|壁板|方案)", text, flags=re.IGNORECASE):
+            return "HAT"
         return "T"
+
+    def _stiffener_type_was_specified(self, text: str) -> bool:
+        lowered = text.lower()
+        compact = re.sub(r"\s+", "", lowered)
+        keywords = [
+            "板式", "刀型", "blade", "帽型", "帽形", "帽加筋", "帽筋", "hat", "hat型",
+            "槽型", "角材", "角型", "t型", "t形", "l型", "l形",
+        ]
+        if any(keyword in compact for keyword in keywords):
+            return True
+        return bool(re.search(r"帽\s*(?:型|形|式|状)?\s*(?:加筋|筋条|筋|壁板|方案)", text, flags=re.IGNORECASE))
 
     def _extract_application(self, text: str) -> str:
         if "尾翼" in text:
@@ -232,6 +243,7 @@ class TaskParser:
             r"(?:生成|给出|提供|输出)\s*([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
             r"([1-9][0-9]?)\s*(?:个)?候选",
             r"(?:候选(?:数量)?|样本(?:数量)?)\D{0,6}([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
+            r"(?:generate|create|produce)\s*([1-9][0-9]?)\s*(?:candidates|designs|samples)?",
         ]
 
     def _top_k_patterns(self) -> list[str]:
@@ -242,24 +254,32 @@ class TaskParser:
             r"(?:初筛|筛选|代理模型初筛)\D{0,8}(?:Top[- ]?|TOP[- ]?|top[- ]?)\s*([1-9][0-9]?)",
             r"(?:初筛|筛选|代理模型初筛)\s*([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
             r"(?:筛)\s*([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
+            r"(?:screen|select)\s*(?:top[- ]?)?\s*([1-9][0-9]?)",
+            r"(?:top[- ]?k|top)\D{0,8}([1-9][0-9]?)",
         ]
 
     def _pattern_was_specified(self, patterns: list[str], text: str) -> bool:
         return any(re.search(pattern, text, flags=re.IGNORECASE) for pattern in patterns)
+
+    def _match_is_screening_context(self, text: str, match: re.Match[str]) -> bool:
+        prefix = text[max(0, match.start() - 12): match.start()]
+        return any(token in prefix for token in ["初筛", "筛选", "保留", "Top", "top", "TOP"])
 
     def _extract_top_k_candidates(self, text: str) -> int:
         for pattern in self._top_k_patterns():
             match = re.search(pattern, text, flags=re.IGNORECASE)
             if match:
                 return int(max(1, min(float(match.group(1)), 30.0)))
-        return self.default_top_k
+        raise ValueError("任务缺少初筛保留数量，请在自然语言需求中明确指定。")
 
     def _extract_total_candidates(self, text: str) -> int:
         for pattern in self._total_candidate_patterns():
             match = re.search(pattern, text, flags=re.IGNORECASE)
             if match:
+                if self._match_is_screening_context(text, match):
+                    continue
                 return int(max(1, min(float(match.group(1)), 60.0)))
-        return max(1, DEFAULT_CANDIDATE_GENERATION_PREFERENCES["total_candidates"] if self.default_total_candidates <= 0 else self.default_total_candidates)
+        raise ValueError("任务缺少候选池总数，请在自然语言需求中明确指定。")
 
     def _extract_candidate_generation_preferences(self, text: str) -> Dict[str, Any]:
         return {
@@ -335,9 +355,7 @@ class TaskParser:
             facts["explicit_fields"].append("material_system")
 
         stiffener_type = self._extract_stiffener_type(text)
-        if any(keyword.lower() in text.lower() for keyword in TYPE_DISPLAY_NAMES.values()) or any(
-            keyword in text for keyword in ["板式", "刀型", "帽型", "帽形", "槽型", "角材", "角型", "T型", "T 型", "T形", "L型", "L 型"]
-        ):
+        if any(keyword.lower() in text.lower() for keyword in TYPE_DISPLAY_NAMES.values()) or self._stiffener_type_was_specified(text):
             facts["stiffener_type"] = stiffener_type
             facts["explicit_fields"].append("stiffener_type")
 
@@ -399,14 +417,14 @@ class TaskParser:
         normalized.setdefault("screening_preferences", {})
 
         normalized["candidate_generation_preferences"]["total_candidates"] = int(
-            hints.get("candidate_generation_preferences", {}).get("total_candidates", self.default_total_candidates)
+            hints["candidate_generation_preferences"]["total_candidates"]
         )
         normalized["candidate_generation_preferences"]["source_allocation_mode"] = "ratio"
         normalized["candidate_generation_preferences"]["source_ratio"] = dict(
             hints.get("candidate_generation_preferences", {}).get("source_ratio", self.default_source_ratio)
         )
         normalized["screening_preferences"]["top_k_candidates"] = int(
-            hints.get("screening_preferences", {}).get("top_k_candidates", self.default_top_k)
+            hints["screening_preferences"]["top_k_candidates"]
         )
 
         user_facts = dict(hints.get("user_input_facts", {"explicit_fields": []}))

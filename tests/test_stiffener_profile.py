@@ -36,6 +36,7 @@ class TestStiffenerTypeValidation:
     def test_validate_chinese(self):
         assert validate_stiffener_type("T型") == "T"
         assert validate_stiffener_type("帽型") == "HAT"
+        assert validate_stiffener_type("帽加筋") == "HAT"
         assert validate_stiffener_type("板式") == "BLADE"
         assert validate_stiffener_type("角材") == "L"
 

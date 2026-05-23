@@ -41,7 +41,7 @@ class _FakeKnowledge:
 def test_temporary_candidates_do_not_consume_persistent_ids() -> None:
     agent = OrchestratorAgent()
     agent.candidate_gen.llm_backend = None
-    task = agent.parse_instruction("请设计一个T形加筋方案，压缩荷载为1000kN/m")
+    task = agent.parse_instruction("请设计一个T形加筋方案，压缩荷载为1000kN/m，生成 4 个候选，初筛保留 2 个候选")
     next_before = next_candidate_index()
 
     candidates = agent.generate_candidates(task)
@@ -59,7 +59,7 @@ def test_orchestrator_candidate_generation_uses_knowledge_base_guidance() -> Non
     )
     agent.candidate_gen.llm_backend = _FakeLLMBackend(captured)
 
-    task = agent.parse_instruction("请设计一个T形加筋方案，压缩荷载为1000kN/m，剪切180kN/m，边界SSCC")
+    task = agent.parse_instruction("请设计一个T形加筋方案，压缩荷载为1000kN/m，剪切180kN/m，边界SSCC，生成 4 个候选，初筛保留 2 个候选")
     candidates = agent.generate_candidates(task)
 
     assert candidates
@@ -75,7 +75,7 @@ def test_orchestrator_candidate_generation_without_knowledge_base_still_runs() -
     agent.candidate_gen.knowledge_base = _FakeKnowledge([])
     agent.candidate_gen.llm_backend = _FakeLLMBackend()
 
-    task = agent.parse_instruction("请设计一个T形加筋方案，压缩荷载为1000kN/m")
+    task = agent.parse_instruction("请设计一个T形加筋方案，压缩荷载为1000kN/m，生成 4 个候选，初筛保留 2 个候选")
     candidates = agent.generate_candidates(task)
 
     assert candidates
@@ -88,7 +88,7 @@ def test_orchestrator_candidates_keep_session_ids_before_fem() -> None:
     agent.candidate_gen.knowledge_base = _FakeKnowledge([])
     agent.candidate_gen.llm_backend = _FakeLLMBackend()
 
-    task = agent.parse_instruction("请设计一个T形加筋方案，压缩荷载为1000kN/m")
+    task = agent.parse_instruction("请设计一个T形加筋方案，压缩荷载为1000kN/m，生成 4 个候选，初筛保留 2 个候选")
     candidates = agent.generate_candidates(task)
 
     assert candidates[0]["candidate_id"].startswith("TMP_")

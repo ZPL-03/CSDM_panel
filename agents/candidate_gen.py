@@ -237,17 +237,15 @@ class CandidateGenAgent(BaseAgent):
             "候选方案必须使用 Markdown 表格表达，表格列名必须清晰包含材料、几何参数、铺层比例和推荐理由。"
             "不要输出 case_id、task、abaqus_results、verdict、created_at 等历史字段。"
             f"方案必须为 {type_display} 加筋壁板，线性屈曲场景，与任务中的工况和边界一致。"
-            "用户已给事实只能来自 input 的“用户已给信息”；系统约束用于生成候选，不得写成用户事实。"
+            "用户已给事实只能来自“用户已给信息”；系统约束用于生成候选，不得写成用户事实。"
         )
         knowledge_text = "\n\n".join(knowledge_guidance) if knowledge_guidance else "当前没有可用外部知识库/知识图谱片段，请仅依据任务约束生成。"
         user_prompt = (
-            f"instruction: 请为{type_display}生成 {desired_count} 个可进入代理模型初筛的初始候选方案，"
-            "用自然语言工程回答给出候选方案表和推荐理由。\n\n"
-            "input:\n"
-            "任务类型：批量候选方案生成\n"
-            f"候选数量：{desired_count}\n"
+            "工程任务：批量生成复合材料加筋壁板初始候选方案。\n"
+            f"设计对象：{type_display}\n"
+            f"需要生成的 LLM 来源候选数量：{desired_count}\n"
             f"用户已给信息：\n{chr(10).join(f'- {line}' for line in fact_lines) if fact_lines else '- 用户未显式给出更多设计事实'}\n\n"
-            "当前规范化任务约束：\n"
+            "当前任务约束：\n"
             f"- 设计对象：{task_payload['application']}\n"
             f"- 筋条类型：{type_display}\n"
             f"- 工况：{describe_load_conditions(task_payload['load_conditions'])}\n"
@@ -257,7 +255,7 @@ class CandidateGenAgent(BaseAgent):
             f"可选材料体系：{', '.join(material_options)}。\n"
             f"系统候选字段约束：\n{chr(10).join(f'- {line}' for line in constraint_lines)}\n\n"
             f"外部知识库/知识图谱依据：\n{knowledge_text}\n"
-            "\noutput 要求：\n"
+            "\n回答要求：\n"
             f"1. 候选表给出 {desired_count} 行。\n"
             "2. 表格列使用：编号 | 材料 | 壁板长度(mm) | 壁板宽度(mm) | 蒙皮厚度(mm) | 筋距(mm) | 筋高(mm) | 腹板厚度(mm) | 翼缘宽度(mm) | 翼缘厚度(mm) | 帽顶宽度(mm) | 帽顶厚度(mm) | 铺层 | f0 | f45 | f90 | 推荐理由。\n"
             "3. 对 BLADE、T、L 不需要的几何列可以填“-”，但该筋型必需参数不得缺失。\n"
@@ -470,6 +468,7 @@ class CandidateGenAgent(BaseAgent):
             "rank_score": None,
             "rationale": str(raw.get("rationale", f"{source} 生成候选")),
             "origin_summary": str(raw.get("origin_summary") or ""),
+            "llm_output_excerpt": raw.get("llm_output_excerpt"),
             "screening_summary": None,
             "selection_reason": None,
             "display_name": str(raw.get("display_name") or session_candidate_id),
@@ -515,6 +514,9 @@ class CandidateGenAgent(BaseAgent):
                     raise SchemaValidationError("LLM 自然语言回答中没有可解析的候选表")
                 usable_items = []
                 for raw in items:
+                    if isinstance(raw, dict):
+                        raw = dict(raw)
+                        raw["llm_output_excerpt"] = answer[:2000]
                     merged_raw = self._merge_user_facts_into_raw_candidate(task, raw)
                     if self._llm_raw_candidate_is_usable(task, merged_raw):
                         usable_items.append(merged_raw)
@@ -549,9 +551,7 @@ class CandidateGenAgent(BaseAgent):
     def _resolve_source_targets(self, task: Dict) -> Dict[str, Any]:
         target_total = requested_candidate_pool_size(task)
         if target_total <= 0:
-            target_total = int(
-                self.app_config.get("pipeline", {}).get("default_total_candidates", 10)
-            )
+            raise ValueError("候选池总数必须由任务解析结果明确给出")
 
         preferences = self._task_payload(task).get("candidate_generation_preferences", {})
         ratio = self._sanitize_source_ratio(preferences.get("source_ratio") or self._source_ratio_from_config())
@@ -564,36 +564,112 @@ class CandidateGenAgent(BaseAgent):
             "source_ratio": ratio,
         }
 
+    def _signature_value(self, value: Any, digits: int = 6) -> Any:
+        try:
+            return round(float(value), digits)
+        except (TypeError, ValueError):
+            return str(value or "").strip()
+
+    def _candidate_signature(self, candidate: Dict[str, Any]) -> tuple:
+        geometry = dict(candidate.get("geometry") or {})
+        material = dict(candidate.get("material_system") or {})
+        layup = dict(candidate.get("layup") or {})
+        geometry_signature = tuple(
+            (key, self._signature_value(value, 3))
+            for key, value in sorted(geometry.items())
+            if value is not None
+        )
+        layup_signature = (
+            str(layup.get("skin_layup") or "").strip(),
+            self._signature_value(layup.get("skin_f0"), 6),
+            self._signature_value(layup.get("skin_f45"), 6),
+            self._signature_value(layup.get("skin_f90"), 6),
+        )
+        return (
+            str(candidate.get("stiffener_type") or "T").strip(),
+            str(material.get("material_key") or material.get("name") or "").strip().lower(),
+            geometry_signature,
+            layup_signature,
+        )
+
+    def _add_unique_candidates(
+        self,
+        pool: List[Dict[str, Any]],
+        incoming: List[Dict[str, Any]],
+        seen: set[tuple],
+    ) -> tuple[int, int]:
+        added = 0
+        duplicate = 0
+        for candidate in incoming:
+            signature = self._candidate_signature(candidate)
+            if signature in seen:
+                duplicate += 1
+                continue
+            seen.add(signature)
+            pool.append(candidate)
+            added += 1
+        return added, duplicate
+
+    def _renumber_session_candidates(self, candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        renumbered: List[Dict[str, Any]] = []
+        for index, candidate in enumerate(candidates, start=1):
+            updated = dict(candidate)
+            candidate_id = format_temp_candidate_id(index)
+            updated["candidate_id"] = candidate_id
+            updated["display_name"] = candidate_id
+            updated.pop("persistent_candidate_id", None)
+            renumbered.append(self._finalize_candidate_identity(updated))
+        return renumbered
+
     def run(self, task: Dict) -> List[Dict]:
         candidates: List[Dict] = []
+        seen_signatures: set[tuple] = set()
         next_index = 1
         source_targets = self._resolve_source_targets(task)
 
         llm_candidates = self._llm_candidates(task, next_index, source_targets["llm"])
         valid_llm_candidates = [candidate for candidate in llm_candidates if candidate["rule_check"]["is_valid"]]
-        candidates.extend(valid_llm_candidates)
+        llm_added, llm_duplicates = self._add_unique_candidates(candidates, valid_llm_candidates, seen_signatures)
         next_index += len(llm_candidates)
 
         transfer_candidates = self._case_transfer_candidates(task, next_index, source_targets["case_transfer"])
         valid_transfer_candidates = [candidate for candidate in transfer_candidates if candidate["rule_check"]["is_valid"]]
-        candidates.extend(valid_transfer_candidates)
+        transfer_added, transfer_duplicates = self._add_unique_candidates(
+            candidates,
+            valid_transfer_candidates,
+            seen_signatures,
+        )
         next_index += len(transfer_candidates)
 
-        doe_count = max(source_targets["total"] - len(candidates), 0)
         stype = task_payload_from_request(task).get("stiffener_type", "T")
-        doe_candidates = self.doe_sampler.sample_candidates(
-            task,
-            n_samples=doe_count,
-            start_index=next_index,
-            strict_solver_window=True,
-            stiffener_type=stype,
-            id_factory=format_temp_candidate_id,
-        )
-        candidates.extend(doe_candidates)
-        candidates = [
-            self._finalize_candidate_identity(candidate)
-            for candidate in candidates[: source_targets["total"]]
-        ]
+        doe_candidates: List[Dict[str, Any]] = []
+        doe_added = 0
+        doe_duplicates = 0
+        doe_round = 0
+        while len(candidates) < source_targets["total"] and doe_round < 8:
+            requested = max(source_targets["total"] - len(candidates), source_targets["doe"] if doe_round == 0 else 1)
+            batch = self.doe_sampler.sample_candidates(
+                task,
+                n_samples=requested,
+                start_index=next_index,
+                strict_solver_window=True,
+                stiffener_type=stype,
+                id_factory=format_temp_candidate_id,
+            )
+            next_index += len(batch)
+            doe_candidates.extend(batch)
+            added, duplicate = self._add_unique_candidates(candidates, batch, seen_signatures)
+            doe_added += added
+            doe_duplicates += duplicate
+            if not batch:
+                break
+            doe_round += 1
+        candidates = self._renumber_session_candidates(candidates[: source_targets["total"]])
+        if len(candidates) != source_targets["total"]:
+            raise RuntimeError(f"候选池数量不一致：目标 {source_targets['total']}，实际 {len(candidates)}。")
+        duplicate_total = llm_duplicates + transfer_duplicates + doe_duplicates
+        if duplicate_total:
+            self.emit(f"候选去重过滤 {duplicate_total} 个结构等价方案")
         self.emit(
             "候选生成完成："
             f"目标总数 {source_targets['total']}，"
@@ -602,12 +678,12 @@ class CandidateGenAgent(BaseAgent):
             f"{source_targets['source_ratio']['case_transfer']:g}:"
             f"{source_targets['source_ratio']['doe']:g}，"
             f"初始配额 LLM={source_targets['llm']} / 案例迁移={source_targets['case_transfer']} / DOE={source_targets['doe']}；"
-            f"有效进入候选池 LLM={len(valid_llm_candidates)}，"
-            f"案例迁移={len(valid_transfer_candidates)}，"
-            f"DOE补足={len(doe_candidates)}"
+            f"有效进入候选池 LLM={llm_added}，"
+            f"案例迁移={transfer_added}，"
+            f"DOE补足={doe_added}"
             + (
                 "；案例迁移为 0 表示当前案例库没有满足筋型、工况、边界、材料与通过结论硬条件的可迁移案例"
-                if source_targets["case_transfer"] > 0 and not valid_transfer_candidates
+                if source_targets["case_transfer"] > 0 and transfer_added == 0
                 else ""
             )
         )

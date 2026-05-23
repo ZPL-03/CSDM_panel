@@ -105,6 +105,7 @@
       "type": "string"
     },
     "origin_summary": {"type": ["string", "null"]},
+    "llm_output_excerpt": {"type": ["string", "null"]},
     "screening_summary": {"type": ["string", "null"]},
     "selection_reason": {"type": ["string", "null"]},
     "display_name": {"type": "string", "minLength": 1},

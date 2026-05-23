@@ -61,6 +61,8 @@ class KnowledgeAgent(BaseAgent):
             "rule_check": dict(design.get("rule_check", {})),
             "surrogate_BLF": design.get("surrogate_BLF"),
             "rationale": design.get("rationale", ""),
+            "origin_summary": design.get("origin_summary", ""),
+            "llm_output_excerpt": design.get("llm_output_excerpt"),
         }
 
     def _sanitize_abaqus_results(self, abaqus_results: Dict) -> Dict:

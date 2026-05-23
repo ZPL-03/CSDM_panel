@@ -35,7 +35,7 @@
 - 支持 3 类工况：`axial_compression`、`in_plane_shear`、`compression_shear`
 - 支持 3 类边界：`SSSS`、`CCCC`、`SSCC`
 - 支持 4 种筋条类型：`BLADE`、`T`、`HAT`、`L`，均可走通完整设计流程
-- 候选生成已经按三条路径解耦：`LLM`、`CASE_TRANSFER`、`DOE`，默认来源比例为 `2:1:1`
+- 候选生成已经按三条路径解耦：`LLM`、`CASE_TRANSFER`、`DOE`，默认来源比例为 `2:1:1`；三路候选按材料、几何和铺层签名去重，重复方案不进入候选池并由 DOE 补足
 - 历史案例迁移采用"结构化硬过滤 + Case Memory 向量排序"混合检索；向量库不替代工程约束，也不把历史案例原文直接注入 LLM Prompt
 - `data/cases/` 中当前有 350 个评估档案（T 型 344 个，BLADE/HAT/L 各 2 个）
 - `knowledge/case_library/` 中当前有 41 个正式案例
@@ -81,7 +81,7 @@ REPORT_GEN：工程报告输出
 
 ### 4.3 三条候选生成路径的边界
 
-- `LLM` 路径直接使用外部知识库/知识图谱：`core/domain_knowledge.py` 将任务转换为检索文本，从 `knowledge/external/` 取回知识库片段和知识图谱关系并注入 Prompt；LLM 输出工程自然语言候选表，`CandidateGenAgent` 解析为结构化候选并执行规则检查；未就绪时不注入额外知识片段。
+- `LLM` 路径直接使用外部知识库/知识图谱：`core/domain_knowledge.py` 将任务转换为检索文本，从 `knowledge/external/` 取回知识库片段和知识图谱关系并注入 Prompt；LLM 输出工程自然语言候选表，`CandidateGenAgent` 解析为结构化候选并执行规则检查，同时保留候选行和 LLM 回答片段用于追踪；未就绪时不注入额外知识片段。
 - `CASE_TRANSFER` 路径不走外部知识库/知识图谱：`core/case_retriever.py` 先按筋型、工况、边界、材料和通过结论做结构化硬过滤，再用 `core/case_memory.py` 中的 Case Memory 向量索引辅助相似案例排序；只迁移满足工程约束的历史设计。
 - `DOE` 路径独立存在：`core/doe_sampler.py` 在参数范围内采样，提供补足与探索候选。
 
@@ -182,7 +182,7 @@ python -m pytest tests/test_fem_agent.py tests/test_e2e.py -q
 | `config/material_db.yaml` | 材料数据库 |
 | `config/param_ranges.yaml` | 设计变量范围、铺层模板、规则检查阈值（按筋型分段） |
 
-`pipeline.default_total_candidates` 控制未显式指定候选数量时的默认候选池总数，当前为 10。`pipeline.candidate_source_ratio` 控制初始候选来源比例，当前为：
+候选池总数和初筛保留数量由自然语言需求明确给出，例如“生成 12 个候选，初筛保留 5 个候选”。`pipeline.candidate_source_ratio` 控制初始候选来源比例，当前为：
 
 ```yaml
 candidate_source_ratio:
@@ -191,7 +191,7 @@ candidate_source_ratio:
   doe: 1
 ```
 
-例如候选池目标为 10 时，初始配额为 LLM 5 个、案例迁移 3 个、DOE 2 个；若 LLM 或案例迁移有效候选不足，DOE 负责补足候选池。
+例如候选池目标为 12 时，初始配额为 LLM 6 个、案例迁移 3 个、DOE 3 个；若 LLM 或案例迁移有效候选不足，DOE 负责补足候选池。
 
 ## 9. 常用脚本
 
