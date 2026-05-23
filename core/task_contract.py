@@ -258,6 +258,16 @@ def normalize_candidate_generation_preferences(preferences: Dict[str, Any] | Non
     if sum(normalized_ratio.values()) <= 0.0:
         normalized_ratio = deepcopy(DEFAULT_CANDIDATE_GENERATION_PREFERENCES["source_ratio"])
     normalized["source_ratio"] = normalized_ratio
+    from core.stiffener_profile import resolve_stiffener_type
+    raw_stiffener_types = preferences.get("stiffener_types")
+    if isinstance(raw_stiffener_types, (list, tuple)):
+        stiffener_types: list[str] = []
+        for raw_type in raw_stiffener_types:
+            stype = resolve_stiffener_type(str(raw_type))
+            if stype not in stiffener_types:
+                stiffener_types.append(stype)
+        if stiffener_types:
+            normalized["stiffener_types"] = stiffener_types
     return normalized
 
 

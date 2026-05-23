@@ -65,6 +65,22 @@ def test_task_parser_recognizes_short_hat_stiffener_phrase() -> None:
     assert task_payload["load_conditions"]["Nxy_kN_per_m"] == 200.0
 
 
+def test_task_parser_preserves_multiple_requested_stiffener_types() -> None:
+    parser = TaskParser()
+    task = parser.parse_instruction(
+        "请为机翼下蒙皮壁板设计一个 T 形/帽形/板式加筋方案，压缩 3000 kN/m，"
+        "剪切 500 kN/m，边界 SSCC，生成 12 个候选，初筛保留 10 个候选"
+    )
+    task_payload = task["task"]
+
+    assert task_payload["stiffener_type"] == "T"
+    assert task_payload["candidate_generation_preferences"]["stiffener_types"] == ["T", "HAT", "BLADE"]
+    assert task_payload["user_input_facts"]["stiffener_types"] == ["T", "HAT", "BLADE"]
+    assert "stiffener_types" in task_payload["user_input_facts"]["explicit_fields"]
+    assert task_payload["candidate_generation_preferences"]["total_candidates"] == 12
+    assert task_payload["screening_preferences"]["top_k_candidates"] == 10
+
+
 def test_task_parser_supports_short_screening_phrase() -> None:
     parser = TaskParser()
     task = parser.parse_instruction(

@@ -196,7 +196,7 @@ CSDM_panel/
 - 从 `knowledge/external/` 检索知识库片段与知识图谱关系
 - 外部知识库/知识图谱未就绪时，不注入额外知识片段
 - Prompt 中包含规范化任务约束、用户明确输入事实、工况说明、边界说明、材料选项、检索依据和自然语言候选表约束
-- LLM 输出工程自然语言候选表，`CandidateGenAgent` 从表格解析 `geometry`、`layup`、`material_system` 和 `rationale`，并保存候选行 `origin_summary` 与回答片段 `llm_output_excerpt`
+- LLM 输出工程自然语言候选表，`CandidateGenAgent` 从表格解析 `geometry`、`layup`、`material_system` 和 `rationale`，并保存候选行 `origin_summary` 与回答原文 `llm_output_excerpt`
 - 候选进入下游前必须通过 `RuleChecker`
 - 不输出历史案例字段，也不要求 LLM 直接输出 JSON
 
@@ -225,7 +225,7 @@ case_transfer: 1
 doe: 1
 ```
 
-候选池目标为 12 时，初始配额为 LLM 6 个、案例迁移 3 个、DOE 3 个。配额只决定优先尝试数量；若 LLM 自然语言表格解析失败、规则检查失败，或案例迁移没有足够可迁移样本，DOE 会继续补足总数。
+候选池目标为 12 时，初始配额为 LLM 6 个、案例迁移 3 个、DOE 3 个。若自然语言同时指定 T、HAT、BLADE 等多种筋型，各来源配额会继续按筋型序列拆分。配额只决定优先尝试数量；若 LLM 自然语言表格解析失败、规则检查失败，或案例迁移没有足够可迁移样本，DOE 会继续补足总数。
 
 ## 7. 知识回流
 

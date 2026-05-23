@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from agents.candidate_gen import CandidateGenAgent
 from core.llm_backend import LLMBackend
+from core.stiffener_profile import default_geometry
 
 
 def _build_task() -> dict:
@@ -101,6 +102,22 @@ def test_candidate_gen_parses_natural_language_table_from_llm() -> None:
     assert "Markdown 表格" in captured["system_prompt"]
 
 
+def test_candidate_gen_keeps_complete_llm_answer_text() -> None:
+    agent = CandidateGenAgent()
+
+    class _LongAnswerBackend(_FakeNaturalBackend):
+        def chat(self, system_prompt: str, user_prompt: str, max_tokens_override: int | None = None) -> str:
+            return super().chat(system_prompt, user_prompt, max_tokens_override) + "\n" + ("完整回答追踪" * 260) + "END_MARKER"
+
+    agent.llm_backend = _LongAnswerBackend(count=6)
+    agent.knowledge_base = type("FakeKnowledge", (), {"format_snippets": staticmethod(lambda _task, top_k=5: [])})()
+
+    candidates = agent.run(_build_task())
+
+    assert "END_MARKER" in candidates[0]["llm_output_excerpt"]
+    assert len(candidates[0]["llm_output_excerpt"]) > 2000
+
+
 def test_candidate_gen_respects_total_candidate_target_and_two_one_one_ratio() -> None:
     agent = CandidateGenAgent()
     agent.llm_backend = _FakeNaturalBackend(count=6)
@@ -173,6 +190,59 @@ def test_candidate_gen_respects_total_candidate_target_and_two_one_one_ratio() -
     assert sum(1 for item in candidates if item["source"] == "LLM") == 6
     assert sum(1 for item in candidates if item["source"] == "CASE_TRANSFER") == 3
     assert sum(1 for item in candidates if item["source"] == "DOE") == 3
+
+
+def test_candidate_gen_distributes_doe_candidates_across_requested_stiffener_types() -> None:
+    agent = CandidateGenAgent()
+    agent.llm_backend = None
+    agent.case_retriever = type(
+        "EmptyCaseRetriever",
+        (),
+        {"retrieve_transferable_cases": staticmethod(lambda _task, top_k=5: [])},
+    )()
+
+    def _fake_doe_candidates(
+        task: dict,
+        n_samples: int,
+        start_index: int = 1,
+        stiffener_type: str = "T",
+        **_kwargs,
+    ) -> list[dict]:
+        candidates = []
+        for offset in range(n_samples):
+            geometry = default_geometry(stiffener_type)
+            geometry["panel_length_mm"] += start_index + offset
+            raw = {
+                "geometry": geometry,
+                "layup": {
+                    "skin_layup": "[45/-45/0/90/0/-45/45]s",
+                    "skin_f0": 0.286,
+                    "skin_f45": 0.571,
+                    "skin_f90": 0.143,
+                },
+                "rationale": f"{stiffener_type} doe candidate {offset + 1}",
+            }
+            candidates.append(agent._normalize_candidate(task, raw, start_index + offset, "DOE"))
+        return candidates
+
+    agent.doe_sampler = type("FakeDOE", (), {"sample_candidates": staticmethod(_fake_doe_candidates)})()
+    task = _build_task()
+    task["task"]["candidate_generation_preferences"] = {
+        "total_candidates": 12,
+        "source_allocation_mode": "ratio",
+        "source_ratio": {"llm": 0.0, "case_transfer": 0.0, "doe": 1.0},
+        "stiffener_types": ["T", "HAT", "BLADE"],
+    }
+
+    candidates = agent.run(task)
+
+    assert len(candidates) == 12
+    assert [candidates[index]["candidate_id"] for index in range(12)] == [f"TMP_{index}" for index in range(1, 13)]
+    assert {stype: sum(1 for candidate in candidates if candidate["stiffener_type"] == stype) for stype in ["T", "HAT", "BLADE"]} == {
+        "T": 4,
+        "HAT": 4,
+        "BLADE": 4,
+    }
 
 
 def test_candidate_generation_summary_reports_quota_and_effective_counts() -> None:

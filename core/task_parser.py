@@ -76,8 +76,60 @@ class TaskParser:
         material["is_user_specified"] = False
         return material, False
 
+    def _stiffener_type_patterns(self) -> list[tuple[str, list[str]]]:
+        return [
+            (
+                "BLADE",
+                [
+                    r"板\s*式\s*(?:筋|加筋|筋条|壁板|方案)?",
+                    r"平\s*板\s*筋",
+                    r"刀\s*型\s*(?:筋|加筋|筋条|壁板|方案)?",
+                    r"(?<![A-Za-z0-9])blade(?:\s*stiffener)?(?![A-Za-z0-9])",
+                ],
+            ),
+            (
+                "HAT",
+                [
+                    r"帽\s*(?:型|形|式|状)?\s*(?:加筋|筋条|筋|壁板|方案)?",
+                    r"槽\s*型\s*(?:筋|加筋|筋条|壁板|方案)?",
+                    r"(?<![A-Za-z0-9])hat(?:\s*型|\s*stiffener)?(?![A-Za-z0-9])",
+                ],
+            ),
+            (
+                "L",
+                [
+                    r"角\s*(?:材|型|型筋|形筋)",
+                    r"(?<![A-Za-z0-9])L\s*(?:型|形|型筋|形筋|[-\s]*stiffener)?(?![A-Za-z0-9])",
+                ],
+            ),
+            (
+                "T",
+                [
+                    r"(?<![A-Za-z0-9])T\s*(?:型|形|型筋|形筋|[-\s]*stiffener)?(?![A-Za-z0-9])",
+                ],
+            ),
+        ]
+
+    def _extract_stiffener_types(self, text: str) -> list[str]:
+        matches: list[tuple[int, int, str]] = []
+        for priority, (stype, patterns) in enumerate(self._stiffener_type_patterns()):
+            for pattern in patterns:
+                for match in re.finditer(pattern, text, flags=re.IGNORECASE):
+                    token = match.group(0).strip()
+                    if token:
+                        matches.append((match.start(), priority, stype))
+        matches.sort(key=lambda item: (item[0], item[1]))
+        stiffener_types: list[str] = []
+        for _, _, stype in matches:
+            if stype not in stiffener_types:
+                stiffener_types.append(stype)
+        return stiffener_types
+
     def _extract_stiffener_type(self, text: str) -> str:
         """从用户自然语言中识别筋条类型。"""
+        stiffener_types = self._extract_stiffener_types(text)
+        if stiffener_types:
+            return stiffener_types[0]
         mapping = [
             ("板式筋", "BLADE"), ("板式", "BLADE"), ("blade", "BLADE"),
             ("平板筋", "BLADE"), ("刀型筋", "BLADE"), ("刀型", "BLADE"),
@@ -101,6 +153,8 @@ class TaskParser:
         return "T"
 
     def _stiffener_type_was_specified(self, text: str) -> bool:
+        if self._extract_stiffener_types(text):
+            return True
         lowered = text.lower()
         compact = re.sub(r"\s+", "", lowered)
         keywords = [
@@ -282,11 +336,15 @@ class TaskParser:
         raise ValueError("任务缺少候选池总数，请在自然语言需求中明确指定。")
 
     def _extract_candidate_generation_preferences(self, text: str) -> Dict[str, Any]:
-        return {
+        preferences = {
             "total_candidates": self._extract_total_candidates(text),
             "source_allocation_mode": "ratio",
             "source_ratio": dict(self.default_source_ratio),
         }
+        stiffener_types = self._extract_stiffener_types(text)
+        if stiffener_types:
+            preferences["stiffener_types"] = stiffener_types
+        return preferences
 
     def _extract_user_load_fact(self, text: str) -> Dict[str, Any] | None:
         compact_text = re.sub(r"\s+", "", text)
@@ -358,6 +416,10 @@ class TaskParser:
         if any(keyword.lower() in text.lower() for keyword in TYPE_DISPLAY_NAMES.values()) or self._stiffener_type_was_specified(text):
             facts["stiffener_type"] = stiffener_type
             facts["explicit_fields"].append("stiffener_type")
+            stiffener_types = self._extract_stiffener_types(text)
+            if len(stiffener_types) > 1:
+                facts["stiffener_types"] = stiffener_types
+                facts["explicit_fields"].append("stiffener_types")
 
         candidate_generation: Dict[str, Any] = {}
         if self._pattern_was_specified(self._total_candidate_patterns(), text):

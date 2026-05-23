@@ -108,6 +108,14 @@
             "doe": {"type": "number", "minimum": 0}
           },
           "additionalProperties": false
+        },
+        "stiffener_types": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["BLADE", "T", "HAT", "L"]
+          },
+          "uniqueItems": true
         }
       },
       "additionalProperties": true

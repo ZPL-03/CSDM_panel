@@ -75,7 +75,7 @@ def test_candidate_detail_shows_llm_answer_excerpt() -> None:
         window.candidate_widget.update_candidates([candidate])
         html = window.candidate_widget.detail_browser.toHtml()
 
-        assert "LLM 回答片段" in html
+        assert "LLM 回答原文" in html
         assert "&lt;raw table&gt;" in html
     finally:
         window.close()

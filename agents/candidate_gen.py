@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from copy import deepcopy
 import re
 from typing import Any, Dict, List
 
@@ -122,6 +123,53 @@ class CandidateGenAgent(BaseAgent):
     def _task_payload(self, task: Dict) -> Dict[str, Any]:
         return task_payload_from_request(task)
 
+    def _requested_stiffener_types(self, task: Dict) -> List[str]:
+        task_payload = self._task_payload(task)
+        preferences = dict(task_payload.get("candidate_generation_preferences") or {})
+        raw_types = preferences.get("stiffener_types")
+        stiffener_types: List[str] = []
+        if isinstance(raw_types, (list, tuple)):
+            for raw_type in raw_types:
+                stype = resolve_stiffener_type(str(raw_type))
+                if stype not in stiffener_types:
+                    stiffener_types.append(stype)
+        if not stiffener_types:
+            stiffener_types.append(resolve_stiffener_type(task_payload.get("stiffener_type", "T")))
+        return stiffener_types
+
+    def _task_for_stiffener_type(self, task: Dict, stiffener_type: str) -> Dict:
+        stype = resolve_stiffener_type(stiffener_type)
+        task_record = deepcopy(task)
+        payload = task_payload_from_request(task_record)
+        payload["stiffener_type"] = stype
+        preferences = dict(payload.get("candidate_generation_preferences") or {})
+        preferences["stiffener_types"] = [stype]
+        payload["candidate_generation_preferences"] = preferences
+        user_facts = dict(payload.get("user_input_facts") or {})
+        if user_facts.get("stiffener_type") or user_facts.get("stiffener_types"):
+            user_facts["stiffener_type"] = stype
+            user_facts["stiffener_types"] = [stype]
+        payload["user_input_facts"] = user_facts
+        if isinstance(task_record, dict) and isinstance(task_record.get("task"), dict):
+            task_record["task"] = payload
+            return task_record
+        return payload
+
+    def _allocate_by_stiffener_types(self, total: int, stiffener_types: List[str]) -> Dict[str, int]:
+        types = [resolve_stiffener_type(stype) for stype in stiffener_types]
+        unique_types: List[str] = []
+        for stype in types:
+            if stype not in unique_types:
+                unique_types.append(stype)
+        if not unique_types:
+            unique_types = ["T"]
+        base = int(total) // len(unique_types)
+        remainder = int(total) % len(unique_types)
+        return {
+            stype: base + (1 if index < remainder else 0)
+            for index, stype in enumerate(unique_types)
+        }
+
     def _material_options(self, task: Dict) -> List[Dict[str, Any]]:
         task_payload = self._task_payload(task)
         task_material = dict(task_payload.get("material_system", {}))
@@ -190,8 +238,12 @@ class CandidateGenAgent(BaseAgent):
         material = facts.get("material_system", {})
         if isinstance(material, dict) and material.get("name"):
             lines.append(f"材料：{material['name']}")
+        if isinstance(facts.get("stiffener_types"), list) and facts["stiffener_types"]:
+            labels = [TYPE_DISPLAY_NAMES.get(str(stype), str(stype)) for stype in facts["stiffener_types"]]
+            lines.append(f"候选筋条类型范围：{', '.join(labels)}")
         if facts.get("stiffener_type"):
-            lines.append(f"筋条类型：{facts['stiffener_type']}")
+            stype = str(facts["stiffener_type"])
+            lines.append(f"当前生成筋条类型：{TYPE_DISPLAY_NAMES.get(stype, stype)}")
         design_targets = facts.get("design_targets", {})
         if isinstance(design_targets, dict):
             if design_targets.get("BLF_min") is not None:
@@ -516,7 +568,7 @@ class CandidateGenAgent(BaseAgent):
                 for raw in items:
                     if isinstance(raw, dict):
                         raw = dict(raw)
-                        raw["llm_output_excerpt"] = answer[:2000]
+                        raw["llm_output_excerpt"] = answer
                     merged_raw = self._merge_user_facts_into_raw_candidate(task, raw)
                     if self._llm_raw_candidate_is_usable(task, merged_raw):
                         usable_items.append(merged_raw)
@@ -626,42 +678,60 @@ class CandidateGenAgent(BaseAgent):
         seen_signatures: set[tuple] = set()
         next_index = 1
         source_targets = self._resolve_source_targets(task)
+        stiffener_types = self._requested_stiffener_types(task)
 
-        llm_candidates = self._llm_candidates(task, next_index, source_targets["llm"])
-        valid_llm_candidates = [candidate for candidate in llm_candidates if candidate["rule_check"]["is_valid"]]
-        llm_added, llm_duplicates = self._add_unique_candidates(candidates, valid_llm_candidates, seen_signatures)
-        next_index += len(llm_candidates)
+        llm_candidates: List[Dict[str, Any]] = []
+        llm_added = 0
+        llm_duplicates = 0
+        for stype, desired_count in self._allocate_by_stiffener_types(source_targets["llm"], stiffener_types).items():
+            typed_task = self._task_for_stiffener_type(task, stype)
+            batch = self._llm_candidates(typed_task, next_index, desired_count)
+            next_index += len(batch)
+            llm_candidates.extend(batch)
+            valid_batch = [candidate for candidate in batch if candidate["rule_check"]["is_valid"]]
+            added, duplicate = self._add_unique_candidates(candidates, valid_batch, seen_signatures)
+            llm_added += added
+            llm_duplicates += duplicate
 
-        transfer_candidates = self._case_transfer_candidates(task, next_index, source_targets["case_transfer"])
-        valid_transfer_candidates = [candidate for candidate in transfer_candidates if candidate["rule_check"]["is_valid"]]
-        transfer_added, transfer_duplicates = self._add_unique_candidates(
-            candidates,
-            valid_transfer_candidates,
-            seen_signatures,
-        )
-        next_index += len(transfer_candidates)
+        transfer_candidates: List[Dict[str, Any]] = []
+        transfer_added = 0
+        transfer_duplicates = 0
+        for stype, desired_count in self._allocate_by_stiffener_types(source_targets["case_transfer"], stiffener_types).items():
+            typed_task = self._task_for_stiffener_type(task, stype)
+            batch = self._case_transfer_candidates(typed_task, next_index, desired_count)
+            next_index += len(batch)
+            transfer_candidates.extend(batch)
+            valid_batch = [candidate for candidate in batch if candidate["rule_check"]["is_valid"]]
+            added, duplicate = self._add_unique_candidates(candidates, valid_batch, seen_signatures)
+            transfer_added += added
+            transfer_duplicates += duplicate
 
-        stype = task_payload_from_request(task).get("stiffener_type", "T")
         doe_candidates: List[Dict[str, Any]] = []
         doe_added = 0
         doe_duplicates = 0
         doe_round = 0
         while len(candidates) < source_targets["total"] and doe_round < 8:
-            requested = max(source_targets["total"] - len(candidates), source_targets["doe"] if doe_round == 0 else 1)
-            batch = self.doe_sampler.sample_candidates(
-                task,
-                n_samples=requested,
-                start_index=next_index,
-                strict_solver_window=True,
-                stiffener_type=stype,
-                id_factory=format_temp_candidate_id,
-            )
-            next_index += len(batch)
-            doe_candidates.extend(batch)
-            added, duplicate = self._add_unique_candidates(candidates, batch, seen_signatures)
-            doe_added += added
-            doe_duplicates += duplicate
-            if not batch:
+            requested = source_targets["total"] - len(candidates)
+            batch_total = 0
+            for stype, desired_count in self._allocate_by_stiffener_types(requested, stiffener_types).items():
+                if desired_count <= 0:
+                    continue
+                typed_task = self._task_for_stiffener_type(task, stype)
+                batch = self.doe_sampler.sample_candidates(
+                    typed_task,
+                    n_samples=desired_count,
+                    start_index=next_index,
+                    strict_solver_window=True,
+                    stiffener_type=stype,
+                    id_factory=format_temp_candidate_id,
+                )
+                next_index += len(batch)
+                batch_total += len(batch)
+                doe_candidates.extend(batch)
+                added, duplicate = self._add_unique_candidates(candidates, batch, seen_signatures)
+                doe_added += added
+                doe_duplicates += duplicate
+            if batch_total == 0:
                 break
             doe_round += 1
         candidates = self._renumber_session_candidates(candidates[: source_targets["total"]])
@@ -670,6 +740,7 @@ class CandidateGenAgent(BaseAgent):
         duplicate_total = llm_duplicates + transfer_duplicates + doe_duplicates
         if duplicate_total:
             self.emit(f"候选去重过滤 {duplicate_total} 个结构等价方案")
+        type_summary = " / ".join(TYPE_DISPLAY_NAMES.get(stype, stype) for stype in stiffener_types)
         self.emit(
             "候选生成完成："
             f"目标总数 {source_targets['total']}，"
@@ -677,6 +748,7 @@ class CandidateGenAgent(BaseAgent):
             f"{source_targets['source_ratio']['llm']:g}:"
             f"{source_targets['source_ratio']['case_transfer']:g}:"
             f"{source_targets['source_ratio']['doe']:g}，"
+            f"筋型范围={type_summary}；"
             f"初始配额 LLM={source_targets['llm']} / 案例迁移={source_targets['case_transfer']} / DOE={source_targets['doe']}；"
             f"有效进入候选池 LLM={llm_added}，"
             f"案例迁移={transfer_added}，"

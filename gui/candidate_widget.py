@@ -182,7 +182,7 @@ class CandidateWidget(QWidget):
         llm_excerpt_html = ""
         if candidate.get("source") == "LLM" and llm_excerpt:
             llm_excerpt_html = (
-                "<h4>LLM 回答片段</h4>"
+                "<h4>LLM 回答原文</h4>"
                 f"<p>{escape(llm_excerpt).replace(chr(10), '<br>')}</p>"
             )
 

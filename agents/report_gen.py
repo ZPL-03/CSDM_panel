@@ -12,6 +12,7 @@ from agents.base import BaseAgent
 from core.io_utils import write_text
 from core.llm_backend import LLMBackend, auto_llm_enabled
 from core.paths import RESULTS_DIR
+from core.stiffener_profile import TYPE_DISPLAY_NAMES
 from core.task_contract import describe_boundary_conditions, describe_load_conditions, task_payload_from_request
 
 
@@ -65,6 +66,15 @@ class ReportGenAgent(BaseAgent):
             counts[source] = counts.get(source, 0) + 1
         return counts
 
+    def _stiffener_type_label(self, task_payload: Dict[str, Any]) -> str:
+        preferences = dict(task_payload.get("candidate_generation_preferences") or {})
+        raw_types = preferences.get("stiffener_types")
+        if isinstance(raw_types, list) and raw_types:
+            labels = [TYPE_DISPLAY_NAMES.get(str(stype), str(stype)) for stype in raw_types]
+            return " / ".join(labels)
+        stype = str(task_payload.get("stiffener_type") or "T")
+        return TYPE_DISPLAY_NAMES.get(stype, stype)
+
     def _build_structured_summary(self, task: Dict, results: List[Dict], candidates: List[Dict]) -> Dict:
         task_payload = task_payload_from_request(task)
         design_targets = dict(task_payload.get("design_targets", {}))
@@ -77,7 +87,7 @@ class ReportGenAgent(BaseAgent):
             "application": task_payload["application"],
             "load_conditions": describe_load_conditions(task_payload["load_conditions"]),
             "boundary_conditions": describe_boundary_conditions(task_payload["boundary_conditions"]),
-            "stiffener_type": task_payload.get("stiffener_type"),
+            "stiffener_type": self._stiffener_type_label(task_payload),
             "target_BLF": target_blf,
             "primary_objective": design_targets.get("primary_objective"),
             "candidate_source_ratio": task_payload.get("candidate_generation_preferences", {}).get("source_ratio", {}),
@@ -431,7 +441,7 @@ class ReportGenAgent(BaseAgent):
             "",
             f"- 会话任务编号：`{task.get('task_id') or '-'}`",
             f"- 应用场景：{task_payload['application']}",
-            f"- 筋条类型：{task_payload.get('stiffener_type')}",
+            f"- 筋条类型：{self._stiffener_type_label(task_payload)}",
             f"- 工况：{describe_load_conditions(task_payload['load_conditions'])}",
             f"- 边界条件：{describe_boundary_conditions(task_payload['boundary_conditions'])}",
             f"- BLF 目标：不低于 {task_payload['design_targets']['BLF_min']}",
