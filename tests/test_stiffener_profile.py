@@ -10,6 +10,7 @@ from core.stiffener_profile import (
     REQUIRED_GEOMETRY_PARAMS,
     STIFFENER_TYPES,
     TYPE_DISPLAY_NAMES,
+    build_stiffener_meshes,
     build_stiffener_part_specs,
     default_geometry,
     describe_geometry_text,
@@ -187,6 +188,19 @@ class TestPartSpecs:
         geom = default_geometry("T")
         specs = build_stiffener_part_specs("T", geom, [100.0, 300.0, 500.0])
         assert len(specs) == 9  # 3 positions × 3 parts each
+
+
+class TestRenderMeshes:
+    def test_hat_render_mesh_connects_flange_web_and_cap(self):
+        geom = default_geometry("HAT")
+        meshes = build_stiffener_meshes("HAT", geom, [300.0])
+        by_name = {style["name"]: mesh for mesh, style in meshes}
+
+        assert by_name["flange_L_1"].bounds[2:4] == pytest.approx((280.0, 290.0))
+        assert by_name["web_L_1"].bounds[2:4] == pytest.approx((280.0, 290.0))
+        assert by_name["cap_1"].bounds[2:4] == pytest.approx((290.0, 310.0))
+        assert by_name["web_R_1"].bounds[2:4] == pytest.approx((310.0, 320.0))
+        assert by_name["flange_R_1"].bounds[2:4] == pytest.approx((310.0, 320.0))
 
 
 class TestHatInclineAngle:

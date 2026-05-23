@@ -526,35 +526,36 @@ def build_stiffener_meshes(
         flange_t = max(float(geometry.get("flange_thickness_mm", 2.0)), 0.5)
         cap_w = float(geometry.get("cap_width_mm", 20.0))
         cap_t = max(float(geometry.get("cap_thickness_mm", 2.0)), 0.5)
-        half_diff = (flange_w - cap_w) / 2.0
+        half_flange = flange_w / 2.0
+        half_cap = cap_w / 2.0
         for idx, pos in enumerate(positions, start=1):
             # 左下 flange
             left_flange = pv.Box(bounds=(
                 0.0, panel_length,
-                pos - flange_w / 2.0, pos - cap_w / 2.0,
+                pos - half_flange, pos - half_cap,
                 skin_t, skin_t + flange_t,
             ))
             # 右下 flange
             right_flange = pv.Box(bounds=(
                 0.0, panel_length,
-                pos + cap_w / 2.0, pos + flange_w / 2.0,
+                pos + half_cap, pos + half_flange,
                 skin_t, skin_t + flange_t,
             ))
             # 顶帽
             cap = pv.Box(bounds=(
                 0.0, panel_length,
-                pos - cap_w / 2.0, pos + cap_w / 2.0,
+                pos - half_cap, pos + half_cap,
                 skin_t + flange_t + height, skin_t + flange_t + height + cap_t,
             ))
             # 左斜腹板（用 PolyData 四边形）
             left_web = _hat_web_mesh(
-                panel_length, pos - half_diff / 2.0, pos - cap_w / 2.0,
+                panel_length, pos - half_flange, pos - half_cap,
                 skin_t + flange_t, skin_t + flange_t + height,
             )
             # 右斜腹板
             right_web = _hat_web_mesh(
-                panel_length, pos + cap_w / 2.0, pos + half_diff / 2.0,
-                skin_t + flange_t + height, skin_t + flange_t,
+                panel_length, pos + half_flange, pos + half_cap,
+                skin_t + flange_t, skin_t + flange_t + height,
             )
             meshes.append((left_flange, {"color": "#e3b36a", "smooth_shading": True, "name": f"flange_L_{idx}"}))
             meshes.append((right_flange, {"color": "#e3b36a", "smooth_shading": True, "name": f"flange_R_{idx}"}))

@@ -213,11 +213,6 @@ def rebuild_case_memory_index() -> Dict[str, int]:
     }
 
 
-def rebuild_rag_index() -> Dict[str, int]:
-    """向后兼容旧函数名；实际重建的是案例记忆索引。"""
-    return rebuild_case_memory_index()
-
-
 def maybe_retrain_surrogate() -> Dict | None:
     manager = SurrogateModelManager()
     records = manager.load_training_records()
@@ -226,14 +221,14 @@ def maybe_retrain_surrogate() -> Dict | None:
     return manager.train_from_records(records)
 
 
-def run_migration(rebuild_rag: bool, retrain_surrogate: bool) -> Dict:
+def run_migration(rebuild_case_memory: bool, retrain_surrogate: bool) -> Dict:
     summary = {
         "cases": migrate_cases(),
         "case_library": migrate_case_library(),
         "io": migrate_io_payloads(),
         "abaqus_runs": migrate_run_inputs(),
     }
-    if rebuild_rag:
+    if rebuild_case_memory:
         summary["case_memory"] = rebuild_case_memory_index()
     if retrain_surrogate:
         summary["surrogate"] = maybe_retrain_surrogate()
@@ -243,7 +238,7 @@ def run_migration(rebuild_rag: bool, retrain_surrogate: bool) -> Dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--skip-rag", action="store_true")
+    parser.add_argument("--skip-case-memory", action="store_true")
     parser.add_argument("--case-memory-only", action="store_true", help="仅重建 csdm_case_memory 案例记忆集合")
     parser.add_argument("--retrain-surrogate", action="store_true")
     args = parser.parse_args()
@@ -255,7 +250,7 @@ def main() -> int:
         return 0
 
     summary = run_migration(
-        rebuild_rag=not args.skip_rag,
+        rebuild_case_memory=not args.skip_case_memory,
         retrain_surrogate=args.retrain_surrogate,
     )
     print(json.dumps(summary, ensure_ascii=False, indent=2))
