@@ -3,9 +3,9 @@ backend:
   base_url_env: URL
   api_key_env: API_KEY
   model_env: MODEL_NAME
-  base_url: ""
+  base_url: "https://api.deepseek.com/v1"
   api_key: ""
-  model: ""
+  model: "deepseek-v4-pro"
   temperature: 0.2
   max_tokens: 1800
   timeout_seconds: 180

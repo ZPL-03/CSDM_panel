@@ -137,12 +137,12 @@ conda env create -f environment.yml
 
 ### 6.3 LLM 配置
 
-`config/llm_config.yaml` 当前只保留一个 OpenAI 兼容 LLM 后端。LLM 接口只承担自然语言生成，不要求模型直接输出 JSON。运行配置来自项目根目录 `.env`：
+`config/llm_config.yaml` 当前只保留一个 OpenAI 兼容 LLM 后端，默认接口地址为 `https://api.deepseek.com/v1`，默认模型为 `deepseek-v4-pro`。LLM 接口只承担自然语言生成，不要求模型直接输出 JSON。运行配置优先读取项目根目录 `.env`：
 
 ```text
-URL=OpenAI兼容接口地址
+URL=https://api.deepseek.com/v1
 API_KEY=接口密钥
-MODEL_NAME=模型名称
+MODEL_NAME=deepseek-v4-pro
 ```
 
 当前项目不再保留 Ollama、remote_vllm 或多后端切换逻辑。
