@@ -38,12 +38,35 @@ def test_domain_knowledge_retrieves_knowledge_base_and_graph(tmp_path: Path) -> 
                 "chunk_id": "CHUNK_1",
                 "chunk_fingerprint": "fp1",
                 "record_id": "SRC_1",
+                "source_id": "DOC_1",
                 "retrieval_scope": "main",
                 "title": "Stiffened composite panel buckling",
+                "document_title": "Stiffened composite panel buckling",
+                "doi": "10.1000/panel.1",
+                "source_url": "https://example.com/panel",
+                "year": "2026",
+                "venue": "Composite Structures",
                 "chunk_type": "fulltext",
                 "content_plain": "stiffened composite panel axial compression buckling laminate T stiffener",
                 "content_markdown": "T stiffener panel buckling guidance.",
                 "task_categories": ["stiffened_panel_shell_structure", "buckling_stability"],
+            },
+            {
+                "chunk_id": "CHUNK_2",
+                "chunk_fingerprint": "fp2",
+                "record_id": "SRC_1",
+                "source_id": "DOC_1",
+                "retrieval_scope": "main",
+                "title": "Stiffened composite panel buckling",
+                "document_title": "Stiffened composite panel buckling",
+                "doi": "10.1000/panel.1",
+                "source_url": "https://example.com/panel",
+                "year": "2026",
+                "venue": "Composite Structures",
+                "chunk_type": "fulltext",
+                "content_plain": "stiffened composite panel T stiffener compression postbuckling",
+                "content_markdown": "Second panel buckling guidance from same source.",
+                "task_categories": ["stiffened_panel_shell_structure"],
             }
         ],
     )
@@ -58,6 +81,20 @@ def test_domain_knowledge_retrieves_knowledge_base_and_graph(tmp_path: Path) -> 
                 "target": "Buckling",
                 "relation": "EXPERIENCES",
                 "record_id": "SRC_1",
+                "evidence_document_title": "Stiffened composite panel buckling",
+                "evidence_doi": "10.1000/panel.1",
+                "evidence_source_url": "https://example.com/panel",
+            },
+            {
+                "source_type": "Structure",
+                "source": "Stiffened Panel",
+                "target_type": "FailureMode",
+                "target": "Buckling",
+                "relation": "EXPERIENCES",
+                "record_id": "SRC_1",
+                "evidence_document_title": "Stiffened composite panel buckling",
+                "evidence_doi": "10.1000/panel.1",
+                "evidence_source_url": "https://example.com/panel",
             }
         ],
     )
@@ -73,18 +110,24 @@ def test_domain_knowledge_retrieves_knowledge_base_and_graph(tmp_path: Path) -> 
                 "rag_chunks_path": str(rag_path),
                 "kg_dir": str(kg_dir),
                 "manifest_path": str(manifest_path),
-                "top_k": 1,
-                "kg_top_k": 1,
+                "top_k": 2,
+                "kg_top_k": 2,
                 "max_snippet_chars": 200,
             }
         }
     )
 
-    result = knowledge.retrieve(_task(), top_k=1, kg_top_k=1)
-    snippets = knowledge.format_snippets(_task(), top_k=1)
+    result = knowledge.retrieve(_task(), top_k=2, kg_top_k=2)
+    snippets = knowledge.format_snippets(_task(), top_k=2)
     status = knowledge.status()
+    snippet_text = "\n".join(snippets)
 
-    assert result["chunks"][0]["chunk_id"] == "CHUNK_1"
+    assert {chunk["chunk_id"] for chunk in result["chunks"]} == {"CHUNK_1", "CHUNK_2"}
+    assert all(chunk["source_url"] == "https://example.com/panel" for chunk in result["chunks"])
     assert result["relations"][0]["relation"] == "EXPERIENCES"
     assert "T stiffener panel buckling guidance" in snippets[0]
+    assert "来源 S1" in snippet_text
+    assert snippet_text.count("DOI: 10.1000/panel.1") == 1
+    assert snippet_text.count("https://example.com/panel") == 1
+    assert snippet_text.count("Stiffened Panel(Structure) -[EXPERIENCES]-> Buckling(FailureMode)") == 1
     assert status["rag_chunk_count"] == 1

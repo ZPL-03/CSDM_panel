@@ -198,6 +198,35 @@ def _format_path(items: Any) -> str:
     return str(items or "")
 
 
+def _list_values(value: Any) -> list[str]:
+    if isinstance(value, list):
+        return [str(item).strip() for item in value if str(item).strip()]
+    if isinstance(value, str):
+        return [item.strip() for item in value.split(";") if item.strip()]
+    return []
+
+
+def _normalize_source_key(*values: Any) -> str:
+    for value in values:
+        text = re.sub(r"\s+", " ", str(value or "")).strip().lower()
+        if text:
+            return text
+    return ""
+
+
+def _source_line(label: str, source: dict[str, Any]) -> str:
+    title = str(source.get("title") or source.get("record_id") or label).strip()
+    parts = [f"[{label}] {title}"]
+    pub = " ".join(str(value).strip() for value in [source.get("year"), source.get("venue")] if str(value or "").strip())
+    if pub:
+        parts.append(pub)
+    if source.get("doi"):
+        parts.append(f"DOI: {source.get('doi')}")
+    if source.get("source_url"):
+        parts.append(str(source.get("source_url")))
+    return "；".join(parts)
+
+
 class RagChunkRetriever:
     """基于知识库 JSONL 的轻量关键词检索器。"""
 
@@ -223,16 +252,38 @@ class RagChunkRetriever:
         for chunk in _jsonl_rows(self.chunks_path):
             if str(chunk.get("retrieval_scope") or "main") not in {"main", "mixed"}:
                 continue
-            text = str(chunk.get("content_plain") or chunk.get("content_markdown") or chunk.get("text") or "")
-            title = str(chunk.get("title") or "")
+            text = str(
+                chunk.get("content_search")
+                or chunk.get("content_plain")
+                or chunk.get("content_markdown")
+                or chunk.get("text")
+                or ""
+            )
+            title = str(chunk.get("title") or chunk.get("document_title") or _format_path(chunk.get("title_path")) or "")
+            document_title = str(chunk.get("document_title") or title)
+            section_title = str(chunk.get("section_title") or _format_path(chunk.get("section_path")) or "")
             record_id = str(chunk.get("record_id") or "")
+            source_id = str(chunk.get("source_id") or "")
+            task_categories = _list_values(chunk.get("task_categories"))
+            physics_quantities = _list_values(chunk.get("physics_quantities_mentioned"))
             combined = " ".join(
                 [
                     record_id,
+                    source_id,
                     title,
+                    document_title,
+                    section_title,
+                    str(chunk.get("doi") or ""),
+                    str(chunk.get("year") or ""),
+                    str(chunk.get("venue") or ""),
+                    str(chunk.get("source_url") or ""),
                     str(chunk.get("chunk_type") or ""),
+                    str(chunk.get("source_type") or ""),
                     str(chunk.get("primary_category") or ""),
-                    " ".join(str(item) for item in (chunk.get("task_categories") or [])),
+                    " ".join(task_categories),
+                    str(chunk.get("load_case_tag") or ""),
+                    str(chunk.get("design_platform_scope") or ""),
+                    " ".join(physics_quantities),
                     text,
                 ]
             ).lower()
@@ -244,20 +295,32 @@ class RagChunkRetriever:
                         "chunk_id": chunk.get("chunk_id"),
                         "chunk_fingerprint": chunk.get("chunk_fingerprint"),
                         "record_id": chunk.get("record_id"),
-                        "title": chunk.get("title") or _format_path(chunk.get("title_path")),
+                        "source_id": chunk.get("source_id"),
+                        "title": title,
+                        "document_title": document_title,
+                        "section_title": section_title,
+                        "doi": chunk.get("doi"),
+                        "source_url": chunk.get("source_url"),
+                        "year": chunk.get("year"),
+                        "venue": chunk.get("venue"),
                         "chunk_type": chunk.get("chunk_type"),
                         "source_type": chunk.get("source_type"),
                         "page_start": chunk.get("page_start"),
                         "page_end": chunk.get("page_end"),
                         "section_path": chunk.get("section_path") or [],
                         "title_path": chunk.get("title_path") or [],
+                        "primary_category": chunk.get("primary_category"),
+                        "task_categories": task_categories,
+                        "load_case_tag": chunk.get("load_case_tag"),
+                        "design_platform_scope": chunk.get("design_platform_scope"),
+                        "physics_quantities_mentioned": physics_quantities,
                         "source": "KNOWLEDGE_BASE",
                     },
                     "content_preview": trim_text(chunk.get("content_markdown") or chunk.get("text") or text, self.max_snippet_chars),
-                    "categories": chunk.get("task_categories") or [],
+                    "categories": task_categories,
                     "primary_category": str(chunk.get("primary_category") or ""),
                     "search_text": combined,
-                    "title_text": title.lower(),
+                    "title_text": " ".join([title, document_title, section_title]).lower(),
                     "record_text": record_id.lower(),
                     "token_set": token_set,
                 }
@@ -267,9 +330,7 @@ class RagChunkRetriever:
         self.idf = {token: math.log((total + 1) / (count + 1)) + 1.0 for token, count in doc_freq.items()}
 
     def _category_bonus(self, row: dict[str, Any]) -> float:
-        categories = row.get("categories") or []
-        if isinstance(categories, str):
-            categories = [item for item in categories.split(";") if item]
+        categories = _list_values(row.get("categories"))
         bonus = 0.0
         for category in categories:
             bonus += PREFERRED_CATEGORIES.get(str(category), 0.0)
@@ -363,6 +424,7 @@ class KnowledgeGraphRetriever:
 
         matched_entities = self._matched_entities(query)
         record_set = {str(record_id) for record_id in record_ids if str(record_id).strip()}
+        expanded_terms = [term for term in expand_query_terms(query) if len(term) >= 2]
         results: list[dict[str, Any]] = []
         seen: set[tuple[str, str, str, str]] = set()
 
@@ -377,7 +439,20 @@ class KnowledgeGraphRetriever:
             if target in matched_entities:
                 score += 2.0
             if record_id in record_set:
-                score += 1.0
+                score += 2.0
+            relation_text = " ".join(
+                [
+                    source,
+                    target,
+                    relation_type,
+                    str(relation.get("source_type") or ""),
+                    str(relation.get("target_type") or ""),
+                    str(relation.get("evidence_document_title") or ""),
+                ]
+            ).lower()
+            for term in expanded_terms:
+                if term in relation_text:
+                    score += 1.0
             if score <= 0:
                 continue
 
@@ -444,27 +519,72 @@ class DomainKnowledgeBase:
     def format_snippets(self, task: Dict[str, Any], top_k: int | None = None) -> list[str]:
         payload = self.retrieve(task, top_k=top_k or self.top_k)
         formatted: list[str] = []
+        source_labels: dict[str, str] = {}
+        source_items: dict[str, dict[str, Any]] = {}
+
+        def register_source(item: dict[str, Any], *, evidence: bool = False) -> str:
+            title = item.get("evidence_document_title") if evidence else item.get("document_title") or item.get("title")
+            source_url = item.get("evidence_source_url") if evidence else item.get("source_url")
+            doi = item.get("evidence_doi") if evidence else item.get("doi")
+            key = _normalize_source_key(source_url, doi, title, item.get("source_id"), item.get("record_id"))
+            if not key:
+                return ""
+            label = source_labels.get(key)
+            if label:
+                return label
+            label = f"S{len(source_labels) + 1}"
+            source_labels[key] = label
+            source_items[label] = {
+                "title": title,
+                "year": item.get("year"),
+                "venue": item.get("venue"),
+                "doi": doi,
+                "source_url": source_url,
+                "record_id": item.get("record_id"),
+            }
+            return label
+
         for index, item in enumerate(payload.get("chunks", []), start=1):
             title = item.get("title") or item.get("record_id") or f"资料片段{index}"
-            formatted.append(
-                f"[外部知识库 {index}] {title}\n{item.get('text') or ''}"
-            )
+            source_label = register_source(item)
+            meta_lines = [f"[外部知识库 {index}{f' | 来源 {source_label}' if source_label else ''}] {title}"]
+            if item.get("page_start") not in (None, ""):
+                page_end = item.get("page_end")
+                page_text = str(item.get("page_start")) if page_end in (None, "", item.get("page_start")) else f"{item.get('page_start')}-{page_end}"
+                meta_lines.append(f"页码：{page_text}")
+            formatted.append("\n".join([*meta_lines, str(item.get("text") or "")]))
 
         relations = payload.get("relations", [])
         if relations:
             relation_lines = []
-            for index, relation in enumerate(relations, start=1):
+            relation_keys: set[tuple[str, str, str, str, str]] = set()
+            for relation in relations:
+                key = (
+                    str(relation.get("source_type") or ""),
+                    str(relation.get("source") or ""),
+                    str(relation.get("relation") or ""),
+                    str(relation.get("target_type") or ""),
+                    str(relation.get("target") or ""),
+                )
+                if key in relation_keys:
+                    continue
+                relation_keys.add(key)
+                evidence_label = register_source(relation, evidence=True)
+                evidence_text = f"（依据 {evidence_label}）" if evidence_label else ""
                 relation_lines.append(
-                    "图谱 {idx}: {source}({source_type}) -[{rel}]-> {target}({target_type})".format(
-                        idx=index,
+                    "图谱 {idx}: {source}({source_type}) -[{rel}]-> {target}({target_type}){evidence}".format(
+                        idx=len(relation_lines) + 1,
                         source=relation.get("source"),
                         source_type=relation.get("source_type"),
                         rel=relation.get("relation"),
                         target=relation.get("target"),
                         target_type=relation.get("target_type"),
+                        evidence=evidence_text,
                     )
                 )
             formatted.append("知识图谱关系：\n" + "\n".join(relation_lines))
+        if source_items:
+            formatted.append("来源清单：\n" + "\n".join(_source_line(label, source_items[label]) for label in sorted(source_items, key=lambda item: int(item[1:]))))
         return formatted
 
     def status(self) -> dict[str, Any]:
@@ -489,10 +609,16 @@ class DomainKnowledgeBase:
             ),
             "provenance_dir": manifest.get("provenance_dir"),
             "source_registry_path": manifest.get("source_registry_path"),
+            "source_metadata_path": manifest.get("source_metadata_path"),
             "structured_documents_path": manifest.get("structured_documents_path"),
             "markdown_documents_dir": manifest.get("markdown_documents_dir"),
             "source_registry_count": int(manifest.get("source_registry_count", 0) or 0),
+            "source_metadata_count": int(manifest.get("source_metadata_count", 0) or 0),
             "structured_document_count": int(manifest.get("structured_document_count", 0) or 0),
+            "structured_block_count": int(manifest.get("structured_block_count", 0) or 0),
+            "table_record_count": int(manifest.get("table_record_count", 0) or 0),
+            "figure_record_count": int(manifest.get("figure_record_count", 0) or 0),
+            "formula_record_count": int(manifest.get("formula_record_count", 0) or 0),
             "markdown_document_count": int(manifest.get("markdown_document_count", 0) or 0),
             "updated_at": manifest.get("updated_at"),
         }

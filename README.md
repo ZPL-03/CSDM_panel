@@ -42,7 +42,7 @@
 - `knowledge/chroma_db/` 中当前 `csdm_case_memory` 案例记忆集合有 350 条索引记录
 - `data/abaqus_runs/` 中当前有 350 个样本工件目录
 - `models/surrogate_metrics.json` 当前选中模型为 `mlp`，训练样本数 350，MLP `MAPE = 0.2608`
-- `knowledge/external/` 是外部知识库/知识图谱资产目录：知识库文本块 43651 条，知识图谱实体 1763 个，知识图谱关系 347609 条
+- `knowledge/external/` 是外部知识库/知识图谱资产目录：知识库文本块 51788 条，知识图谱实体 2214 个，知识图谱关系 480899 条
 - 报告导出以已有有限元校核结果为范围，可生成阶段报告；未校核候选保留在待校核状态，不进入有限元结论
 
 ## 4. 系统架构
@@ -145,6 +145,14 @@ API_KEY=接口密钥
 MODEL_NAME=模型名称
 ```
 
+工作站领域模型接口示例：
+
+```text
+URL=https://csllm.ipen03.com/v1
+API_KEY=工作站vLLM密钥
+MODEL_NAME=csllm
+```
+
 ## 7. 快速开始
 
 ### 7.1 环境自检
@@ -222,15 +230,23 @@ candidate_source_ratio:
 ### 11.2 外部知识库/知识图谱
 
 - `knowledge/external/rag/rag_chunks.jsonl`：复合材料知识库文本块
+- `knowledge/external/rag/rag_chunks_index.csv`：复合材料知识库文本块索引
 - `knowledge/external/kg/entities.jsonl`：知识图谱实体
 - `knowledge/external/kg/relations.jsonl`：知识图谱关系
 - `knowledge/external/kg/kg_stats.json`：图谱统计
 - `knowledge/external/provenance/source_registry/`：源登记与来源分类
+- `knowledge/external/provenance/source_registry/source_metadata.jsonl`：源元数据
 - `knowledge/external/provenance/structured_text/documents.jsonl`：结构化文档清单
+- `knowledge/external/provenance/structured_text/blocks.jsonl`：结构化文本块
+- `knowledge/external/provenance/structured_text/blocks_index.csv`：结构化文本块索引
+- `knowledge/external/provenance/structured_text/table_records.jsonl`：表格记录
+- `knowledge/external/provenance/structured_text/figure_records.jsonl`：图片记录
+- `knowledge/external/provenance/structured_text/formula_records.jsonl`：公式记录
+- `knowledge/external/provenance/structured_text/markdown_documents_index.csv`：Markdown 全文索引
 - `knowledge/external/provenance/structured_text/markdown_documents/`：可审计 Markdown 全文
 - `knowledge/external/manifest.json`：知识资产清单
 
-LLM 当前只读取知识库文本块和知识图谱关系；`provenance/` 只用于人工核查检索命中的资料来源和完整上下文。该目录是本项目运行时读取的知识资产，目录已加入 `.gitignore`，避免提交大体量派生产物。
+LLM 当前只读取知识库文本块和知识图谱关系；`provenance/` 只用于人工核查检索命中的资料来源、结构化记录和完整上下文。该目录是本项目运行时读取的知识资产，目录已加入 `.gitignore`，避免提交大体量派生产物。
 
 ## 12. 回归验证
 

@@ -35,7 +35,7 @@ CSDM_panel 是面向复合材料加筋壁板的多智能体设计原型系统，
 - `data/abaqus_runs/` 中当前有 350 个样本工件目录
 - `models/surrogate_metrics.json` 当前选中模型为 `mlp`
 - 当前代理模型训练样本数为 350
-- `knowledge/external/` 中的外部知识库/知识图谱包含知识库文本块 43651 条、知识图谱实体 1763 个、知识图谱关系 347609 条
+- `knowledge/external/` 中的外部知识库/知识图谱包含知识库文本块 51788 条、知识图谱实体 2214 个、知识图谱关系 480899 条
 
 主链路已经贯通，LLM 路径使用外部知识库/知识图谱做检索增强，输出工程自然语言候选表后由系统解析为结构化候选；案例迁移路径使用案例库与案例记忆索引；DOE 路径提供参数空间采样。
 
@@ -128,9 +128,12 @@ CSDM_panel/
   - `knowledge/chroma_db/`：案例记忆集合所在的 Chroma 目录
 - 外部知识库/知识图谱资产
   - `knowledge/external/rag/rag_chunks.jsonl`
+  - `knowledge/external/rag/rag_chunks_index.csv`
   - `knowledge/external/kg/entities.jsonl`
   - `knowledge/external/kg/relations.jsonl`
   - `knowledge/external/kg/kg_stats.json`
+  - `knowledge/external/provenance/source_registry/`
+  - `knowledge/external/provenance/structured_text/`
   - `knowledge/external/manifest.json`
 
 ## 5. 主流程
@@ -249,7 +252,7 @@ doe: 1
 - 知识图谱关系：`knowledge/external/kg/relations.jsonl`
 - 溯源资料：`knowledge/external/provenance/`
 
-LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料不进入运行检索链路，用于核查命中片段对应的源登记、结构化文档清单和 Markdown 全文上下文。
+LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料不进入运行检索链路，用于核查命中片段对应的源登记、结构化文档、结构化文本块、表格、图片、公式记录和 Markdown 全文上下文。
 
 ### 8.2 `core/case_retriever.py`
 

@@ -14,9 +14,18 @@ CSDM_panel 当前保留两类知识能力：
 外部知识库/知识图谱资产包括：
 
 - `knowledge/external/rag/rag_chunks.jsonl`
+- `knowledge/external/rag/rag_chunks_index.csv`
 - `knowledge/external/kg/entities.jsonl`
 - `knowledge/external/kg/relations.jsonl`
 - `knowledge/external/kg/kg_stats.json`
+- `knowledge/external/provenance/source_registry/`
+- `knowledge/external/provenance/source_registry/source_metadata.jsonl`
+- `knowledge/external/provenance/structured_text/documents.jsonl`
+- `knowledge/external/provenance/structured_text/blocks.jsonl`
+- `knowledge/external/provenance/structured_text/table_records.jsonl`
+- `knowledge/external/provenance/structured_text/figure_records.jsonl`
+- `knowledge/external/provenance/structured_text/formula_records.jsonl`
+- `knowledge/external/provenance/structured_text/markdown_documents/`
 - `knowledge/external/manifest.json`
 
 运行时入口为 `core/domain_knowledge.py`。候选生成智能体只在 LLM 路径中注入这些检索结果，CASE_TRANSFER 与 DOE 路径不读取该资产。
