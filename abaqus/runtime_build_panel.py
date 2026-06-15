@@ -367,7 +367,7 @@ def _assemble_l(assembly, model, web_part, flange_part, skin_instance, spec,
 
 def _assemble_hat(assembly, model, web_part, flange_part, cap_part, skin_instance,
                   spec, index, position_mm, display_index, tol):
-    """HAT 帽型筋：左右斜腹板 + 底部翼缘 + 顶部帽顶。"""
+    """HAT 帽型筋：外侧底部连接板 + 左右斜腹板 + 顶部帽顶。"""
     from abaqusConstants import COMPUTED, ON
     import math as _math
     flange_width = spec["flange_width_mm"]
@@ -378,12 +378,11 @@ def _assemble_hat(assembly, model, web_part, flange_part, cap_part, skin_instanc
     panel_length = spec["panel_length_mm"]
     half_flange = flange_width / 2.0
     half_cap = cap_width / 2.0
-    half_diff = half_flange - half_cap
-    if half_diff <= 0:
-        half_diff = 1.0
+    foot_width = half_flange - half_cap
+    if foot_width <= 0:
+        foot_width = 1.0
 
-    incline_len = _math.sqrt(half_diff ** 2 + height ** 2)
-    incline_angle = _math.degrees(_math.atan2(height, half_diff))
+    incline_angle = _math.degrees(_math.atan2(height, foot_width))
 
     # 左斜腹板：从 (pos-half_flange, skin+flange) 延伸到 (pos-half_cap, skin+flange+height)
     web_left_name = "WebL-%02d" % display_index
@@ -409,17 +408,17 @@ def _assemble_hat(assembly, model, web_part, flange_part, cap_part, skin_instanc
     assembly.translate(instanceList=(web_right_name,),
                        vector=(0.0, position_mm + half_flange, skin_t + flange_t))
 
-    # 左底部 flange（宽度 = half_diff，从 pos-half_flange 到 pos-half_cap）
+    # 左外侧底部连接板（从 pos-half_flange-foot_width 到 pos-half_flange）
     flange_left_name = "FlangeL-%02d" % display_index
     assembly.Instance(name=flange_left_name, part=flange_part, dependent=ON)
     assembly.translate(instanceList=(flange_left_name,),
-                       vector=(0.0, position_mm - half_flange, skin_t))
+                       vector=(0.0, position_mm - half_flange - foot_width, skin_t))
 
-    # 右底部 flange（宽度 = half_diff，从 pos+half_cap 到 pos+half_flange）
+    # 右外侧底部连接板（从 pos+half_flange 到 pos+half_flange+foot_width）
     flange_right_name = "FlangeR-%02d" % display_index
     assembly.Instance(name=flange_right_name, part=flange_part, dependent=ON)
     assembly.translate(instanceList=(flange_right_name,),
-                       vector=(0.0, position_mm + half_cap, skin_t))
+                       vector=(0.0, position_mm + half_flange, skin_t))
 
     # 顶部 cap（全宽 = cap_width，居中于 position_mm）
     cap_name = "Cap-%02d" % display_index
@@ -431,7 +430,8 @@ def _assemble_hat(assembly, model, web_part, flange_part, cap_part, skin_instanc
     flange_left_instance = assembly.instances[flange_left_name]
     flange_left_face = flange_left_instance.faces.getByBoundingBox(
         xMin=-tol, xMax=panel_length + tol,
-        yMin=position_mm - half_flange - tol, yMax=position_mm - half_cap + tol,
+        yMin=position_mm - half_flange - foot_width - tol,
+        yMax=position_mm - half_flange + tol,
         zMin=-tol, zMax=skin_t + tol,
     )
     model.Tie(
@@ -445,7 +445,8 @@ def _assemble_hat(assembly, model, web_part, flange_part, cap_part, skin_instanc
     flange_right_instance = assembly.instances[flange_right_name]
     flange_right_face = flange_right_instance.faces.getByBoundingBox(
         xMin=-tol, xMax=panel_length + tol,
-        yMin=position_mm + half_cap - tol, yMax=position_mm + half_flange + tol,
+        yMin=position_mm + half_flange - tol,
+        yMax=position_mm + half_flange + foot_width + tol,
         zMin=-tol, zMax=skin_t + tol,
     )
     model.Tie(
@@ -455,40 +456,40 @@ def _assemble_hat(assembly, model, web_part, flange_part, cap_part, skin_instanc
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
 
-    # Tie: 左 web 底边 → 左 flange 左边（外侧）
+    # Tie: 左 web 底边 → 左外侧连接板内边
     web_left_instance = assembly.instances[web_left_name]
     web_left_bottom = web_left_instance.edges.getByBoundingBox(
         xMin=-tol, xMax=panel_length + tol,
         yMin=position_mm - half_flange - tol, yMax=position_mm - half_flange + tol,
         zMin=skin_t + flange_t - tol, zMax=skin_t + flange_t + tol,
     )
-    flange_left_outer = flange_left_instance.edges.getByBoundingBox(
+    flange_left_web_edge = flange_left_instance.edges.getByBoundingBox(
         xMin=-tol, xMax=panel_length + tol,
         yMin=position_mm - half_flange - tol, yMax=position_mm - half_flange + tol,
         zMin=-tol, zMax=skin_t + tol,
     )
     model.Tie(
         name="Tie_WebL_FlangeL_%02d" % display_index,
-        main=assembly.Surface(name="SurfFlangeLOuter_%02d" % display_index, side1Edges=flange_left_outer),
+        main=assembly.Surface(name="SurfFlangeLWebEdge_%02d" % display_index, side1Edges=flange_left_web_edge),
         secondary=assembly.Surface(name="SurfWebLBottom_%02d" % display_index, side1Edges=web_left_bottom),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
 
-    # Tie: 右 web 底边 → 右 flange 右边（外侧）
+    # Tie: 右 web 底边 → 右外侧连接板内边
     web_right_instance = assembly.instances[web_right_name]
     web_right_bottom = web_right_instance.edges.getByBoundingBox(
         xMin=-tol, xMax=panel_length + tol,
         yMin=position_mm + half_flange - tol, yMax=position_mm + half_flange + tol,
         zMin=skin_t + flange_t - tol, zMax=skin_t + flange_t + tol,
     )
-    flange_right_outer = flange_right_instance.edges.getByBoundingBox(
+    flange_right_web_edge = flange_right_instance.edges.getByBoundingBox(
         xMin=-tol, xMax=panel_length + tol,
         yMin=position_mm + half_flange - tol, yMax=position_mm + half_flange + tol,
         zMin=-tol, zMax=skin_t + tol,
     )
     model.Tie(
         name="Tie_WebR_FlangeR_%02d" % display_index,
-        main=assembly.Surface(name="SurfFlangeROuter_%02d" % display_index, side1Edges=flange_right_outer),
+        main=assembly.Surface(name="SurfFlangeRWebEdge_%02d" % display_index, side1Edges=flange_right_web_edge),
         secondary=assembly.Surface(name="SurfWebRBottom_%02d" % display_index, side1Edges=web_right_bottom),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
@@ -791,7 +792,23 @@ def build_panel(input_json, result_json):
             partition_sketch = model.ConstrainedSketch(name="SkinPartitionSketch", sheetSize=max(panel_length, panel_width) * 2.0)
             partition_y_positions = []
             for position_mm in spec["stiffener_positions_mm"]:
-                for y_value in (position_mm - half_flange_width, position_mm, position_mm + half_flange_width):
+                if stiffener_type == "HAT":
+                    cap_width = spec.get("cap_width_mm", 20.0)
+                    half_cap_width = cap_width / 2.0
+                    foot_width = half_flange_width - half_cap_width
+                    if foot_width <= 0:
+                        foot_width = 1.0
+                    y_values = (
+                        position_mm - half_flange_width - foot_width,
+                        position_mm - half_flange_width,
+                        position_mm - half_cap_width,
+                        position_mm + half_cap_width,
+                        position_mm + half_flange_width,
+                        position_mm + half_flange_width + foot_width,
+                    )
+                else:
+                    y_values = (position_mm - half_flange_width, position_mm, position_mm + half_flange_width)
+                for y_value in y_values:
                     if 0.0 <= y_value <= panel_width:
                         partition_y_positions.append(round(y_value, 6))
             for y_value in sorted(set(partition_y_positions)):
@@ -802,10 +819,10 @@ def build_panel(input_json, result_json):
         web_sketch = model.ConstrainedSketch(name="WebSketch", sheetSize=max(panel_length, stiffener_height) * 2.0)
         if stiffener_type == "HAT":
             cap_width = spec.get("cap_width_mm", 20.0)
-            half_diff = (flange_width - cap_width) / 2.0
-            if half_diff <= 0:
-                half_diff = 1.0
-            incline_len = (half_diff ** 2 + stiffener_height ** 2) ** 0.5
+            foot_width = (flange_width - cap_width) / 2.0
+            if foot_width <= 0:
+                foot_width = 1.0
+            incline_len = (foot_width ** 2 + stiffener_height ** 2) ** 0.5
             web_sketch.rectangle(point1=(0.0, 0.0), point2=(panel_length, incline_len))
         else:
             web_sketch.rectangle(point1=(0.0, 0.0), point2=(panel_length, stiffener_height))
@@ -818,10 +835,10 @@ def build_panel(input_json, result_json):
         if stiffener_type != "BLADE":
             if stiffener_type == "HAT":
                 cap_width = spec.get("cap_width_mm", 20.0)
-                half_diff = (flange_width - cap_width) / 2.0
-                if half_diff <= 0:
-                    half_diff = 1.0
-                flange_half_width = half_diff
+                foot_width = (flange_width - cap_width) / 2.0
+                if foot_width <= 0:
+                    foot_width = 1.0
+                flange_half_width = foot_width
             elif stiffener_type == "L":
                 flange_half_width = flange_width  # L 型单侧翼缘全宽
             else:

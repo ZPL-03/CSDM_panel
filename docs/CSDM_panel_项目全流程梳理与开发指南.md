@@ -241,6 +241,8 @@ doe: 1
 
 知识回流只写入案例侧资产，不反写 `knowledge/external/` 的外部知识库/知识图谱。
 
+HAT 型筋的底部连接板位于左右斜腹板外侧；`flange_width_mm` 表示左右腹板底边间距，外侧连接板宽度由 `flange_width_mm` 与 `cap_width_mm` 的差值派生。
+
 ## 8. 知识检索与案例检索边界
 
 ### 8.1 `core/domain_knowledge.py`

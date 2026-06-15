@@ -24,7 +24,7 @@
 | --- | --- | --- |
 | `BLADE` | 板式筋 | panel_length_mm, panel_width_mm, skin_thickness_mm, pitch_mm, stiffener_height_mm, web_thickness_mm |
 | `T` | T 型筋 | 上述 + flange_width_mm, flange_thickness_mm |
-| `HAT` | 帽型筋 | T 型参数 + cap_width_mm, cap_thickness_mm |
+| `HAT` | 帽型筋 | T 型参数 + cap_width_mm, cap_thickness_mm；底部连接板位于左右腹板外侧 |
 | `L` | L 型角材 | 同 T 型（单侧翼缘装配） |
 
 类型定义、参数管理和几何验证集中于 `core/stiffener_profile.py`，作为全仓库关于筋型的单点真理模块。
@@ -90,8 +90,8 @@ REPORT_GEN：工程报告输出
 - `core/stiffener_profile.py`：单点真理模块，定义四种筋型的参数集、默认值、范围、部件规格和 3D 可视化网格
 - 任务解析阶段：从用户自然语言中提取筋型关键词（如"帽型"→`HAT`、"板式"→`BLADE`），并锁定到任务契约中
 - 候选生成阶段：DOE 采样按筋型选择参数维度（BLADE 为 6 维、T/L 为 8 维、HAT 为 10 维），规则检查按筋型验证必需参数
-- ABAQUS 建模阶段：按筋型调用对应的装配函数（`_assemble_blade` / `_assemble_t` / `_assemble_hat` / `_assemble_l`），HAT 型自动计算斜腹板角度与长度
-- 3D 可视化阶段：按筋型生成对应的渲染网格（T/L 用 Box 基元、BLADE 无翼缘、HAT 用 PolyData 斜腹板面片）
+- ABAQUS 建模阶段：按筋型调用对应的装配函数（`_assemble_blade` / `_assemble_t` / `_assemble_hat` / `_assemble_l`），HAT 型自动计算斜腹板角度与长度，左右底部连接板位于腹板外侧
+- 3D 可视化阶段：按筋型生成对应的渲染网格（T/L 用 Box 基元、BLADE 无翼缘、HAT 用 PolyData 斜腹板面片和外侧底部连接板）
 
 ### 4.5 对话式 GUI
 

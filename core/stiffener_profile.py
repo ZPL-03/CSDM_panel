@@ -274,10 +274,10 @@ def solver_safe_window_keys(stype: str) -> Dict[str, tuple]:
 
 def hat_incline_angle_deg(flange_width: float, cap_width: float, stiffener_height: float) -> float:
     """计算 HAT 型腹板倾斜角度（度）。"""
-    half_diff = (flange_width - cap_width) / 2.0
-    if half_diff <= 0 or stiffener_height <= 0:
+    web_run = (flange_width - cap_width) / 2.0
+    if web_run <= 0 or stiffener_height <= 0:
         return 0.0
-    return math.degrees(math.atan(stiffener_height / half_diff))
+    return math.degrees(math.atan(stiffener_height / web_run))
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -393,9 +393,13 @@ def build_stiffener_part_specs(
         flange_t = float(geometry.get("flange_thickness_mm", 2.0))
         cap_w = float(geometry.get("cap_width_mm", 20.0))
         cap_t = float(geometry.get("cap_thickness_mm", 2.0))
-        half_diff = (flange_w - cap_w) / 2.0
-        incline_length = math.sqrt(half_diff ** 2 + height ** 2)
-        incline_angle = math.degrees(math.atan2(height, half_diff)) if half_diff > 0 else 90.0
+        half_bottom = flange_w / 2.0
+        half_cap = cap_w / 2.0
+        foot_w = half_bottom - half_cap
+        if foot_w <= 0:
+            foot_w = 1.0
+        incline_length = math.sqrt(foot_w ** 2 + height ** 2)
+        incline_angle = math.degrees(math.atan2(height, foot_w))
 
         for pos in positions:
             specs.append({
@@ -405,7 +409,7 @@ def build_stiffener_part_specs(
                 "thickness_mm": web_t,
                 "section_name": "WebSection",
                 "rotation_degrees": 90.0 - incline_angle,
-                "y_offset_mm": pos - half_diff / 2.0,
+                "y_offset_mm": pos - (half_bottom + half_cap) / 2.0,
                 "z_offset_mm": skin_t + flange_t + height / 2.0,
             })
             specs.append({
@@ -415,7 +419,7 @@ def build_stiffener_part_specs(
                 "thickness_mm": web_t,
                 "section_name": "WebSection",
                 "rotation_degrees": -(90.0 - incline_angle),
-                "y_offset_mm": pos + half_diff / 2.0,
+                "y_offset_mm": pos + (half_bottom + half_cap) / 2.0,
                 "z_offset_mm": skin_t + flange_t + height / 2.0,
             })
             specs.append({
@@ -428,10 +432,13 @@ def build_stiffener_part_specs(
                 "y_offset_mm": pos,
                 "z_offset_mm": skin_t + flange_t + height,
             })
-            for side, y_off in [("left", pos - flange_w / 2.0), ("right", pos + flange_w / 2.0)]:
+            for side, y_off in [
+                ("left", pos - half_bottom - foot_w),
+                ("right", pos + half_bottom),
+            ]:
                 specs.append({
                     "part_type": "flange_half",
-                    "width_mm": half_diff,
+                    "width_mm": foot_w,
                     "height_mm": 0.0,
                     "thickness_mm": flange_t,
                     "section_name": "FlangeSection",
@@ -529,17 +536,20 @@ def build_stiffener_meshes(
         cap_t = max(float(geometry.get("cap_thickness_mm", 2.0)), 0.5)
         half_flange = flange_w / 2.0
         half_cap = cap_w / 2.0
+        foot_w = half_flange - half_cap
+        if foot_w <= 0:
+            foot_w = 1.0
         for idx, pos in enumerate(positions, start=1):
-            # 左下 flange
+            # 左外侧底部连接板
             left_flange = pv.Box(bounds=(
                 0.0, panel_length,
-                pos - half_flange, pos - half_cap,
+                pos - half_flange - foot_w, pos - half_flange,
                 skin_t, skin_t + flange_t,
             ))
-            # 右下 flange
+            # 右外侧底部连接板
             right_flange = pv.Box(bounds=(
                 0.0, panel_length,
-                pos + half_cap, pos + half_flange,
+                pos + half_flange, pos + half_flange + foot_w,
                 skin_t, skin_t + flange_t,
             ))
             # 顶帽

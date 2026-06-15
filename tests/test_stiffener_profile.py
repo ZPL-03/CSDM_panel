@@ -179,6 +179,11 @@ class TestPartSpecs:
         assert "web_right" in types
         assert "cap" in types
         assert "flange_half" in types
+        flanges = {s["side"]: s for s in specs if s["part_type"] == "flange_half"}
+        assert flanges["left"]["y_offset_mm"] == pytest.approx(270.0)
+        assert flanges["left"]["width_mm"] == pytest.approx(10.0)
+        assert flanges["right"]["y_offset_mm"] == pytest.approx(320.0)
+        assert flanges["right"]["width_mm"] == pytest.approx(10.0)
 
     def test_l_part_specs(self):
         geom = default_geometry("L")
@@ -197,11 +202,11 @@ class TestRenderMeshes:
         meshes = build_stiffener_meshes("HAT", geom, [300.0])
         by_name = {style["name"]: mesh for mesh, style in meshes}
 
-        assert by_name["flange_L_1"].bounds[2:4] == pytest.approx((280.0, 290.0))
+        assert by_name["flange_L_1"].bounds[2:4] == pytest.approx((270.0, 280.0))
         assert by_name["web_L_1"].bounds[2:4] == pytest.approx((280.0, 290.0))
         assert by_name["cap_1"].bounds[2:4] == pytest.approx((290.0, 310.0))
         assert by_name["web_R_1"].bounds[2:4] == pytest.approx((310.0, 320.0))
-        assert by_name["flange_R_1"].bounds[2:4] == pytest.approx((310.0, 320.0))
+        assert by_name["flange_R_1"].bounds[2:4] == pytest.approx((320.0, 330.0))
 
 
 class TestHatInclineAngle:

@@ -31,7 +31,7 @@ T:
     min: 1.0
     max: 3.2
 
-# HAT（帽型筋）—— 底部翼缘 + 顶部帽顶
+# HAT（帽型筋）—— 外侧底部连接板 + 顶部帽顶
 HAT:
   flange_width_mm:
     min: 24
