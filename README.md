@@ -125,7 +125,7 @@ CSDM_panel/
 ### 6.1 运行环境
 
 - Windows 11
-- Python 3.9
+- Python 3.10 及以上版本
 - 可使用 Conda 或等价 Python 环境安装依赖
 - ABAQUS 2023
 

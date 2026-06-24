@@ -49,7 +49,7 @@ python scripts/check_env.py
 
 当前 `environment.yml` 约定：
 
-- Python 3.9
+- Python 3.10 及以上版本
 - PyQt6
 - jinja2
 - PyYAML
