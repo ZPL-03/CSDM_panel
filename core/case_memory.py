@@ -174,6 +174,8 @@ class CaseMemoryIndex:
         query_where = {"kind": "case"}
         if where:
             query_where.update(where)
+        if len(query_where) > 1:
+            query_where = {"$and": [{key: value} for key, value in query_where.items()]}
         matches = self.engine.query_text(query_text, top_k=top_k, where=query_where)
         hits: List[CaseMemoryHit] = []
         for item in matches:

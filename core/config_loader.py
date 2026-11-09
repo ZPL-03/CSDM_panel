@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from functools import lru_cache
+import os
 from pathlib import Path
 from typing import Any, Dict
 
@@ -23,7 +24,11 @@ def _load_yaml(path: Path) -> Dict[str, Any]:
 
 @lru_cache(maxsize=None)
 def load_app_config() -> Dict[str, Any]:
-    return _load_yaml(CONFIG_DIR / "app_config.yaml")
+    config = _load_yaml(CONFIG_DIR / "app_config.yaml")
+    abaqus_command = os.getenv("ABAQUS_COMMAND", "").strip()
+    if abaqus_command:
+        config["abaqus"]["command"] = abaqus_command
+    return config
 
 
 @lru_cache(maxsize=None)

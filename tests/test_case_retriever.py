@@ -69,3 +69,16 @@ def test_case_memory_document_keeps_engineering_context() -> None:
     assert metadata["case_scope"] == "formal"
     assert metadata["transferable"] == "true"
     assert "目标" in query_text
+
+
+def test_case_memory_combines_chroma_filters() -> None:
+    from core.case_memory import CaseMemoryIndex
+
+    class Engine:
+        def query_text(self, text, top_k, where):
+            assert where == {"$and": [{"kind": "case"}, {"transferable": "true"}]}
+            return []
+
+    index = CaseMemoryIndex()
+    index.engine = Engine()
+    assert index.query(_task(), where={"transferable": "true"}) == []

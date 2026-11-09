@@ -46,6 +46,9 @@ class LLMBackend:
         self.temperature = float(backend.get("temperature", 0.2))
         self.max_tokens = int(backend.get("max_tokens", 1800))
         self.timeout_seconds = int(backend.get("timeout_seconds", 180))
+        self.extra_body = backend.get("extra_body", {})
+        if not isinstance(self.extra_body, dict):
+            raise ValueError("LLM backend.extra_body 必须是对象")
         missing = []
         if not self.base_url:
             missing.append(str(backend.get("base_url_env") or "base_url"))
@@ -78,6 +81,13 @@ class LLMBackend:
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
             ],
+            "extra_body": self.extra_body,
         }
         response = self.client.chat.completions.create(**request_payload)
-        return response.choices[0].message.content or ""
+        choice = response.choices[0]
+        if choice.finish_reason != "stop":
+            raise ValueError(f"LLM 回答未完整结束（finish_reason={choice.finish_reason}），不能用于候选或报告")
+        content = choice.message.content or ""
+        if not content.strip():
+            raise ValueError("LLM 返回空正文，不能用于候选或报告")
+        return content

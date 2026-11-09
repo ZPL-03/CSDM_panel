@@ -5,6 +5,7 @@ from pathlib import Path
 
 from abaqus.job_utils import is_abaqus_available
 from agents.orchestrator import OrchestratorAgent
+from core.config_loader import load_app_config
 from core.paths import ABAQUS_RUNS_DIR, CASES_DIR, CASE_LIBRARY_DIR, IO_DIR, RESULTS_DIR, TASKS_DIR
 
 
@@ -21,7 +22,7 @@ def _restore_report_files(snapshot: dict[Path, bytes | None]) -> None:
 
 
 def test_orchestrator_end_to_end_with_real_abaqus() -> None:
-    assert is_abaqus_available("abaqus"), "当前环境未找到 abaqus 命令，端到端真实有限元测试不能运行"
+    assert is_abaqus_available(load_app_config()["abaqus"]["command"]), "当前环境未找到配置的 Abaqus 命令，端到端真实有限元测试不能运行"
 
     existing_cases = _snapshot_names(CASES_DIR, "CASE_*.json")
     existing_library = _snapshot_names(CASE_LIBRARY_DIR, "CASE_*.json")

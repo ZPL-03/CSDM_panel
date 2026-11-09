@@ -5,8 +5,9 @@ from __future__ import annotations
 from html import escape
 from typing import Iterable
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QHBoxLayout,
+    QHeaderView,
     QLabel,
     QSplitter,
     QTableWidget,
@@ -69,6 +70,10 @@ class CandidateWidget(QWidget):
         self.table.setSelectionMode(QTableWidget.SelectionMode.ExtendedSelection)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.table.itemSelectionChanged.connect(self._refresh_detail)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setMinimumSectionSize(76)
+        self.table.setMinimumHeight(120)
+        self.table.setWordWrap(False)
 
         self.summary_label = QLabel("当前还没有候选方案。")
         self.summary_label.setWordWrap(True)
@@ -76,21 +81,25 @@ class CandidateWidget(QWidget):
         self.detail_browser = QTextBrowser()
         self.preview_widget = InteractivePlotWidget("选中候选方案后，这里会显示可旋转的三维几何视图。")
 
-        right_layout = QVBoxLayout()
-        right_layout.addWidget(self.summary_label)
-        right_layout.addWidget(self.detail_browser, 2)
-        right_layout.addWidget(self.preview_widget, 3)
+        self.detail_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.detail_splitter.setChildrenCollapsible(False)
+        self.detail_splitter.addWidget(self.detail_browser)
+        self.detail_splitter.addWidget(self.preview_widget)
+        self.detail_splitter.setSizes([360, 640])
+        self.detail_splitter.setStretchFactor(0, 2)
+        self.detail_splitter.setStretchFactor(1, 3)
 
-        right_widget = QWidget()
-        right_widget.setLayout(right_layout)
+        self.content_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.content_splitter.setChildrenCollapsible(False)
+        self.content_splitter.addWidget(self.table)
+        self.content_splitter.addWidget(self.detail_splitter)
+        self.content_splitter.setSizes([240, 600])
+        self.content_splitter.setStretchFactor(0, 0)
+        self.content_splitter.setStretchFactor(1, 1)
 
-        splitter = QSplitter()
-        splitter.addWidget(self.table)
-        splitter.addWidget(right_widget)
-        splitter.setSizes([720, 620])
-
-        layout = QHBoxLayout(self)
-        layout.addWidget(splitter)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.summary_label)
+        layout.addWidget(self.content_splitter, 1)
 
     def _result_for_candidate(self, candidate: dict) -> dict | None:
         return self.results_by_session_id.get(candidate.get("candidate_id", ""))
@@ -112,7 +121,7 @@ class CandidateWidget(QWidget):
             display_label = candidate.get("display_name") or candidate.get("candidate_id") or "-"
             values = [
                 display_label,
-                generation_label,
+                {"LLM": "LLM", "CASE_TRANSFER": "案例迁移", "DOE": "DOE"}.get(source, source),
                 _format_number(candidate.get("surrogate_BLF")),
                 _format_number(candidate.get("surrogate_weight")),
                 _format_number(candidate.get("rank_score"), 4),
@@ -128,8 +137,7 @@ class CandidateWidget(QWidget):
 
         summary = " / ".join(f"{key}: {value}" for key, value in sorted(source_counter.items()))
         self.summary_label.setText(
-            f"当前候选方案数：{len(self.candidates)} | 来源构成：{summary or '-'} | "
-            "说明：候选阶段只使用临时编号，只有做过 ABAQUS 校核后才会分配正式 C 编号。"
+            f"候选方案：{len(self.candidates)} | {summary or '-'}"
         )
 
         if self.candidates:

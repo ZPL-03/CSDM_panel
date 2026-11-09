@@ -16,6 +16,7 @@ if str(ROOT) not in sys.path:
 from dotenv import load_dotenv
 
 from core.paths import ensure_project_dirs
+from core.config_loader import load_app_config
 
 load_dotenv(ROOT / ".env")
 
@@ -51,7 +52,8 @@ def main() -> int:
     ensure_project_dirs()
     checks = []
     checks.append(("Python", True, sys.version.split()[0]))
-    checks.append(("ABAQUS", shutil.which("abaqus") is not None, shutil.which("abaqus") or "未找到"))
+    abaqus_command = load_app_config()["abaqus"]["command"]
+    checks.append(("ABAQUS", shutil.which(abaqus_command) is not None, shutil.which(abaqus_command) or "未找到"))
     checks.append(
         (
             "LLM配置",

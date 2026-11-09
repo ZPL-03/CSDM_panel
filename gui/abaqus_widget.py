@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from typing import Iterable
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-    QHBoxLayout,
+    QHeaderView,
     QSplitter,
     QTableWidget,
     QTableWidgetItem,
@@ -29,7 +30,7 @@ def _fmt(value: object, digits: int = 3) -> str:
 class AbaqusWidget(QWidget):
     """展示有限元校核结果与交互式模态视图。"""
 
-    HEADERS = ["候选样本", "正式编号", "状态", "BLF_global", "BLF_local", "重量", "结论", "失效模式"]
+    HEADERS = ["候选样本", "正式编号", "状态", "BLF_global", "BLF_local", "面密度", "结论", "失效模式"]
 
     def __init__(self) -> None:
         super().__init__()
@@ -41,23 +42,32 @@ class AbaqusWidget(QWidget):
         self.table.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
         self.table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.table.itemSelectionChanged.connect(self._refresh_detail)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setMinimumSectionSize(76)
+        self.table.setMinimumHeight(120)
+        self.table.setWordWrap(False)
 
         self.detail_browser = QTextBrowser()
         self.preview_widget = InteractivePlotWidget("完成 ABAQUS 校核后，这里会显示可旋转的模态云图。")
 
-        right_layout = QVBoxLayout()
-        right_layout.addWidget(self.detail_browser, 2)
-        right_layout.addWidget(self.preview_widget, 3)
-        right_widget = QWidget()
-        right_widget.setLayout(right_layout)
+        self.detail_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.detail_splitter.setChildrenCollapsible(False)
+        self.detail_splitter.addWidget(self.detail_browser)
+        self.detail_splitter.addWidget(self.preview_widget)
+        self.detail_splitter.setSizes([360, 640])
+        self.detail_splitter.setStretchFactor(0, 2)
+        self.detail_splitter.setStretchFactor(1, 3)
 
-        splitter = QSplitter()
-        splitter.addWidget(self.table)
-        splitter.addWidget(right_widget)
-        splitter.setSizes([720, 620])
+        self.content_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.content_splitter.setChildrenCollapsible(False)
+        self.content_splitter.addWidget(self.table)
+        self.content_splitter.addWidget(self.detail_splitter)
+        self.content_splitter.setSizes([200, 640])
+        self.content_splitter.setStretchFactor(0, 0)
+        self.content_splitter.setStretchFactor(1, 1)
 
-        layout = QHBoxLayout(self)
-        layout.addWidget(splitter)
+        layout = QVBoxLayout(self)
+        layout.addWidget(self.content_splitter)
 
     def update_results(self, results: Iterable[dict]) -> None:
         self.results = list(results)
@@ -116,7 +126,7 @@ class AbaqusWidget(QWidget):
             f"<b>BLF_global：</b>{_fmt(result.get('BLF_global'))}<br>"
             f"<b>BLF_local：</b>{_fmt(result.get('BLF_local'))}<br>"
             f"<b>重量：</b>{_fmt(result.get('weight_kg_per_m2'))} kg/m^2<br>"
-            f"<b>最大位移：</b>{_fmt(result.get('max_displacement_mm'))} mm<br>"
+            f"<b>模态向量最大幅值：</b>{_fmt(result.get('max_displacement_mm'))}（归一化模态，非实际加载位移）<br>"
             f"<b>失效模式：</b>{result.get('failure_mode', '-')}<br>"
             f"<b>结论：</b>{result.get('verdict', '-')}</p>"
             f"<p><b>工程说明：</b>{result.get('diagnosis_summary', '-')}</p>"

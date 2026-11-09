@@ -45,19 +45,14 @@ class CaseRetriever:
         self.vector_top_k_multiplier = int(case_memory_config.get("vector_top_k_multiplier", 4) or 4)
         self.vector_rank_weight = float(case_memory_config.get("vector_rank_weight", 0.1) or 0.1)
         self._case_memory: CaseMemoryIndex | None = None
-        self._case_memory_failed = False
 
     @property
     def case_memory(self) -> CaseMemoryIndex | None:
-        if not self.use_vector_index or self._case_memory_failed:
+        if not self.use_vector_index:
             return None
         if self._case_memory is not None:
             return self._case_memory
-        try:
-            self._case_memory = CaseMemoryIndex()
-        except Exception:
-            self._case_memory_failed = True
-            return None
+        self._case_memory = CaseMemoryIndex()
         return self._case_memory
 
     def _candidate_paths(self) -> List[Path]:
@@ -178,11 +173,7 @@ class CaseRetriever:
             return {}
         where = {"transferable": "true"} if transferable_only else None
         query_k = max(top_k * max(self.vector_top_k_multiplier, 1), top_k)
-        try:
-            hits = memory.query(task, top_k=query_k, where=where)
-        except Exception:
-            self._case_memory_failed = True
-            return {}
+        hits = memory.query(task, top_k=query_k, where=where)
         rank_map: Dict[str, int] = {}
         for rank, hit in enumerate(hits):
             rank_map.setdefault(hit.case_id, rank)

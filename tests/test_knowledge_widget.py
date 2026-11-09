@@ -49,9 +49,8 @@ def test_knowledge_widget_renders_external_knowledge_status(monkeypatch) -> None
                             "kg_relation_count": 300,
                             "manifest_path": "knowledge/external/manifest.json",
                             "provenance_dir": "knowledge/external/provenance",
-                            "source_registry_count": 11,
-                            "structured_document_count": 12,
-                            "markdown_document_count": 13,
+                            "source_metadata_count": 11,
+                            "retrieval_engine": "SQLite FTS5 BM25",
                             "updated_at": "2026-05-17T16:58:13",
                         }
                     )
@@ -71,9 +70,8 @@ def test_knowledge_widget_renders_external_knowledge_status(monkeypatch) -> None
             assert "42" in html
             assert "105" in html
             assert "300" in html
-            assert "源登记记录数" in html
-            assert "结构化文档数" in html
-            assert "Markdown 全文数" in html
+            assert "来源元数据数" in html
+            assert "SQLite FTS5 BM25" in html
             assert "knowledge/external/provenance" in html
             assert "更新时间" in html
             assert "2026-05-17T16:58:13" in html
@@ -88,3 +86,20 @@ def test_knowledge_widget_renders_external_knowledge_status(monkeypatch) -> None
             metrics_path.unlink(missing_ok=True)
         else:
             metrics_path.write_text(original_metrics, encoding="utf-8")
+
+
+def test_knowledge_widget_reports_case_index_failure(monkeypatch) -> None:
+    app = _app()
+
+    def broken_index():
+        raise RuntimeError("索引读取失败 <collection>")
+
+    monkeypatch.setattr("gui.knowledge_widget.CaseMemoryIndex", broken_index)
+    widget = KnowledgeWidget()
+    try:
+        widget.refresh()
+        assert "不可用：索引读取失败 <collection>" in widget.toPlainText()
+        assert "&lt;collection&gt;" in widget.toHtml()
+    finally:
+        widget.close()
+        app.processEvents()

@@ -1,5 +1,7 @@
 import os
 
+import pytest
+
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PyQt6.QtWidgets import QApplication
@@ -239,4 +241,75 @@ def test_close_event_tolerates_deleted_worker_thread() -> None:
 
         assert window.worker_thread is None
     finally:
+        app.processEvents()
+
+
+def test_workbench_tables_use_full_right_pane_width() -> None:
+    app = _app()
+    window = MainWindow()
+    try:
+        window.resize(1280, 800)
+        window.show()
+        for panel in (window.candidate_widget, window.abaqus_widget):
+            window.tabs.setCurrentWidget(panel)
+            app.processEvents()
+            assert panel.table.width() >= panel.width() - 30
+            assert panel.table.horizontalScrollBar().maximum() == 0
+            assert panel.preview_widget.width() > panel.detail_browser.width()
+        assert window.workspace_splitter.sizes()[1] > 2 * window.workspace_splitter.sizes()[0]
+    finally:
+        window.close()
+        app.processEvents()
+
+
+def test_desktop_entry_opens_normal_window(monkeypatch) -> None:
+    import main
+
+    calls = []
+
+    class Application:
+        def exec(self):
+            return 0
+
+    class Window:
+        def show(self):
+            calls.append("normal")
+
+    monkeypatch.setattr(main, "ensure_project_dirs", lambda: None)
+    monkeypatch.setattr(main, "QApplication", lambda argv: Application())
+    monkeypatch.setattr(main, "MainWindow", Window)
+    assert main.main() == 0
+    assert calls == ["normal"]
+
+
+@pytest.mark.parametrize("size", [(1000, 640), (1280, 800), (1440, 900)])
+def test_sidebar_controls_are_visible_without_scrolling(size) -> None:
+    from PyQt6.QtCore import QPoint
+    from PyQt6.QtWidgets import QPushButton, QScrollArea
+
+    app = _app()
+    window = MainWindow()
+    try:
+        window.resize(*size)
+        window.show()
+        for stage in ("idle", "awaiting_screen_confirmation", "awaiting_report_confirmation"):
+            window.session.stage = stage
+            window._update_overview_cards()
+            window.task_browser.setPlainText("任务数据\n" * 100)
+            window.chat_widget.setPlainText("对话消息\n" * 100)
+            app.processEvents()
+            assert window.width() <= size[0] and window.height() <= size[1]
+            sidebar = window.workspace_splitter.widget(0)
+            assert not sidebar.findChildren(QScrollArea)
+            for button in sidebar.findChildren(QPushButton):
+                top_left = button.mapTo(sidebar, QPoint())
+                assert sidebar.rect().contains(top_left)
+                assert sidebar.rect().contains(top_left + button.rect().bottomRight())
+                assert button.fontMetrics().horizontalAdvance(button.text()) + 14 <= button.width()
+            assert window.task_browser.height() >= 64
+            assert window.chat_widget.height() >= 80
+            assert window.task_browser.verticalScrollBar().maximum() > 0
+            assert window.chat_widget.verticalScrollBar().maximum() > 0
+    finally:
+        window.close()
         app.processEvents()

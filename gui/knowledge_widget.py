@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from html import escape
 
 from PyQt6.QtWidgets import QTextBrowser
 
@@ -22,8 +23,8 @@ class KnowledgeWidget(QTextBrowser):
         knowledge_status = DomainKnowledgeBase().status()
         try:
             case_memory_count = CaseMemoryIndex().engine.count()
-        except Exception:
-            case_memory_count = 0
+        except Exception as exc:
+            case_memory_count = f"不可用：{escape(str(exc))}"
 
         odb_count = 0
         vis_count = 0
@@ -69,9 +70,8 @@ class KnowledgeWidget(QTextBrowser):
                 f"<b>知识库文本块数：</b>{knowledge_status.get('rag_chunk_count', 0)}<br>",
                 f"<b>知识图谱实体数：</b>{knowledge_status.get('kg_entity_count', 0)}<br>",
                 f"<b>知识图谱关系数：</b>{knowledge_status.get('kg_relation_count', 0)}<br>",
-                f"<b>源登记记录数：</b>{knowledge_status.get('source_registry_count', 0)}<br>",
-                f"<b>结构化文档数：</b>{knowledge_status.get('structured_document_count', 0)}<br>",
-                f"<b>Markdown 全文数：</b>{knowledge_status.get('markdown_document_count', 0)}<br>",
+                f"<b>来源元数据数：</b>{knowledge_status.get('source_metadata_count', 0)}<br>",
+                f"<b>检索引擎：</b>{knowledge_status.get('retrieval_engine', '-')}<br>",
                 f"<b>知识清单：</b>{knowledge_status.get('manifest_path') or '-'}<br>",
                 f"<b>溯源资料目录：</b>{knowledge_status.get('provenance_dir') or '-'}<br>",
                 f"<b>更新时间：</b>{knowledge_status.get('updated_at') or '-'}",

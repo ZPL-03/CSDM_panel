@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""ABAQUS 运行时 T 形筋壁板建模脚本，兼容旧版 Python 解释器。"""
+"""Abaqus 运行时复合材料加筋壁板建模脚本，兼容 Python 2.7/3。"""
 
 from __future__ import absolute_import
 
@@ -206,9 +206,9 @@ def _assemble_blade(assembly, model, web_part, skin_instance, spec,
         zMin=-tol, zMax=spec["skin_thickness_mm"] + tol,
     )
     model.Tie(
-        name="Tie_Web_Skin_%02d" % display_index,
-        main=assembly.Surface(name="SurfSkinW_%02d" % display_index, side1Faces=skin_face),
-        secondary=assembly.Surface(name="SurfWebB_%02d" % display_index, side1Edges=web_edge),
+        "Tie_Web_Skin_%02d" % display_index,
+        assembly.Surface(name="SurfSkinW_%02d" % display_index, side1Faces=skin_face),
+        assembly.Surface(name="SurfWebB_%02d" % display_index, side1Edges=web_edge),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
 
@@ -284,21 +284,21 @@ def _assemble_t(assembly, model, web_part, flange_part, skin_instance, spec,
     )
 
     model.Tie(
-        name="Tie_Skin_FlangeL_%02d" % display_index,
-        main=assembly.Surface(name="SurfSkinL_%02d" % display_index, side1Faces=skin_left_face),
-        secondary=assembly.Surface(name="SurfFlangeFaceL_%02d" % display_index, side1Faces=flange_left_face),
+        "Tie_Skin_FlangeL_%02d" % display_index,
+        assembly.Surface(name="SurfSkinL_%02d" % display_index, side1Faces=skin_left_face),
+        assembly.Surface(name="SurfFlangeFaceL_%02d" % display_index, side1Faces=flange_left_face),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
     model.Tie(
-        name="Tie_Skin_FlangeR_%02d" % display_index,
-        main=assembly.Surface(name="SurfSkinR_%02d" % display_index, side1Faces=skin_right_face),
-        secondary=assembly.Surface(name="SurfFlangeFaceR_%02d" % display_index, side1Faces=flange_right_face),
+        "Tie_Skin_FlangeR_%02d" % display_index,
+        assembly.Surface(name="SurfSkinR_%02d" % display_index, side1Faces=skin_right_face),
+        assembly.Surface(name="SurfFlangeFaceR_%02d" % display_index, side1Faces=flange_right_face),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
     model.Tie(
-        name="Tie_Web_Flange_%02d" % display_index,
-        main=assembly.Surface(name="SurfFlangeInner_%02d" % display_index, side1Edges=flange_inner_edges),
-        secondary=assembly.Surface(name="SurfWebBase_%02d" % display_index, side1Edges=web_bottom_edge),
+        "Tie_Web_Flange_%02d" % display_index,
+        assembly.Surface(name="SurfFlangeInner_%02d" % display_index, side1Edges=flange_inner_edges),
+        assembly.Surface(name="SurfWebBase_%02d" % display_index, side1Edges=web_bottom_edge),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
 
@@ -352,15 +352,15 @@ def _assemble_l(assembly, model, web_part, flange_part, skin_instance, spec,
     )
 
     model.Tie(
-        name="Tie_Skin_Flange_%02d" % display_index,
-        main=assembly.Surface(name="SurfSkinF_%02d" % display_index, side1Faces=skin_face),
-        secondary=assembly.Surface(name="SurfFlangeF_%02d" % display_index, side1Faces=flange_face),
+        "Tie_Skin_Flange_%02d" % display_index,
+        assembly.Surface(name="SurfSkinF_%02d" % display_index, side1Faces=skin_face),
+        assembly.Surface(name="SurfFlangeF_%02d" % display_index, side1Faces=flange_face),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
     model.Tie(
-        name="Tie_Web_Flange_%02d" % display_index,
-        main=assembly.Surface(name="SurfFlangeIn_%02d" % display_index, side1Edges=flange_inner),
-        secondary=assembly.Surface(name="SurfWebB_%02d" % display_index, side1Edges=web_bottom_edge),
+        "Tie_Web_Flange_%02d" % display_index,
+        assembly.Surface(name="SurfFlangeIn_%02d" % display_index, side1Edges=flange_inner),
+        assembly.Surface(name="SurfWebB_%02d" % display_index, side1Edges=web_bottom_edge),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
 
@@ -435,9 +435,9 @@ def _assemble_hat(assembly, model, web_part, flange_part, cap_part, skin_instanc
         zMin=-tol, zMax=skin_t + tol,
     )
     model.Tie(
-        name="Tie_Skin_FlangeL_%02d" % display_index,
-        main=assembly.Surface(name="SurfSkinFL_%02d" % display_index, side1Faces=skin_instance.faces),
-        secondary=assembly.Surface(name="SurfFlangeL_%02d" % display_index, side1Faces=flange_left_face),
+        "Tie_Skin_FlangeL_%02d" % display_index,
+        assembly.Surface(name="SurfSkinFL_%02d" % display_index, side1Faces=skin_instance.faces),
+        assembly.Surface(name="SurfFlangeL_%02d" % display_index, side1Faces=flange_left_face),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
 
@@ -450,9 +450,9 @@ def _assemble_hat(assembly, model, web_part, flange_part, cap_part, skin_instanc
         zMin=-tol, zMax=skin_t + tol,
     )
     model.Tie(
-        name="Tie_Skin_FlangeR_%02d" % display_index,
-        main=assembly.Surface(name="SurfSkinFR_%02d" % display_index, side1Faces=skin_instance.faces),
-        secondary=assembly.Surface(name="SurfFlangeR_%02d" % display_index, side1Faces=flange_right_face),
+        "Tie_Skin_FlangeR_%02d" % display_index,
+        assembly.Surface(name="SurfSkinFR_%02d" % display_index, side1Faces=skin_instance.faces),
+        assembly.Surface(name="SurfFlangeR_%02d" % display_index, side1Faces=flange_right_face),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
 
@@ -469,9 +469,9 @@ def _assemble_hat(assembly, model, web_part, flange_part, cap_part, skin_instanc
         zMin=-tol, zMax=skin_t + tol,
     )
     model.Tie(
-        name="Tie_WebL_FlangeL_%02d" % display_index,
-        main=assembly.Surface(name="SurfFlangeLWebEdge_%02d" % display_index, side1Edges=flange_left_web_edge),
-        secondary=assembly.Surface(name="SurfWebLBottom_%02d" % display_index, side1Edges=web_left_bottom),
+        "Tie_WebL_FlangeL_%02d" % display_index,
+        assembly.Surface(name="SurfFlangeLWebEdge_%02d" % display_index, side1Edges=flange_left_web_edge),
+        assembly.Surface(name="SurfWebLBottom_%02d" % display_index, side1Edges=web_left_bottom),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
 
@@ -488,9 +488,9 @@ def _assemble_hat(assembly, model, web_part, flange_part, cap_part, skin_instanc
         zMin=-tol, zMax=skin_t + tol,
     )
     model.Tie(
-        name="Tie_WebR_FlangeR_%02d" % display_index,
-        main=assembly.Surface(name="SurfFlangeRWebEdge_%02d" % display_index, side1Edges=flange_right_web_edge),
-        secondary=assembly.Surface(name="SurfWebRBottom_%02d" % display_index, side1Edges=web_right_bottom),
+        "Tie_WebR_FlangeR_%02d" % display_index,
+        assembly.Surface(name="SurfFlangeRWebEdge_%02d" % display_index, side1Edges=flange_right_web_edge),
+        assembly.Surface(name="SurfWebRBottom_%02d" % display_index, side1Edges=web_right_bottom),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
 
@@ -507,9 +507,9 @@ def _assemble_hat(assembly, model, web_part, flange_part, cap_part, skin_instanc
         zMin=skin_t + flange_t + height - tol, zMax=skin_t + flange_t + height + tol,
     )
     model.Tie(
-        name="Tie_WebL_Cap_%02d" % display_index,
-        main=assembly.Surface(name="SurfCapLEdge_%02d" % display_index, side1Edges=cap_left_edge),
-        secondary=assembly.Surface(name="SurfWebLTop_%02d" % display_index, side1Edges=web_left_top),
+        "Tie_WebL_Cap_%02d" % display_index,
+        assembly.Surface(name="SurfCapLEdge_%02d" % display_index, side1Edges=cap_left_edge),
+        assembly.Surface(name="SurfWebLTop_%02d" % display_index, side1Edges=web_left_top),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
 
@@ -525,9 +525,9 @@ def _assemble_hat(assembly, model, web_part, flange_part, cap_part, skin_instanc
         zMin=skin_t + flange_t + height - tol, zMax=skin_t + flange_t + height + tol,
     )
     model.Tie(
-        name="Tie_WebR_Cap_%02d" % display_index,
-        main=assembly.Surface(name="SurfCapREdge_%02d" % display_index, side1Edges=cap_right_edge),
-        secondary=assembly.Surface(name="SurfWebRTop_%02d" % display_index, side1Edges=web_right_top),
+        "Tie_WebR_Cap_%02d" % display_index,
+        assembly.Surface(name="SurfCapREdge_%02d" % display_index, side1Edges=cap_right_edge),
+        assembly.Surface(name="SurfWebRTop_%02d" % display_index, side1Edges=web_right_top),
         positionToleranceMethod=COMPUTED, adjust=ON, tieRotations=ON, thickness=ON,
     )
 

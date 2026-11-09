@@ -1,27 +1,30 @@
 import shutil
 from pathlib import Path
 
+import pytest
+
 from abaqus.job_utils import is_abaqus_available
 from agents.fem_agent import FEMAgent
 from core.id_utils import format_candidate_id, next_candidate_index
+from core.config_loader import load_app_config
 from core.paths import ABAQUS_RUNS_DIR, IO_DIR
+from core.stiffener_profile import default_geometry
 
 
-def _real_fem_candidate(candidate_id: str) -> dict:
+def _real_fem_candidate(candidate_id: str, stiffener_type: str = "T") -> dict:
     return {
         "candidate_id": candidate_id,
         "display_name": candidate_id,
         "source": "DOE",
-        "stiffener_type": "T",
+        "stiffener_type": stiffener_type,
         "geometry": {
+            **default_geometry(stiffener_type),
             "panel_length_mm": 360,
             "panel_width_mm": 240,
             "skin_thickness_mm": 2.4,
             "pitch_mm": 120,
             "stiffener_height_mm": 24,
             "web_thickness_mm": 2.0,
-            "flange_width_mm": 16,
-            "flange_thickness_mm": 2.0,
         },
         "layup": {
             "skin_layup": "[45/-45/0/90/0/-45/45]s",
@@ -64,8 +67,10 @@ def _cleanup_candidate_artifacts(candidate_id: str) -> None:
     shutil.rmtree(ABAQUS_RUNS_DIR / candidate_id, ignore_errors=True)
 
 
-def test_fem_agent_runs_real_abaqus() -> None:
-    assert is_abaqus_available("abaqus"), "当前环境未找到 abaqus 命令，真实有限元测试不能运行"
+@pytest.mark.parametrize("stiffener_type", ["T", "BLADE", "L", "HAT"])
+def test_fem_agent_runs_real_abaqus(stiffener_type: str) -> None:
+    command = load_app_config()["abaqus"]["command"]
+    assert is_abaqus_available(command), "当前环境未找到配置的 Abaqus 命令，真实有限元测试不能运行"
 
     candidate_id = format_candidate_id(next_candidate_index())
     _cleanup_candidate_artifacts(candidate_id)
@@ -73,7 +78,7 @@ def test_fem_agent_runs_real_abaqus() -> None:
     agent = FEMAgent(
         config={
             "abaqus": {
-                "command": "abaqus",
+                "command": command,
                 "max_retries": 1,
                 "job_timeout_seconds": 900,
                 "poll_interval_seconds": 2,
@@ -82,7 +87,7 @@ def test_fem_agent_runs_real_abaqus() -> None:
     )
 
     try:
-        result = agent.run(_real_fem_candidate(candidate_id))
+        result = agent.run(_real_fem_candidate(candidate_id, stiffener_type))
 
         assert result["status"] == "success"
         assert result["error_type"] is None

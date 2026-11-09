@@ -8,6 +8,7 @@ import numpy as np
 
 from core.config_loader import load_app_config, load_material_db, load_param_ranges
 from core.id_utils import format_candidate_id
+from core.layup import normalize_layup
 from core.rule_checker import RuleChecker
 from core.stiffener_profile import (
     load_param_ranges_for_type,
@@ -72,31 +73,12 @@ class DOESampler:
             result[:, dim] = points
         return result
 
-    def _parse_layup_sequence(self, layup_text: str) -> List[str]:
-        text = (layup_text or "").strip()
-        if not text:
-            return []
-        symmetric = text.endswith("s")
-        if symmetric:
-            text = text[:-1]
-        base = [item.strip() for item in text.strip("[] ").split("/") if item.strip()]
-        return base + list(reversed(base)) if symmetric else base
-
     def _layup_payload(self, rng: np.random.Generator) -> Dict:
         template = self.layup_templates[int(rng.integers(0, len(self.layup_templates)))]
         layup_text = str(template.get("skin_layup", "[45/-45/0/90/0/-45/45]s"))
-        sequence = self._parse_layup_sequence(layup_text)
-        total = max(len(sequence), 1)
-        count_0 = sum(1 for angle in sequence if angle == "0")
-        count_45 = sum(1 for angle in sequence if angle in {"45", "-45"})
-        count_90 = sum(1 for angle in sequence if angle == "90")
         return {
             "template_name": template.get("name", "LAYUP"),
-            "skin_layup": layup_text,
-            "skin_f0": round(count_0 / total, 3),
-            "skin_f45": round(count_45 / total, 3),
-            "skin_f90": round(count_90 / total, 3),
-            "ply_count": total,
+            **normalize_layup(layup_text),
         }
 
     def _estimate_rationale(self, material_name: str, layup_name: str) -> str:

@@ -40,10 +40,7 @@ pipeline:
 
 rag:
   embedding_model: BAAI/bge-m3
-  embedding_cache_dir: models/embedding_cache
   local_files_only: true
-  use_hash_embedding_only: false
-  allow_hash_fallback: true
 
 case_memory:
   collection_name: csdm_case_memory
@@ -54,8 +51,9 @@ case_memory:
 external_knowledge:
   enabled: true
   base_dir: knowledge/external
-  rag_chunks_path: knowledge/external/rag/rag_chunks.jsonl
+  rag_index_path: knowledge/external/rag/retrieval_index.sqlite
   kg_dir: knowledge/external/kg
+  source_metadata_path: knowledge/external/provenance/source_metadata.compact.jsonl.gz
   manifest_path: knowledge/external/manifest.json
   top_k: 5
   kg_top_k: 8

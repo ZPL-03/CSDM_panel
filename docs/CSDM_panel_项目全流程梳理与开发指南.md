@@ -11,7 +11,7 @@ CSDM_panel 是面向复合材料加筋壁板的多智能体设计原型系统，
   -> 结构化任务
   -> 候选设计生成
   -> 代理模型初筛
-  -> ABAQUS 高保真校核
+  -> ABAQUS 线性屈曲校核
   -> 结果归档与知识回流
   -> 报告输出
 ```
@@ -27,7 +27,7 @@ CSDM_panel 是面向复合材料加筋壁板的多智能体设计原型系统，
 
 ## 2. 当前实现状态
 
-截至 2026-05-23，仓库内可直接确认：
+仓库中的运行资产和业务入口如下：
 
 - `data/cases/` 中当前有 350 个评估档案
 - `knowledge/case_library/` 中当前有 41 个正式案例
@@ -35,7 +35,7 @@ CSDM_panel 是面向复合材料加筋壁板的多智能体设计原型系统，
 - `data/abaqus_runs/` 中当前有 350 个样本工件目录
 - `models/surrogate_metrics.json` 当前选中模型为 `mlp`
 - 当前代理模型训练样本数为 350
-- `knowledge/external/` 中的外部知识库/知识图谱包含知识库文本块 51788 条、知识图谱实体 2214 个、知识图谱关系 480899 条
+- `knowledge/external/` 包含 173228 个 RAG 文本块、2219 个实体、250606 条关系和 1931 条来源元数据
 
 主链路已经贯通，LLM 路径使用外部知识库/知识图谱做检索增强，输出工程自然语言候选表后由系统解析为结构化候选；案例迁移路径使用案例库与案例记忆索引；DOE 路径提供参数空间采样。
 
@@ -127,13 +127,11 @@ CSDM_panel/
   - `knowledge/case_library/`：通过样本形成的正式案例库
   - `knowledge/chroma_db/`：案例记忆集合所在的 Chroma 目录
 - 外部知识库/知识图谱资产
-  - `knowledge/external/rag/rag_chunks.jsonl`
-  - `knowledge/external/rag/rag_chunks_index.csv`
+  - `knowledge/external/rag/retrieval_index.sqlite`
   - `knowledge/external/kg/entities.jsonl`
-  - `knowledge/external/kg/relations.jsonl`
+  - `knowledge/external/kg/relations.compact.jsonl.gz`
   - `knowledge/external/kg/kg_stats.json`
-  - `knowledge/external/provenance/source_registry/`
-  - `knowledge/external/provenance/structured_text/`
+  - `knowledge/external/provenance/source_metadata.compact.jsonl.gz`
   - `knowledge/external/manifest.json`
 
 ## 5. 主流程
@@ -197,10 +195,11 @@ CSDM_panel/
 
 - `DomainKnowledgeBase` 将任务转换为检索文本
 - 从 `knowledge/external/` 检索知识库片段与知识图谱关系
-- 外部知识库/知识图谱未就绪时，不注入额外知识片段
+- 启用外部知识但资产不完整时明确报错；显式关闭外部知识时不注入片段
 - Prompt 中包含规范化任务约束、用户明确输入事实、工况说明、边界说明、材料选项、检索依据和自然语言候选表约束
 - LLM 输出工程自然语言候选表，`CandidateGenAgent` 从表格解析 `geometry`、`layup`、`material_system` 和 `rationale`，并保存候选行 `origin_summary` 与回答原文 `llm_output_excerpt`
 - 候选进入下游前必须通过 `RuleChecker`
+- 铺层表达式经 `core/layup.py` 规范化，比例和层数按序列计算；LLM 声明的比例与序列不一致时拒绝候选并反馈具体错误
 - 不输出历史案例字段，也不要求 LLM 直接输出 JSON
 
 ### 6.2 CASE_TRANSFER 路径
@@ -249,12 +248,14 @@ HAT 型筋的底部连接板位于左右斜腹板外侧；`flange_width_mm` 表�
 
 外部知识库/知识图谱入口读取：
 
-- 知识库文本块：`knowledge/external/rag/rag_chunks.jsonl`
+- 完整文本块与全文索引：`knowledge/external/rag/retrieval_index.sqlite`
 - 知识图谱实体：`knowledge/external/kg/entities.jsonl`
-- 知识图谱关系：`knowledge/external/kg/relations.jsonl`
-- 溯源资料：`knowledge/external/provenance/`
+- 知识图谱关系：`knowledge/external/kg/relations.compact.jsonl.gz`
+- 来源元数据：`knowledge/external/provenance/source_metadata.compact.jsonl.gz`
 
-LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料不进入运行检索链路，用于核查命中片段对应的源登记、结构化文档、结构化文本块、表格、图片、公式记录和 Markdown 全文上下文。
+LLM 候选生成使用全文 BM25 与筋型聚焦召回融合后的证据，图谱关系按任务实体和已命中文本块排序。相同内容去重，同一来源最多两个片段；DOI、来源编号和 URL 共同用于引用合并，证据块编号、章节和页码随片段保留。完整解析文档不属于运行资产，SQLite 文本表已保存全部 RAG 内容。启用外部知识但文件缺失或损坏时抛出明确错误。
+
+`scripts/sync_external_knowledge.py --source <dataset/processed目录>` 校验 CS_LLM 导出指纹与最新 RAG 来源指纹，验证全部图谱实体和证据引用后部署。旧资产归档到项目外，项目内只保留清单列出的运行文件。`--verify-only` 对已部署资产执行同样的文件和引用校验。
 
 ### 8.2 `core/case_retriever.py`
 
@@ -265,6 +266,8 @@ LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料�
 - `transfer_candidates(task, top_k=2)`
 
 它的职责是在历史案例中找可迁移设计。结构化硬约束决定能否迁移，向量索引只影响相似案例排序或非迁移场景下的观察召回。
+
+案例记忆使用用户级 Hugging Face 缓存中的 `BAAI/bge-m3`，输出 1024 维归一化文本向量。模型不存在或索引读写失败时明确报错，不以哈希伪向量、内存集合或自动清空索引替代。显式重建入口为 `python scripts/migrate_contracts.py --case-memory-only`。
 
 ### 8.3 `core/rag_engine.py`
 
@@ -371,7 +374,9 @@ LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料�
 
 `task_id` 是可选追溯字段。新回流样本在任务上下文存在时可以写入它，但案例编号、样本编号和案例迁移不依赖该字段。
 
-## 11. GUI 知识库页
+## 11. GUI 工作台
+
+程序以普通窗口启动，依据当前显示器可用区域设置初始尺寸。左侧任务摘要与对话区独立滚动，可拖动调整各自高度；输入及操作按钮固定可见。候选与有限元表格使用右侧工作区整行，下方并列展示详情和三维视图。
 
 `gui/knowledge_widget.py` 展示：
 
@@ -382,7 +387,7 @@ LLM 候选生成只读取知识库文本块和知识图谱关系。溯源资料�
 - 模态可视化数据数
 - 代理模型指标
 - 外部知识库/知识图谱文本块、实体、关系数量
-- 源登记、结构化文档和 Markdown 全文数量
+- 来源元数据数与检索引擎
 - 知识资产清单路径、溯源资料目录和时间信息
 
 ## 12. 常用脚本
@@ -449,6 +454,8 @@ python scripts/migrate_contracts.py --retrain-surrogate
 16. `abaqus/runtime_extract_blf.py`
 
 ## 14. 当前边界说明
+
+有限元模型使用均质正交各向异性壳截面，不逐层离散设计铺层。铺层序列和比例用于候选约束及代理模型特征，不进入当前有限元截面计算，不能把铺层变化效果解释为该模型已验证的结论。线性屈曲分析也不替代缺陷敏感性、材料损伤、非线性承载能力和网格收敛验证。
 
 ### 14.1 案例迁移不是 LLM 检索增强
 

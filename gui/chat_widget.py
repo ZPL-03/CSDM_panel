@@ -1,4 +1,4 @@
-"""Conversation message widget."""
+"""对话消息展示组件。"""
 
 from __future__ import annotations
 
@@ -6,10 +6,11 @@ from html import escape
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QTextBrowser
+from gui.theme import ACCENT, TEXT
 
 
 class ChatWidget(QTextBrowser):
-    """Display user, system and agent messages with readable wrapping."""
+    """展示用户、系统和智能体消息，保留换行与 HTML 转义。"""
 
     def __init__(self) -> None:
         super().__init__()
@@ -18,9 +19,9 @@ class ChatWidget(QTextBrowser):
         self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
         self.document().setDefaultStyleSheet(
             """
-            body { margin: 0; color: #1f2937; font-size: 13px; }
+            body { margin: 0; font-size: 13px; }
             .message { margin: 0 0 10px 0; white-space: pre-wrap; }
-            .sender { font-weight: 700; color: #31527a; }
+            .sender { font-weight: 700; }
             .content { line-height: 1.45; }
             """
         )
@@ -29,7 +30,7 @@ class ChatWidget(QTextBrowser):
         text = escape(str(message)).replace("\n", "<br>")
         sender_text = escape(str(sender))
         self.append(
-            f'<div class="message"><span class="sender">[{sender_text}]</span> '
-            f'<span class="content">{text}</span></div>'
+            f'<div class="message"><span class="sender" style="color:{ACCENT}">[{sender_text}]</span> '
+            f'<span class="content" style="color:{TEXT}">{text}</span></div>'
         )
         self.verticalScrollBar().setValue(self.verticalScrollBar().maximum())

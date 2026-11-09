@@ -342,7 +342,7 @@ def test_openai_compatible_chat_uses_plain_text_request(monkeypatch) -> None:
         def create(self, **kwargs):
             captured.update(kwargs)
             message = type("Message", (), {"content": "plain text"})()
-            choice = type("Choice", (), {"message": message})()
+            choice = type("Choice", (), {"message": message, "finish_reason": "stop"})()
             return type("Response", (), {"choices": [choice]})()
 
     class _FakeOpenAI:

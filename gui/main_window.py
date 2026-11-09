@@ -11,16 +11,17 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from PyQt6 import sip
-from PyQt6.QtCore import QObject, QThread, QUrl, pyqtSignal
+from PyQt6.QtCore import QObject, QThread, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QCloseEvent, QDesktopServices
 from PyQt6.QtWidgets import (
     QApplication,
     QGridLayout,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
     QPushButton,
+    QSizePolicy,
+    QSplitter,
     QTabWidget,
     QTextBrowser,
     QVBoxLayout,
@@ -43,6 +44,7 @@ from gui.candidate_widget import CandidateWidget
 from gui.chat_widget import ChatWidget
 from gui.knowledge_widget import KnowledgeWidget
 from gui.log_widget import LogWidget
+from gui.theme import apply_dark_theme
 
 
 @dataclass
@@ -183,7 +185,11 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("CSDM_panel - 复合材料加筋壁板智能设计系统")
-        self.resize(1680, 980)
+        available = self.screen().availableGeometry()
+        self.resize(min(1440, round(available.width() * 0.92)), min(900, round(available.height() * 0.90)))
+        self.setMinimumSize(1000, 640)
+        self.move(available.x() + (available.width() - self.width()) // 2,
+                  available.y() + (available.height() - self.height()) // 2)
         self.session = PipelineSession()
         self.worker_thread: QThread | None = None
         self.worker: PipelineWorker | None = None
@@ -191,8 +197,6 @@ class MainWindow(QMainWindow):
         self.chat_widget = ChatWidget()
         self.task_browser = QTextBrowser()
         self.task_browser.setHtml(self._initial_task_html())
-        self.workflow_browser = QTextBrowser()
-        self.workflow_browser.setHtml(self._workflow_html())
         self.status_label = QLabel("状态：等待输入设计需求")
         self.status_label.setWordWrap(True)
         self.status_label.setObjectName("statusLabel")
@@ -210,11 +214,15 @@ class MainWindow(QMainWindow):
         self.refresh_button = QPushButton("刷新知识库")
         self.open_report_button = QPushButton("打开最新报告")
 
-        self.screen_button = QPushButton("手动：代理模型初筛")
-        self.evaluate_selected_button = QPushButton("手动：校核所选样本")
-        self.evaluate_all_button = QPushButton("手动：校核当前候选")
-        self.report_button = QPushButton("手动：导出报告")
+        self.screen_button = QPushButton("代理初筛")
+        self.evaluate_selected_button = QPushButton("校核所选")
+        self.evaluate_all_button = QPushButton("校核待选")
+        self.report_button = QPushButton("导出报告")
         self.reset_button = QPushButton("重置会话")
+        self.screen_button.setToolTip("使用代理模型对候选方案排序")
+        self.evaluate_selected_button.setToolTip("对表格中选中的待校核方案执行有限元校核")
+        self.evaluate_all_button.setToolTip("对当前候选中的全部待校核方案执行有限元校核")
+        self.report_button.setToolTip("根据已完成的有限元结果生成报告")
 
         self.stage_card = QLabel("阶段：idle")
         self.candidate_card = QLabel("候选：0")
@@ -240,29 +248,20 @@ class MainWindow(QMainWindow):
         self.knowledge_widget.refresh()
 
     def _build_layout(self) -> None:
-        primary_header = QLabel("主流程")
-        primary_header.setObjectName("sectionTitle")
         primary_button_layout = QGridLayout()
-        primary_button_layout.setHorizontalSpacing(10)
-        primary_button_layout.setVerticalSpacing(10)
+        primary_button_layout.setSpacing(6)
         primary_button_layout.addWidget(self.generate_button, 0, 0)
         primary_button_layout.addWidget(self.confirm_yes_button, 0, 1)
         primary_button_layout.addWidget(self.confirm_no_button, 0, 2)
 
-        utility_header = QLabel("辅助入口")
-        utility_header.setObjectName("sectionTitle")
         utility_button_layout = QGridLayout()
-        utility_button_layout.setHorizontalSpacing(10)
-        utility_button_layout.setVerticalSpacing(10)
+        utility_button_layout.setSpacing(6)
         utility_button_layout.addWidget(self.example_button, 0, 0)
         utility_button_layout.addWidget(self.refresh_button, 0, 1)
         utility_button_layout.addWidget(self.open_report_button, 0, 2)
 
-        stats_header = QLabel("当前会话")
-        stats_header.setObjectName("sectionTitle")
         stats_layout = QGridLayout()
-        stats_layout.setHorizontalSpacing(10)
-        stats_layout.setVerticalSpacing(10)
+        stats_layout.setSpacing(6)
         stats_layout.addWidget(self.stage_card, 0, 0)
         stats_layout.addWidget(self.candidate_card, 0, 1)
         stats_layout.addWidget(self.pending_card, 1, 0)
@@ -271,114 +270,79 @@ class MainWindow(QMainWindow):
         manual_header = QLabel("人工操作")
         manual_header.setObjectName("sectionTitle")
         manual_button_layout = QGridLayout()
-        manual_button_layout.setHorizontalSpacing(10)
-        manual_button_layout.setVerticalSpacing(10)
+        manual_button_layout.setSpacing(6)
         manual_button_layout.addWidget(self.screen_button, 0, 0)
         manual_button_layout.addWidget(self.evaluate_selected_button, 0, 1)
         manual_button_layout.addWidget(self.evaluate_all_button, 0, 2)
-        manual_button_layout.addWidget(self.report_button, 1, 0)
-        manual_button_layout.addWidget(self.reset_button, 1, 1, 1, 2)
+        manual_button_layout.addWidget(self.report_button, 1, 0, 1, 2)
+        manual_button_layout.addWidget(self.reset_button, 1, 2)
+
+        self.conversation_splitter = QSplitter(Qt.Orientation.Vertical)
+        self.conversation_splitter.setChildrenCollapsible(False)
+        for browser, minimum_height in ((self.task_browser, 64), (self.chat_widget, 80)):
+            browser.setMinimumHeight(minimum_height)
+            browser.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
+            self.conversation_splitter.addWidget(browser)
+        self.conversation_splitter.setStretchFactor(0, 1)
+        self.conversation_splitter.setStretchFactor(1, 2)
+        self.conversation_splitter.setSizes([140, 280])
+
+        controls = QWidget()
+        controls.setObjectName("sidebarControls")
+        control_layout = QVBoxLayout(controls)
+        control_layout.setContentsMargins(0, 0, 0, 0)
+        control_layout.setSpacing(6)
+        control_layout.addWidget(self.status_label)
+        control_layout.addWidget(self.input_line)
+        control_layout.addLayout(primary_button_layout)
+        control_layout.addLayout(utility_button_layout)
+        control_layout.addLayout(stats_layout)
+        control_layout.addWidget(manual_header)
+        control_layout.addLayout(manual_button_layout)
 
         left_layout = QVBoxLayout()
-        left_layout.setSpacing(10)
-        left_layout.addWidget(self.task_browser, 2)
-        left_layout.addWidget(self.workflow_browser, 2)
-        left_layout.addWidget(self.chat_widget, 6)
-        left_layout.addWidget(self.status_label)
-        left_layout.addWidget(self.input_line)
-        left_layout.addWidget(primary_header)
-        left_layout.addLayout(primary_button_layout)
-        left_layout.addWidget(utility_header)
-        left_layout.addLayout(utility_button_layout)
-        left_layout.addWidget(stats_header)
-        left_layout.addLayout(stats_layout)
-        left_layout.addWidget(manual_header)
-        left_layout.addLayout(manual_button_layout)
+        left_layout.setContentsMargins(0, 0, 6, 0)
+        left_layout.setSpacing(8)
+        left_layout.addWidget(self.conversation_splitter, 1)
+        left_layout.addWidget(controls)
 
         right_layout = QVBoxLayout()
         right_layout.addWidget(self.tabs)
 
-        main_layout = QHBoxLayout()
-        main_layout.setSpacing(12)
         left_container = QWidget()
         right_container = QWidget()
         left_container.setLayout(left_layout)
         right_container.setLayout(right_layout)
-        main_layout.addWidget(left_container, 2)
-        main_layout.addWidget(right_container, 3)
+        left_container.setMinimumWidth(340)
+        self.workspace_splitter = QSplitter(Qt.Orientation.Horizontal)
+        self.workspace_splitter.setChildrenCollapsible(False)
+        self.workspace_splitter.addWidget(left_container)
+        self.workspace_splitter.addWidget(right_container)
+        self.workspace_splitter.setStretchFactor(0, 0)
+        self.workspace_splitter.setStretchFactor(1, 1)
+        self.workspace_splitter.setSizes([380, 1200])
 
         root = QWidget()
-        root.setLayout(main_layout)
+        root_layout = QVBoxLayout(root)
+        title = QLabel("CSDM_panel")
+        title.setObjectName("appTitle")
+        subtitle = QLabel("复合材料加筋壁板智能设计系统")
+        subtitle.setObjectName("appSubtitle")
+        root_layout.addWidget(title)
+        root_layout.addWidget(subtitle)
+        root_layout.addWidget(self.workspace_splitter, 1)
         self.setCentralWidget(root)
 
-    def _decorate_button(self, button: QPushButton, background: str, border: str, color: str = "#1f2937") -> None:
-        button.setMinimumHeight(42)
-        button.setStyleSheet(
-            f"""
-            QPushButton {{
-                background: {background};
-                border: 1px solid {border};
-                color: {color};
-                border-radius: 10px;
-                padding: 8px 14px;
-                font-weight: 600;
-            }}
-            QPushButton:hover {{
-                background: #eef4fb;
-            }}
-            QPushButton:disabled {{
-                background: #f4f6f8;
-                color: #9aa6b6;
-                border: 1px solid #d9e0e8;
-            }}
-            """
-        )
-
     def _apply_styles(self) -> None:
-        self.setStyleSheet(
-            """
-            QMainWindow, QWidget {
-                background: #f3f6fb;
-                color: #1f2937;
-            }
-            QTextBrowser, QTableWidget, QLineEdit {
-                background: white;
-                border: 1px solid #d8e1ee;
-                border-radius: 10px;
-            }
-            QLineEdit {
-                padding: 10px 12px;
-                font-size: 15px;
-            }
-            QLabel#sectionTitle {
-                font-size: 13px;
-                font-weight: 700;
-                color: #31435c;
-                padding: 4px 2px 0 2px;
-            }
-            QLabel#statusLabel {
-                background: #eaf1fb;
-                border: 1px solid #cfdbef;
-                border-radius: 10px;
-                padding: 10px 12px;
-            }
-            """
-        )
         for card in [self.stage_card, self.candidate_card, self.pending_card, self.pass_card]:
-            card.setStyleSheet(
-                "background:#ffffff;border:1px solid #d8e1ee;border-radius:10px;padding:12px 14px;font-weight:600;"
-            )
-        self._decorate_button(self.generate_button, "#dbeafe", "#93c5fd", "#1e3a8a")
-        self._decorate_button(self.confirm_yes_button, "#dcfce7", "#86efac", "#166534")
-        self._decorate_button(self.confirm_no_button, "#fef3c7", "#fcd34d", "#92400e")
-        self._decorate_button(self.example_button, "#ffffff", "#cfd8e6")
-        self._decorate_button(self.refresh_button, "#ffffff", "#cfd8e6")
-        self._decorate_button(self.open_report_button, "#ffffff", "#cfd8e6")
-        self._decorate_button(self.screen_button, "#ffffff", "#cfd8e6")
-        self._decorate_button(self.evaluate_selected_button, "#ffffff", "#cfd8e6")
-        self._decorate_button(self.evaluate_all_button, "#ffffff", "#cfd8e6")
-        self._decorate_button(self.report_button, "#ffffff", "#cfd8e6")
-        self._decorate_button(self.reset_button, "#fff1f2", "#fecdd3", "#9f1239")
+            card.setProperty("metric", True)
+            card.setWordWrap(True)
+            card.setMinimumWidth(0)
+        self.generate_button.setProperty("role", "primary")
+        self.confirm_yes_button.setProperty("role", "success")
+        self.confirm_no_button.setProperty("role", "warning")
+        self.reset_button.setProperty("role", "danger")
+        apply_dark_theme(self)
 
     def _connect_signals(self) -> None:
         self.generate_button.clicked.connect(self._start_conversation)
@@ -437,7 +401,13 @@ class MainWindow(QMainWindow):
         passed_count = sum(1 for result in self.session.results_by_session_id.values() if result.get("verdict") == "通过")
         candidate_pool_target = requested_candidate_pool_size(self.session.task) if self.session.task else 0
         requested_top_k = requested_screen_top_k(self.session.task) if self.session.task else 0
-        self.stage_card.setText(f"阶段：{self.session.stage or 'idle'}")
+        stage_labels = {
+            "idle": "待输入", "parsing": "解析需求", "generated": "候选已生成",
+            "awaiting_screen_confirmation": "待初筛确认", "screened": "初筛完成",
+            "awaiting_fem_confirmation": "待校核确认", "paused_before_fem": "校核已暂停",
+            "awaiting_report_confirmation": "待报告确认", "completed": "流程完成",
+        }
+        self.stage_card.setText(f"阶段：{stage_labels.get(self.session.stage, self.session.stage) or '待输入'}")
         self.candidate_card.setText(f"候选池：{generated_count} / 目标 {candidate_pool_target}" if self.session.task else "候选池：0")
         self.pending_card.setText(
             f"待校核：{pending_count} / 初筛目标 {requested_top_k}" if self.session.task else "待校核：0"
@@ -603,7 +573,6 @@ class MainWindow(QMainWindow):
         self.chat_widget.clear()
         self.log_widget.clear()
         self.task_browser.setHtml(self._initial_task_html())
-        self.workflow_browser.setHtml(self._workflow_html())
         self.candidate_widget.update_candidates([])
         self.abaqus_widget.update_results([])
         self.candidate_widget.reset_view()
@@ -738,17 +707,7 @@ class MainWindow(QMainWindow):
     def _initial_task_html(self) -> str:
         return (
             "<h3>当前任务</h3>"
-            "<p>输入自然语言需求后，系统会自动解析任务、生成候选，并在关键节点引导你确认是否继续。</p>"
-        )
-
-    def _workflow_html(self) -> str:
-        return (
-            "<h3>对话流程</h3>"
-            "<p>1. 输入一句自然语言需求，系统解析任务摘要并生成初始候选；需求中需要写明候选池总数和初筛保留数</p>"
-            "<p>2. 系统询问是否进行代理模型初筛，并解释当前评分机制、候选池目标和 Top-K 目标</p>"
-            "<p>3. 系统询问是否进行有限元校核，并展示入选原因</p>"
-            "<p>4. 校核完成后展示 BLF、失效模式、结论，并询问是否导出报告</p>"
-            "<p>5. 聊天区会同时显示结构化进度和自然语言说明；辅助与手动入口可随时介入</p>"
+            "<p>暂无设计任务。</p>"
         )
 
     def _task_summary_html(self) -> str:
@@ -792,7 +751,7 @@ def main() -> int:
     ensure_project_dirs()
     app = QApplication(sys.argv)
     window = MainWindow()
-    window.showMaximized()
+    window.show()
     return app.exec()
 
 

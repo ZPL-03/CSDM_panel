@@ -2,7 +2,7 @@
 
 复合材料加筋壁板智能设计系统（Composite Stiffened-panel Design Manager, CSDM_panel）是一个面向复合材料加筋壁板的多智能体设计原型系统，目标是把"自然语言需求 -> 结构化任务 -> 候选生成 -> 代理模型初筛 -> ABAQUS 校核 -> 知识回流 -> 报告输出"这条工程链路自动化。
 
-当前仓库已经具备可运行的 Windows 原型：前端为 PyQt6 对话式 GUI，后端由多智能体协同完成候选生成、有限元校核、知识回流和报告导出；候选生成链路已经拆分为三条职责清晰的来源：LLM + 外部知识库/知识图谱、历史案例迁移、DOE 参数采样。
+系统运行于 Windows，前端为 PyQt6 对话式 GUI，后端由多智能体协同完成候选生成、有限元校核、知识回流和报告导出；候选来源分为 LLM + 外部知识库/知识图谱、历史案例迁移、DOE 参数采样。
 
 ## 1. 项目目标
 
@@ -42,8 +42,12 @@
 - `knowledge/chroma_db/` 中当前 `csdm_case_memory` 案例记忆集合有 350 条索引记录
 - `data/abaqus_runs/` 中当前有 350 个样本工件目录
 - `models/surrogate_metrics.json` 当前选中模型为 `mlp`，训练样本数 350，MLP `MAPE = 0.2608`
-- `knowledge/external/` 是外部知识库/知识图谱资产目录：知识库文本块 51788 条，知识图谱实体 2214 个，知识图谱关系 480899 条
+- `knowledge/external/` 包含 173228 个 RAG 文本块、2219 个知识图谱实体、250606 条关系和 1931 条来源元数据，资产版本为 2026-11-01 导出
 - 报告导出以已有有限元校核结果为范围，可生成阶段报告；未校核候选保留在待校核状态，不进入有限元结论
+
+代理训练集以 T 型筋为主，其他筋型各两个样本不足以证明跨筋型预测精度。代理分数只用于候选优先级，不能代替真实 Abaqus 校核或作为承载能力结论。
+
+Abaqus 使用均质正交各向异性壳截面，不逐层离散设计铺层。铺层序列及比例用于候选约束和代理特征，不进入当前有限元截面计算，因此该模型不能验证铺层变化效果。线性屈曲结果不等于含缺陷、损伤或非线性的极限承载能力。
 
 ## 4. 系统架构
 
@@ -81,9 +85,11 @@ REPORT_GEN：工程报告输出
 
 ### 4.3 三条候选生成路径的边界
 
-- `LLM` 路径直接使用外部知识库/知识图谱：`core/domain_knowledge.py` 将任务转换为检索文本，从 `knowledge/external/` 取回知识库片段和知识图谱关系并注入 Prompt；LLM 输出工程自然语言候选表，`CandidateGenAgent` 解析为结构化候选并执行规则检查，同时保留候选行和 LLM 回答原文用于追踪；未就绪时不注入额外知识片段。
+- `LLM` 路径直接使用外部知识库/知识图谱：`core/domain_knowledge.py` 将任务转换为检索文本，通过 SQLite FTS5 BM25 召回全文证据，融合筋型聚焦召回，并检索图谱关系；片段、证据块编号和合并后的来源清单一起进入 Prompt。相同内容只出现一次，同一来源最多保留两个片段。启用外部知识但资产缺失或损坏时明确报错。LLM 输出工程自然语言候选表，`CandidateGenAgent` 解析为结构化候选并执行规则检查，同时保留候选行和 LLM 回答原文。
 - `CASE_TRANSFER` 路径不走外部知识库/知识图谱：`core/case_retriever.py` 先按筋型、工况、边界、材料和通过结论做结构化硬过滤，再用 `core/case_memory.py` 中的 Case Memory 向量索引辅助相似案例排序；只迁移满足工程约束的历史设计。
 - `DOE` 路径独立存在：`core/doe_sampler.py` 在参数范围内采样，提供补足与探索候选。
+
+`core/layup.py` 规范化铺层表达式，校验允许角度与正负角平衡，并按序列计算比例和层数。LLM 表中比例与序列不一致时拒绝候选并反馈具体校验信息；案例迁移派生候选的比例按序列计算，不重写原始案例。
 
 ### 4.4 筋型感知架构
 
@@ -95,7 +101,9 @@ REPORT_GEN：工程报告输出
 
 ### 4.5 对话式 GUI
 
-- 左侧为聊天主区，支持自然语言输入和流程事件回显
+- 界面使用统一黑灰主题，表格、聊天、输入、按钮状态和三维视口使用一致的配色；高亮文字与模态色条保持浅色
+- 程序以普通窗口启动，初始尺寸依据显示器可用区域设置；左侧任务与对话区、右侧工作区可拖动分栏，候选和结果表占右侧整行，详情与三维视图位于表格下方
+- 左侧任务摘要与对话内容独立滚动，输入、主流程及人工操作区固定可见；上下内容区可拖动分配高度
 - 右侧包含候选方案、ABAQUS 结果、知识库、日志等标签页
 - 主流程内置 3 个确认节点：代理模型初筛前、FEM 校核前、报告导出前
 - `core/conversation_flow.py` 提供 UI 无关的对话流程控制器，GUI 只是其中一种承载方式
@@ -127,7 +135,7 @@ CSDM_panel/
 - Windows 11
 - Python 3.10 及以上版本
 - 可使用 Conda 或等价 Python 环境安装依赖
-- ABAQUS 2023
+- Abaqus 2019 或 2023，运行命令由本机配置指定
 
 ### 6.2 创建环境
 
@@ -144,6 +152,12 @@ URL=OpenAI兼容接口地址
 API_KEY=接口密钥
 MODEL_NAME=模型名称
 ```
+
+`ABAQUS_COMMAND` 可在 `.env` 中指定本机 Abaqus 启动文件的绝对路径；未设置时使用 `config/app_config.yaml` 的 `abaqus.command`。运行、自检和真实有限元回归使用同一命令配置。
+
+案例记忆使用 `BAAI/bge-m3` 的真实归一化文本嵌入，模型从 Hugging Face 用户缓存读取，不存放于项目目录。离线运行前执行 `huggingface-cli download BAAI/bge-m3` 准备模型，再执行 `python scripts/migrate_contracts.py --case-memory-only` 建立案例索引。模型或索引错误明确抛出，不替换成哈希向量，也不因查询异常删除集合。
+
+`backend.extra_body` 保存当前服务的请求参数，默认 DeepSeek 接口使用非思考模式。切换服务时按服务协议配置该字段。系统只接受正常结束且正文非空的回答，长度截断或过滤结果不会进入候选解析和报告解释。
 
 工作站领域模型接口示例：
 
@@ -203,13 +217,15 @@ candidate_source_ratio:
 
 | 命令 | 说明 |
 | --- | --- |
-| `python scripts/check_env.py` | 检查 Python、ABAQUS、LLM 连接与核心依赖是否可用 |
+| `python scripts/check_env.py` | 检查 Python、ABAQUS 命令、LLM 配置与核心依赖是否可用 |
 | `python scripts/train_screener.py` | 依据案例库重训 `SCREENER` 代理模型 |
 | `python scripts/migrate_contracts.py --retrain-surrogate` | 迁移案例、IO 与工件契约，重建案例记忆索引并可选重训模型 |
 | `python scripts/migrate_contracts.py --case-memory-only` | 仅重建 `csdm_case_memory` 案例记忆集合 |
 | `python scripts/rebuild_abaqus_artifacts.py --limit 10 --workers 1` | 重建缺失的 ABAQUS 工件 |
 | `python scripts/build_initial_cases.py` | 批量生成/补齐初始案例集 |
 | `python scripts/clean_artifacts.py` | 清理 `__pycache__`、`.pytest_cache` 与 ABAQUS 临时文件 |
+| `python scripts/sync_external_knowledge.py --source <CS_LLM的dataset/processed目录>` | 校验 CS_LLM 导出版本并替换外部知识资产，旧资产归档至项目外 |
+| `python scripts/sync_external_knowledge.py --verify-only` | 校验全部知识文件指纹、记录数、图谱实体和证据块引用 |
 
 ## 10. 标识与关联
 
@@ -229,24 +245,16 @@ candidate_source_ratio:
 
 ### 11.2 外部知识库/知识图谱
 
-- `knowledge/external/rag/rag_chunks.jsonl`：复合材料知识库文本块
-- `knowledge/external/rag/rag_chunks_index.csv`：复合材料知识库文本块索引
+- `knowledge/external/rag/retrieval_index.sqlite`：完整 RAG 内容、来源、章节、块类型及 FTS5 全文索引
 - `knowledge/external/kg/entities.jsonl`：知识图谱实体
-- `knowledge/external/kg/relations.jsonl`：知识图谱关系
+- `knowledge/external/kg/relations.compact.jsonl.gz`：知识图谱关系与证据引用
 - `knowledge/external/kg/kg_stats.json`：图谱统计
-- `knowledge/external/provenance/source_registry/`：源登记与来源分类
-- `knowledge/external/provenance/source_registry/source_metadata.jsonl`：源元数据
-- `knowledge/external/provenance/structured_text/documents.jsonl`：结构化文档清单
-- `knowledge/external/provenance/structured_text/blocks.jsonl`：结构化文本块
-- `knowledge/external/provenance/structured_text/blocks_index.csv`：结构化文本块索引
-- `knowledge/external/provenance/structured_text/table_records.jsonl`：表格记录
-- `knowledge/external/provenance/structured_text/figure_records.jsonl`：图片记录
-- `knowledge/external/provenance/structured_text/formula_records.jsonl`：公式记录
-- `knowledge/external/provenance/structured_text/markdown_documents_index.csv`：Markdown 全文索引
-- `knowledge/external/provenance/structured_text/markdown_documents/`：可审计 Markdown 全文
-- `knowledge/external/manifest.json`：知识资产清单
+- `knowledge/external/provenance/source_metadata.compact.jsonl.gz`：统一来源元数据
+- `knowledge/external/manifest.json`：部署文件、记录数、SHA256、导出时间与安装时间
 
-LLM 当前只读取知识库文本块和知识图谱关系；`provenance/` 只用于人工核查检索命中的资料来源、结构化记录和完整上下文。该目录是本项目运行时读取的知识资产，目录已加入 `.gitignore`，避免提交大体量派生产物。
+运行检索只依赖项目内资产。SQLite 中的 `chunks.payload` 保存完整文本块，不需要另存重复 JSONL、解析文档或向量文件。来源元数据补齐引用信息，DOI、来源编号与规范化 URL 共同用于合并同一文献的引用；图谱关系保留 `evidence_chunk_id`。外部知识检索是全文 BM25 与筋型聚焦召回，案例记忆使用独立 Chroma 向量集合。该目录已加入 `.gitignore`，工作站部署需要单独同步资产。
+
+[GitHub Release v2026.11.09](https://github.com/ZPL-03/CSDM_panel/releases/tag/v2026.11.09) 提供 `CSDM_panel_knowledge_20261101.tar.gz` 与 SHA256 文件。首次部署将压缩包解压到 `knowledge/`，形成 `knowledge/external/`，再运行 `python scripts/sync_external_knowledge.py --verify-only`。已有外部知识目录应先整体移至项目外归档，避免解压合并造成残留。该压缩包只包含上述六个运行文件，不包含解析原文、案例记忆模型或业务求解结果。
 
 ## 12. 回归验证
 

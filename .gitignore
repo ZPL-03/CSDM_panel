@@ -33,7 +33,6 @@ knowledge/external/rag/
 knowledge/external/kg/
 knowledge/external/provenance/
 knowledge/external/manifest.json
-models/embedding_cache/
 
 # Abaqus session / generated files
 abaqus.rpy*

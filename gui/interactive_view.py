@@ -1,4 +1,4 @@
-"""Interactive PyVista view widget."""
+"""交互式 PyVista 几何与有限元结果视口。"""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from PyQt6.QtCore import QEvent, Qt
 from PyQt6.QtWidgets import QLabel, QStackedLayout, QVBoxLayout, QWidget
 
 from gui.render_utils import build_candidate_scene, build_mode_shape_scene
+from gui.theme import BACKGROUND, TEXT
 
 try:
     from pyvistaqt import QtInteractor
@@ -26,11 +27,7 @@ class InteractivePlotWidget(QWidget):
         self.message_label = QLabel(empty_message)
         self.message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.message_label.setWordWrap(True)
-        self.message_label.setMinimumHeight(320)
-
-        self.hint_label = QLabel("\u9f20\u6807\u5de6\u952e\u65cb\u8f6c\uff0c\u6eda\u8f6e\u7f29\u653e\uff0cShift+\u62d6\u62fd\u5e73\u79fb\uff0c\u53cc\u51fb\u53ef\u91cd\u7f6e\u89c6\u89d2\u3002")
-        self.hint_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.hint_label.setWordWrap(True)
+        self.message_label.setMinimumHeight(180)
 
         self.plot_container = QWidget()
         self.plot_layout = QVBoxLayout(self.plot_container)
@@ -62,9 +59,7 @@ class InteractivePlotWidget(QWidget):
 
         self.plot_layout.addWidget(self.plotter.interactor)
         self.plotter.interactor.installEventFilter(self)
-        if self.plot_layout.indexOf(self.hint_label) == -1:
-            self.plot_layout.addWidget(self.hint_label)
-        self.plotter.set_background("#f5f7fb")
+        self.plotter.set_background(BACKGROUND)
         self.plotter.enable_trackball_style()
         return True
 
@@ -103,7 +98,7 @@ class InteractivePlotWidget(QWidget):
         if self.plotter is not None:
             try:
                 self.plotter.clear()
-                self.plotter.set_background("#f5f7fb")
+                self.plotter.set_background(BACKGROUND)
             except Exception:
                 self._dispose_plotter()
         self._initial_camera_position = None
@@ -140,9 +135,9 @@ class InteractivePlotWidget(QWidget):
             return False
         assert self.plotter is not None
         self.plotter.clear()
-        self.plotter.set_background("#f5f7fb")
-        self.plotter.add_text(title, position="upper_left", font_size=11, color="#1f2937")
-        self.plotter.add_axes(line_width=2)
+        self.plotter.set_background(BACKGROUND)
+        self.plotter.add_text(title, position="upper_left", font_size=11, color=TEXT)
+        self.plotter.add_axes(line_width=2, color=TEXT)
         self.stack.setCurrentWidget(self.plot_container)
         return True
 
@@ -179,12 +174,16 @@ class InteractivePlotWidget(QWidget):
             show_edges=False,
             smooth_shading=True,
             scalar_bar_args={
-                "title": scalar_name or "ModeMagnitude",
-                "vertical": True,
-                "position_x": 0.88,
-                "position_y": 0.16,
-                "height": 0.68,
-                "width": 0.07,
+                "title": "Mode amplitude",
+                "color": TEXT,
+                "vertical": False,
+                "position_x": 0.24,
+                "position_y": 0.04,
+                "height": 0.12,
+                "width": 0.64,
+                "n_labels": 3,
+                "title_font_size": 10,
+                "label_font_size": 9,
             },
         )
-        self._apply_default_camera(0.92)
+        self._apply_default_camera(0.86)

@@ -98,6 +98,21 @@ def test_report_pdf_generation_handles_long_lines(tmp_path: Path) -> None:
     assert pdf_path.stat().st_size > 0
 
 
+def test_report_pdf_renders_all_markdown_heading_levels() -> None:
+    agent = ReportGenAgent()
+    headings = ["# 标题", "## 章节", "### 小节", "#### 关注点", "##### 细节", "###### 约束 ###"]
+    story = agent._build_pdf_story("\n\n".join(headings + ["####### 普通文本", "正文含 # 字符"]), "Helvetica")
+
+    assert [paragraph.getPlainText() for paragraph in story] == [
+        "标题", "章节", "小节", "关注点", "细节", "约束", "####### 普通文本", "正文含 # 字符",
+    ]
+    assert [paragraph.style.name for paragraph in story] == [
+        "CSDM_panelTitle", "CSDM_panelHeading2", *["CSDM_panelHeading3"] * 4,
+        "CSDM_panelBody", "CSDM_panelBody",
+    ]
+    assert all(paragraph.style.keepWithNext for paragraph in story[:6])
+
+
 def test_report_falls_back_to_structured_engineering_explanation() -> None:
     task, results, candidates = _report_sample()
     agent = ReportGenAgent()
@@ -144,7 +159,7 @@ def test_report_uses_llm_only_for_grounded_engineering_explanation() -> None:
     assert agent._last_llm_explanation_used is True
 
 
-def test_report_cleans_llm_explanation_before_using_it() -> None:
+def test_report_rejects_ungrounded_llm_explanation_without_text_repair() -> None:
     task, results, candidates = _report_sample()
     agent = ReportGenAgent()
 
@@ -154,21 +169,44 @@ def test_report_cleans_llm_explanation_before_using_it() -> None:
 
         def chat(self, system_prompt, user_prompt, max_tokens_override=None):
             self.calls += 1
-            if self.calls == 1:
-                return "### 屈曲建议\n- 建议增加 0.3 mm，并可考虑 T800 替代材料。"
-            assert "报告解释文本约束清理器" in system_prompt
-            return (
-                "### 屈曲与重量权衡\n"
-                "- 建议围绕当前材料、铺层和筋条几何开展权衡，不引入额外阈值或替代材料。"
-            )
+            return "### 屈曲建议\n- 建议增加 0.3 mm，并可考虑 T800 替代材料。"
 
     backend = ControlledBackend()
     agent.llm_backend = backend
 
     markdown = agent._render_markdown(task, results, candidates)
 
-    assert "额外阈值或替代材料" in markdown
+    assert "有限元结论中通过 1 个" in markdown
     assert "0.3 mm" not in markdown
     assert "T800" not in markdown
-    assert backend.calls == 2
-    assert agent._last_llm_explanation_used is True
+    assert backend.calls == 1
+    assert agent._last_llm_explanation_used is False
+
+
+def test_report_explanation_receives_complete_layup_and_results() -> None:
+    task, results, candidates = _report_sample()
+    agent = ReportGenAgent()
+    payload = agent._build_llm_explanation_payload(agent._build_structured_summary(task, results, candidates))
+    assert payload["screened_candidates"][0]["skin_f0"] == 0.286
+    assert payload["screened_candidates"][0]["geometry"]["skin_thickness_mm"] == 2.5
+    assert payload["results"][0]["BLF_global"] == 1.46
+    assert "不进入当前有限元截面计算" in payload["analysis_scope"]
+
+
+def test_report_states_actual_shell_model_and_layup_inputs() -> None:
+    task, results, candidates = _report_sample()
+    agent = ReportGenAgent()
+    agent.llm_backend = None
+    markdown = agent._render_markdown(task, results, candidates)
+    assert "均质正交各向异性壳截面" in markdown
+    assert "不能据此验证铺层顺序或比例对屈曲的影响" in markdown
+    assert "铺层设计输入：[45/-45/0/90/0/-45/45]s" in markdown
+    assert "比例 f0=0.286" in markdown
+
+
+def test_report_does_not_equate_low_blf_target_with_reference_load_capacity() -> None:
+    task, results, candidates = _report_sample()
+    task["task"]["design_targets"]["BLF_min"] = 0.1
+    results[0]["BLF_global"] = 0.2
+    markdown = ReportGenAgent()._render_markdown(task, results, candidates)
+    assert "不能据此认定可承受完整参考载荷" in markdown

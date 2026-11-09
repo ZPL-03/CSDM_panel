@@ -14,7 +14,7 @@ def main() -> int:
     ensure_project_dirs()
     app = QApplication(sys.argv)
     window = MainWindow()
-    window.showMaximized()
+    window.show()
     return app.exec()
 
 
