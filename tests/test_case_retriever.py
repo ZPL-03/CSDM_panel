@@ -1,3 +1,7 @@
+import json
+
+import pytest
+
 from core.case_memory import case_record_metadata, case_record_to_search_text, task_to_case_query_text
 from core.case_retriever import CaseRetriever, _is_pass_verdict
 from core.io_utils import read_json
@@ -20,7 +24,33 @@ def _task() -> dict:
     }
 
 
-def test_case_retriever_returns_matching_cases() -> None:
+@pytest.fixture
+def case_records():
+    records = []
+    for index, (load_type, verdict) in enumerate(
+        [("compression_shear", "通过"), ("axial_compression", "通过"), ("axial_compression", "不通过")], 1
+    ):
+        task = _task()
+        task["load_conditions"]["type"] = load_type
+        record = {
+            "case_id": f"CASE_{index}",
+            "task": task,
+            "design": {
+                "stiffener_type": "T",
+                "geometry": {"panel_length_mm": 700, "panel_width_mm": 600, "stiffener_height_mm": 40},
+                "layup": {"skin_layup": "[0/45/-45/90]s"},
+                "load_conditions": task["load_conditions"],
+                "boundary_conditions": task["boundary_conditions"],
+                "material_system": task["material_system"],
+            },
+            "abaqus_results": {"status": "success", "verdict": verdict, "BLF_global": 1.5},
+        }
+        (CASE_LIBRARY_DIR / f"CASE_{index}.json").write_text(json.dumps(record, ensure_ascii=False), encoding="utf-8")
+        records.append(record)
+    return records
+
+
+def test_case_retriever_returns_matching_cases(case_records) -> None:
     retriever = CaseRetriever(include_archive=True, include_formal=True, use_vector_index=False)
     matches = retriever.retrieve_similar_cases(_task(), top_k=3)
 
@@ -39,7 +69,7 @@ def test_is_pass_verdict_only_accepts_exact_pass() -> None:
 
 
 
-def test_case_retriever_transfer_cases_are_all_passed() -> None:
+def test_case_retriever_transfer_cases_are_all_passed(case_records) -> None:
     retriever = CaseRetriever(include_archive=True, include_formal=True, use_vector_index=False)
     task = _task()
     task["load_conditions"] = {"type": "axial_compression", "Nx_kN_per_m": 1000.0}
@@ -53,7 +83,7 @@ def test_case_retriever_transfer_cases_are_all_passed() -> None:
     assert all(match["design"]["boundary_conditions"]["type"] == "SSSS" for match in matches)
 
 
-def test_case_memory_document_keeps_engineering_context() -> None:
+def test_case_memory_document_keeps_engineering_context(case_records) -> None:
     first_case = next(iter(sorted(CASE_LIBRARY_DIR.glob("CASE_*.json"))))
     record = read_json(first_case)
 

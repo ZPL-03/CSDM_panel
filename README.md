@@ -265,6 +265,8 @@ python scripts/check_env.py
 python -m pytest tests -q
 ```
 
+测试使用临时任务、候选、案例、报告、求解目录和 Chroma 数据库，代理模型读取临时副本；正式知识包只读。真实 Abaqus 回归覆盖 T、BLADE、L、HAT 筋型及完整编排流程。无界面 GUI 检查可设置 `QT_QPA_PLATFORM=offscreen` 和 `QT_OPENGL=software`。
+
 ## 13. 已知边界
 
 - 真实 ABAQUS 求解依赖本机许可证与命令行环境
