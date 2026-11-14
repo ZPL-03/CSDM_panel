@@ -42,7 +42,7 @@
 - `knowledge/chroma_db/` 中当前 `csdm_case_memory` 案例记忆集合有 350 条索引记录
 - `data/abaqus_runs/` 中当前有 350 个样本工件目录
 - `models/surrogate_metrics.json` 当前选中模型为 `mlp`，训练样本数 350，MLP `MAPE = 0.2608`
-- `knowledge/external/` 包含 173228 个 RAG 文本块、2219 个知识图谱实体、250606 条关系和 1931 条来源元数据，资产版本为 2026-11-01 导出
+- `knowledge/external/` 包含 173228 个 RAG 文本块、2219 个知识图谱实体、250606 条关系和 1931 条来源元数据，导出时间与文件指纹见 `knowledge/external/manifest.json`
 - 报告导出以已有有限元校核结果为范围，可生成阶段报告；未校核候选保留在待校核状态，不进入有限元结论
 
 代理训练集以 T 型筋为主，其他筋型各两个样本不足以证明跨筋型预测精度。代理分数只用于候选优先级，不能代替真实 Abaqus 校核或作为承载能力结论。
