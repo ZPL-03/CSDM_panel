@@ -1,4 +1,4 @@
-"""清理 Python 缓存、Abaqus 会话残留和异常工件。"""
+"""默认仅清理 Python 缓存，按显式参数清理业务记录及关联工件。"""
 
 from __future__ import annotations
 
@@ -52,7 +52,7 @@ def purge_business_records(candidate_ids: list[str], case_ids: list[str]) -> Non
             touched = touched or path.exists()
             remove_path(path)
     if touched and CHROMA_DIR.exists():
-        shutil.rmtree(CHROMA_DIR, ignore_errors=True)
+        shutil.rmtree(CHROMA_DIR)
 
 
 def purge_problem_prefixes(prefixes: list[str]) -> None:
@@ -66,17 +66,15 @@ def purge_problem_prefixes(prefixes: list[str]) -> None:
             remove_path(path)
 
     if prefixes and not candidate_ids and not case_ids and CHROMA_DIR.exists():
-        shutil.rmtree(CHROMA_DIR, ignore_errors=True)
-
-
+        shutil.rmtree(CHROMA_DIR)
 
 
 def remove_path(path: Path) -> None:
-    """删除文件或目录，不存在时直接跳过。"""
+    """删除文件或目录，不存在时跳过，其他删除失败直接抛出异常。"""
     if not path.exists():
         return
     if path.is_dir():
-        shutil.rmtree(path, ignore_errors=True)
+        shutil.rmtree(path)
     else:
         path.unlink(missing_ok=True)
 
@@ -90,38 +88,6 @@ def clean_python_caches() -> None:
         remove_path(path)
 
 
-def clean_abaqus_session_files() -> None:
-    """清理 Abaqus 会话文件和临时 build 脚本。"""
-    for pattern in ("abaqus.rpy*", "abaqus*.rec"):
-        for path in ABAQUS_DIR.glob(pattern):
-            remove_path(path)
-        for path in ABAQUS_RUNS_DIR.rglob(pattern):
-            remove_path(path)
-
-    for path in ABAQUS_DIR.glob("build_*.py"):
-        remove_path(path)
-
-    for path in ABAQUS_RUNS_DIR.rglob("build_*.py"):
-        remove_path(path)
-
-    residual_patterns = (
-        "*.lck",
-        "*.023",
-        "*.com",
-        "*.jnl",
-        "*.sta",
-        "*.prt",
-        "*.sim",
-        "*.log",
-        "*.env",
-        "*.odb_f",
-        "candidate_retry_*.json",
-    )
-    for pattern in residual_patterns:
-        for path in ABAQUS_RUNS_DIR.rglob(pattern):
-            remove_path(path)
-
-
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--purge-prefix", action="append", default=[])
@@ -130,9 +96,10 @@ def main() -> int:
     args = parser.parse_args()
 
     clean_python_caches()
-    clean_abaqus_session_files()
-    purge_business_records(args.candidate_id, args.case_id)
-    purge_problem_prefixes(args.purge_prefix)
+    if args.candidate_id or args.case_id:
+        purge_business_records(args.candidate_id, args.case_id)
+    if args.purge_prefix:
+        purge_problem_prefixes(args.purge_prefix)
     return 0
 
 

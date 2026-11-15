@@ -223,9 +223,11 @@ candidate_source_ratio:
 | `python scripts/migrate_contracts.py --case-memory-only` | 仅重建 `csdm_case_memory` 案例记忆集合 |
 | `python scripts/rebuild_abaqus_artifacts.py --limit 10 --workers 1` | 重建缺失的 ABAQUS 工件 |
 | `python scripts/build_initial_cases.py` | 批量生成/补齐初始案例集 |
-| `python scripts/clean_artifacts.py` | 清理 `__pycache__`、`.pytest_cache` 与 ABAQUS 临时文件 |
+| `python scripts/clean_artifacts.py` | 默认仅递归清理 `__pycache__`、`*.pyc`，以及项目根目录的 `.pytest_cache` |
 | `python scripts/sync_external_knowledge.py --source <CS_LLM的dataset/processed目录>` | 校验 CS_LLM 导出版本并替换外部知识资产，旧资产归档至项目外 |
 | `python scripts/sync_external_knowledge.py --verify-only` | 校验全部知识文件指纹、记录数、图谱实体和证据块引用 |
+
+Abaqus 工件与案例引用文件不属于默认清理范围。`--candidate-id`、`--case-id` 和 `--purge-prefix` 显式触发对应业务清理；文件或目录删除失败时直接报错，命令以非零状态退出。
 
 ## 10. 标识与关联
 
