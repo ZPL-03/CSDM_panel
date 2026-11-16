@@ -1,13 +1,12 @@
-import shutil
 from pathlib import Path
 
 import pytest
 
-from abaqus.job_utils import is_abaqus_available
+from abaqus.job_utils import is_abaqus_available, job_transient_paths
 from agents.fem_agent import FEMAgent
 from core.id_utils import format_candidate_id, next_candidate_index
 from core.config_loader import load_app_config
-from core.paths import ABAQUS_RUNS_DIR, IO_DIR
+from core.io_utils import read_json, write_json
 from core.stiffener_profile import default_geometry
 
 
@@ -58,46 +57,55 @@ def _real_fem_candidate(candidate_id: str, stiffener_type: str = "T") -> dict:
     }
 
 
-def _cleanup_candidate_artifacts(candidate_id: str) -> None:
-    for path in [
-        IO_DIR / f"input_{candidate_id}.json",
-        IO_DIR / f"result_{candidate_id}.json",
-    ]:
-        path.unlink(missing_ok=True)
-    shutil.rmtree(ABAQUS_RUNS_DIR / candidate_id, ignore_errors=True)
-
-
 @pytest.mark.parametrize("stiffener_type", ["T", "BLADE", "L", "HAT"])
 def test_fem_agent_runs_real_abaqus(stiffener_type: str) -> None:
     command = load_app_config()["abaqus"]["command"]
     assert is_abaqus_available(command), "当前环境未找到配置的 Abaqus 命令，真实有限元测试不能运行"
 
     candidate_id = format_candidate_id(next_candidate_index())
-    _cleanup_candidate_artifacts(candidate_id)
-
     agent = FEMAgent(
         config={
             "abaqus": {
                 "command": command,
                 "max_retries": 1,
                 "job_timeout_seconds": 900,
-                "poll_interval_seconds": 2,
             }
         }
     )
 
-    try:
-        result = agent.run(_real_fem_candidate(candidate_id, stiffener_type))
+    result = agent.run(_real_fem_candidate(candidate_id, stiffener_type))
 
-        assert result["status"] == "success"
-        assert result["error_type"] is None
-        assert result["BLF_global"] is not None
-        assert result["BLF_global"] > 0
-        assert result["mode_eigenvalues"]
-        assert result["load_summary"]
-        assert result["boundary_summary"]
-        assert result["diagnosis_summary"]
-        assert Path(result["abaqus_inp"]).exists()
-        assert Path(result["abaqus_odb"]).exists()
-    finally:
-        _cleanup_candidate_artifacts(candidate_id)
+    assert result["status"] == "success"
+    assert result["error_type"] is None
+    assert result["BLF_global"] is not None
+    assert result["BLF_global"] > 0
+    assert result["mode_eigenvalues"]
+    assert result["load_summary"]
+    assert result["boundary_summary"]
+    assert result["diagnosis_summary"]
+    assert Path(result["abaqus_inp"]).exists()
+    assert Path(result["abaqus_odb"]).exists()
+    assert read_json(agent._result_path(candidate_id)) == result
+    assert not job_transient_paths(agent._run_dir(candidate_id), [candidate_id])
+
+
+def test_failed_job_persists_diagnosis_before_cleanup(monkeypatch):
+    agent = FEMAgent(config={"abaqus": {"command": "abaqus", "max_retries": 1, "job_timeout_seconds": 10}})
+    run_dir = agent._run_dir("C1")
+    (run_dir / "C1.msg").write_text("solver failed", encoding="utf-8")
+    (run_dir / "C1.inp").write_text("input", encoding="utf-8")
+    monkeypatch.setattr("agents.fem_agent.is_abaqus_available", lambda command: True)
+    def failed_command(*args, **kwargs):
+        write_json(agent._result_path("C1"), {"status": "success"})
+        return 1, "", "process failed"
+    monkeypatch.setattr("agents.fem_agent.run_command", failed_command)
+
+    result = agent.run(_real_fem_candidate("C1"))
+
+    assert result["status"] == "max_retries_exceeded"
+    assert result["error_type"] == "process_crash"
+    assert result["error_log"]["return_code"] == 1
+    assert result["error_log"]["solver_logs"] == {"C1.msg": "solver failed"}
+    assert read_json(agent._result_path("C1")) == result
+    assert (run_dir / "C1.inp").exists()
+    assert not (run_dir / "C1.msg").exists()

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -11,7 +12,8 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from core.paths import ABAQUS_DIR, ABAQUS_RUNS_DIR, CASES_DIR, CASE_LIBRARY_DIR, CHROMA_DIR, DATA_DIR, RESULTS_DIR
+from abaqus.job_utils import ensure_job_unlocked  # noqa: E402
+from core.paths import ABAQUS_DIR, ABAQUS_RUNS_DIR, CASES_DIR, CASE_LIBRARY_DIR, CHROMA_DIR, DATA_DIR  # noqa: E402
 
 
 IO_DIR = DATA_DIR / "io"
@@ -21,6 +23,11 @@ def candidate_artifact_paths(candidate_id: str) -> list[Path]:
     normalized = str(candidate_id).strip()
     if not normalized:
         return []
+    if not re.fullmatch(r"C[1-9][0-9]*", normalized):
+        raise ValueError(f"无效求解编号：{candidate_id}")
+    ensure_job_unlocked(ABAQUS_RUNS_DIR / normalized)
+    if (ABAQUS_DIR / f"{normalized}.lck").exists():
+        raise ValueError(f"作业锁仍存在：{normalized}")
     return [
         IO_DIR / f"input_{normalized}.json",
         IO_DIR / f"result_{normalized}.json",
@@ -35,6 +42,8 @@ def case_artifact_paths(case_id: str) -> list[Path]:
     normalized = str(case_id).strip()
     if not normalized:
         return []
+    if not re.fullmatch(r"CASE_[1-9][0-9]*", normalized):
+        raise ValueError(f"无效案例编号：{case_id}")
     return [
         CASES_DIR / f"{normalized}.json",
         CASE_LIBRARY_DIR / f"{normalized}.json",
@@ -52,27 +61,15 @@ def purge_business_records(candidate_ids: list[str], case_ids: list[str]) -> Non
             touched = touched or path.exists()
             remove_path(path)
     if touched and CHROMA_DIR.exists():
-        shutil.rmtree(CHROMA_DIR)
-
-
-def purge_problem_prefixes(prefixes: list[str]) -> None:
-    candidate_ids = [item.strip() for item in prefixes if item.strip() and item.strip().startswith("C") and not item.strip().startswith("CASE_")]
-    case_ids = [item.strip() for item in prefixes if item.strip().startswith("CASE_")]
-    purge_business_records(candidate_ids, case_ids)
-
-    for path in RESULTS_DIR.glob("batch_summary_*.json"):
-        text = path.read_text(encoding="utf-8") if path.exists() else ""
-        if any(prefix in text for prefix in prefixes):
-            remove_path(path)
-
-    if prefixes and not candidate_ids and not case_ids and CHROMA_DIR.exists():
-        shutil.rmtree(CHROMA_DIR)
+        remove_path(CHROMA_DIR)
 
 
 def remove_path(path: Path) -> None:
     """删除文件或目录，不存在时跳过，其他删除失败直接抛出异常。"""
     if not path.exists():
         return
+    if path.is_symlink() or not path.resolve().is_relative_to(ROOT.resolve()) or path.resolve() == ROOT.resolve():
+        raise ValueError(f"不允许清理越界路径：{path}")
     if path.is_dir():
         shutil.rmtree(path)
     else:
@@ -90,7 +87,6 @@ def clean_python_caches() -> None:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--purge-prefix", action="append", default=[])
     parser.add_argument("--candidate-id", action="append", default=[])
     parser.add_argument("--case-id", action="append", default=[])
     args = parser.parse_args()
@@ -98,8 +94,6 @@ def main() -> int:
     clean_python_caches()
     if args.candidate_id or args.case_id:
         purge_business_records(args.candidate_id, args.case_id)
-    if args.purge_prefix:
-        purge_problem_prefixes(args.purge_prefix)
     return 0
 
 

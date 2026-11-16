@@ -227,7 +227,7 @@ candidate_source_ratio:
 | `python scripts/sync_external_knowledge.py --source <CS_LLM的dataset/processed目录>` | 校验 CS_LLM 导出版本并替换外部知识资产，旧资产归档至项目外 |
 | `python scripts/sync_external_knowledge.py --verify-only` | 校验全部知识文件指纹、记录数、图谱实体和证据块引用 |
 
-Abaqus 工件与案例引用文件不属于默认清理范围。`--candidate-id`、`--case-id` 和 `--purge-prefix` 显式触发对应业务清理；文件或目录删除失败时直接报错，命令以非零状态退出。
+Abaqus 作业退出并保存结果后，求解智能体清理状态文件、日志、模拟中间数据、回放文件和生成的建模脚本，保留 `.inp`、`.odb`、`.cae`、输入快照及结果展示数据。失败作业的日志末尾写入结果的 `error_log.solver_logs`。作业锁存在时不清理，删除失败直接报错。通用缓存命令不扫描求解文件；`--candidate-id` 和 `--case-id` 按完整编号清理明确指定的业务记录。
 
 ## 10. 标识与关联
 

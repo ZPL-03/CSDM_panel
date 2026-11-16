@@ -16,15 +16,8 @@ paths:
 
 abaqus:
   command: abaqus
-  cae_args: "cae noGUI="
-  python_args: "python"
   max_retries: 3
   job_timeout_seconds: 1800
-  poll_interval_seconds: 5
-  cleanup_patterns:
-    - "*.lck"
-    - "*.023"
-    - "*.com"
 
 pipeline:
   top_k: 5

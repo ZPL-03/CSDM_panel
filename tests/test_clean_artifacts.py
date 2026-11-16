@@ -21,7 +21,6 @@ def isolated_runtime(tmp_path, monkeypatch):
         "CASES_DIR": tmp_path / "data/cases",
         "CASE_LIBRARY_DIR": tmp_path / "knowledge/case_library",
         "CHROMA_DIR": tmp_path / "knowledge/chroma_db",
-        "RESULTS_DIR": tmp_path / "data/results",
     }
     for name, path in targets.items():
         path.mkdir(parents=True, exist_ok=True)
@@ -67,9 +66,8 @@ def _candidate_files(candidate_id: str) -> list[Path]:
     ]
 
 
-@pytest.mark.parametrize("status", ["success", "failed", "running"])
-def test_default_only_removes_python_caches(status):
-    """求解状态不影响默认保留范围，案例引用和重试证据保持字节不变。"""
+def test_default_only_removes_python_caches():
+    """通用缓存命令不处理仍属于求解生命周期的文件。"""
     run_dir = clean_artifacts.ABAQUS_RUNS_DIR / "C1"
     artifact_names = [
         "C1.inp", "C1.odb", "C1.sta", "C1.sim", "C1.log", "C1.lck",
@@ -80,13 +78,13 @@ def test_default_only_removes_python_caches(status):
         "C1.simdir/matrix.bin",
     ]
     for name in artifact_names:
-        _write_file(run_dir / name, status)
+        _write_file(run_dir / name)
     for name in ("build_C1.py", "abaqus.rpy", "abaqus.rpy.1", "abaqus1.rec"):
         _write_file(clean_artifacts.ABAQUS_DIR / name)
     record = {
         "case_id": "CASE_1",
         "abaqus_results": {
-            "status": status,
+            "status": "running",
             "abaqus_inp": str(run_dir / "C1.inp"),
             "abaqus_odb": str(run_dir / "C1.odb"),
             "visualization_json": str(run_dir / "C1_mode1.json"),
@@ -98,7 +96,7 @@ def test_default_only_removes_python_caches(status):
     for path in (
         clean_artifacts.IO_DIR / "input_C1.json",
         clean_artifacts.IO_DIR / "result_C1.json",
-        clean_artifacts.RESULTS_DIR / "batch_summary_C1.json",
+        clean_artifacts.ROOT / "data/results/batch_summary_C1.json",
         clean_artifacts.CHROMA_DIR / "chroma.sqlite3",
         clean_artifacts.ROOT / "models/surrogate.pt",
         clean_artifacts.ROOT / "pkg/source.py",
@@ -120,12 +118,11 @@ def test_default_only_removes_python_caches(status):
     assert _snapshot_files() == expected
     assert all(not folder.exists() for folder in cache_dirs)
     assert not loose_pyc.exists()
-    assert not hasattr(clean_artifacts, "clean_abaqus_session_files")
 
 
 def test_default_does_not_read_batch_summaries():
     """业务汇总无法按 UTF-8 解码时，默认缓存清理仍不读取或改动该文件。"""
-    summary = _write_file(clean_artifacts.RESULTS_DIR / "batch_summary_unreadable.json")
+    summary = _write_file(clean_artifacts.ROOT / "data/results/batch_summary_unreadable.json")
     summary.write_bytes(b"\xff")
 
     assert clean_artifacts.main() == 0
@@ -133,21 +130,15 @@ def test_default_does_not_read_batch_summaries():
 
 
 @pytest.mark.parametrize(
-    "arguments,delete_candidate,delete_case,deleted_summaries",
+    "arguments,delete_candidate,delete_case",
     [
-        (["--candidate-id", " C1 "], True, False, set()),
-        (["--case-id", " CASE_1 "], False, True, set()),
-        (["--candidate-id", "C1", "--case-id", "CASE_1"], True, True, set()),
-        (["--purge-prefix", "C1"], True, False, {"selected", "similar"}),
-        (["--purge-prefix", "CASE_1"], False, True, {"selected", "similar"}),
-        (["--purge-prefix", "BROKEN"], False, False, {"selected"}),
-        (["--purge-prefix", "ORPHAN"], False, False, set()),
+        (["--candidate-id", " C1 "], True, False),
+        (["--case-id", " CASE_1 "], False, True),
+        (["--candidate-id", "C1", "--case-id", "CASE_1"], True, True),
     ],
 )
-def test_explicit_purge_keeps_existing_selection_semantics(
-    monkeypatch, arguments, delete_candidate, delete_case, deleted_summaries
-):
-    """候选和案例按编号匹配，批次汇总按正文子串匹配，索引失效规则保持一致。"""
+def test_explicit_purge_uses_exact_ids(monkeypatch, arguments, delete_candidate, delete_case):
+    """指定 C1 不影响 C10 或包含相似文本的报告。"""
     selected_candidates = _candidate_files("C1")
     selected_cases = [folder / "CASE_1.json" for folder in (clean_artifacts.CASES_DIR, clean_artifacts.CASE_LIBRARY_DIR)]
     unrelated = _candidate_files("C10") + [
@@ -156,15 +147,7 @@ def test_explicit_purge_keeps_existing_selection_semantics(
     ]
     for path in selected_candidates + selected_cases + unrelated:
         _write_file(path)
-    summaries = {
-        "selected": {"candidate_id": "C1", "case_id": "CASE_1", "reason": "BROKEN"},
-        "similar": {"candidate_id": "C10", "case_id": "CASE_10"},
-        "other": {"candidate_id": "C2", "case_id": "CASE_2"},
-    }
-    summary_paths = {
-        name: _write_file(clean_artifacts.RESULTS_DIR / f"batch_summary_{name}.json", json.dumps(value))
-        for name, value in summaries.items()
-    }
+    _write_file(clean_artifacts.ROOT / "data/results/batch_summary_C10.json", '{"candidate_id":"C10"}')
     index = _write_file(clean_artifacts.CHROMA_DIR / "chroma.sqlite3")
     expected = _snapshot_files()
     deleted = {index}
@@ -172,7 +155,6 @@ def test_explicit_purge_keeps_existing_selection_semantics(
         deleted.update(selected_candidates)
     if delete_case:
         deleted.update(selected_cases)
-    deleted.update(summary_paths[name] for name in deleted_summaries)
     monkeypatch.setattr(sys, "argv", ["clean_artifacts.py", *arguments])
 
     assert clean_artifacts.main() == 0
@@ -184,8 +166,6 @@ def test_explicit_purge_keeps_existing_selection_semantics(
 @pytest.mark.parametrize("arguments", [
     ["--candidate-id", "C404"],
     ["--case-id", "CASE_404"],
-    ["--purge-prefix", "C404"],
-    ["--purge-prefix", "CASE_404"],
     ["--candidate-id", " ", "--case-id", " "],
 ])
 def test_unmatched_business_ids_preserve_index_and_records(monkeypatch, arguments):
@@ -193,7 +173,7 @@ def test_unmatched_business_ids_preserve_index_and_records(monkeypatch, argument
         clean_artifacts.CASES_DIR / "CASE_1.json",
         clean_artifacts.CASE_LIBRARY_DIR / "CASE_1.json",
         clean_artifacts.CHROMA_DIR / "chroma.sqlite3",
-        clean_artifacts.RESULTS_DIR / "batch_summary_C1.json",
+        clean_artifacts.ROOT / "data/results/batch_summary_C1.json",
     ]:
         _write_file(path)
     expected = _snapshot_files()
@@ -203,7 +183,7 @@ def test_unmatched_business_ids_preserve_index_and_records(monkeypatch, argument
     assert _snapshot_files() == expected
 
 
-@pytest.mark.parametrize("mode", ["cache", "business_index", "prefix_index"])
+@pytest.mark.parametrize("mode", ["cache", "business_index"])
 def test_directory_deletion_errors_propagate(monkeypatch, mode):
     """在底层 rmdir 注入错误，确保真实 rmtree 不会通过 ignore_errors 吞掉异常。"""
     target = clean_artifacts.ROOT / "__pycache__" if mode == "cache" else clean_artifacts.CHROMA_DIR
@@ -211,8 +191,6 @@ def test_directory_deletion_errors_propagate(monkeypatch, mode):
     if mode == "business_index":
         _write_file(clean_artifacts.IO_DIR / "input_C1.json")
         monkeypatch.setattr(sys, "argv", ["clean_artifacts.py", "--candidate-id", "C1"])
-    elif mode == "prefix_index":
-        monkeypatch.setattr(sys, "argv", ["clean_artifacts.py", "--purge-prefix", "BROKEN"])
     original_rmdir = clean_artifacts.shutil.os.rmdir
 
     def deny_target(path, *args, **kwargs):
@@ -243,3 +221,37 @@ def test_file_deletion_errors_propagate(monkeypatch):
 
 def test_missing_path_is_ignored(tmp_path):
     assert clean_artifacts.remove_path(tmp_path / "missing") is None
+
+
+def test_completed_job_cleanup_preserves_model_and_result_files():
+    from abaqus.job_utils import cleanup_job_artifacts
+
+    folder = clean_artifacts.ABAQUS_RUNS_DIR / "C1"
+    keep = {"C1.inp", "C1.odb", "C1.cae", "C1_mode1.json", "candidate_input.json"}
+    for name in keep | {"C1.sta", "C1.sim", "C1.msg", "C1.dat", "build_C1.py", "abaqus.rpy"}:
+        _write_file(folder / name)
+    _write_file(folder / "C1.simdir/matrix.bin")
+
+    cleanup_job_artifacts(folder, ["C1"])
+
+    assert {path.name for path in folder.iterdir()} == keep
+
+
+def test_job_lock_preserves_all_files():
+    from abaqus.job_utils import cleanup_job_artifacts
+
+    folder = clean_artifacts.ABAQUS_RUNS_DIR / "C1"
+    for name in ("C1.lck", "C1.sta", "build_C1.py"):
+        _write_file(folder / name)
+    before = _snapshot_files()
+    with pytest.raises(RuntimeError, match="作业锁"):
+        cleanup_job_artifacts(folder, ["C1"])
+    assert _snapshot_files() == before
+
+
+def test_cleanup_rejects_invalid_ids_and_project_root():
+    for value in ("../config", "C1/..", "C0", "C1_suffix"):
+        with pytest.raises(ValueError, match="无效求解编号"):
+            clean_artifacts.candidate_artifact_paths(value)
+    with pytest.raises(ValueError, match="越界"):
+        clean_artifacts.remove_path(clean_artifacts.ROOT)

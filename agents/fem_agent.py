@@ -4,11 +4,15 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Dict
+import re
 
 from jinja2 import Template
 
 from agents.base import BaseAgent
-from abaqus.job_utils import diagnose_failure, is_abaqus_available, read_tail_text, run_command, wait_for_result_file
+from abaqus.job_utils import (
+    cleanup_job_artifacts, diagnose_failure, ensure_job_unlocked, is_abaqus_available,
+    read_tail_text, run_command, solver_log_tails,
+)
 from core.config_loader import load_app_config
 from core.io_utils import read_json, write_json
 from core.paths import ABAQUS_RUNS_DIR, ABAQUS_TEMPLATE_DIR, IO_DIR, ROOT_DIR
@@ -34,6 +38,8 @@ class FEMAgent(BaseAgent):
         return IO_DIR / f"result_{candidate_id}.json"
 
     def _run_dir(self, candidate_id: str) -> Path:
+        if not re.fullmatch(r"C[1-9][0-9]*", candidate_id):
+            raise ValueError(f"无效求解编号：{candidate_id}")
         run_dir = ABAQUS_RUNS_DIR / candidate_id
         run_dir.mkdir(parents=True, exist_ok=True)
         return run_dir
@@ -46,28 +52,6 @@ class FEMAgent(BaseAgent):
 
     def _odb_path(self, candidate_id: str) -> Path:
         return self._run_dir(candidate_id) / f"{candidate_id}.odb"
-
-    def _cleanup_run_artifacts(self, candidate_id: str, keep_logs: bool = True) -> None:
-        run_dir = self._run_dir(candidate_id)
-        removable = [".lck", ".023", ".com", ".jnl", ".sta", ".prt", ".sim", ".log", ".env", ".odb_f"]
-        if not keep_logs:
-            removable.extend([".msg", ".dat"])
-
-        for suffix in removable:
-            path = run_dir / f"{candidate_id}{suffix}"
-            if path.exists():
-                path.unlink(missing_ok=True)
-
-        for path in run_dir.glob("abaqus.rpy*"):
-            path.unlink(missing_ok=True)
-        for path in run_dir.glob("abaqus*.rec"):
-            path.unlink(missing_ok=True)
-        for path in run_dir.glob("candidate_retry_*.json"):
-            path.unlink(missing_ok=True)
-
-        script_path = self._script_path(candidate_id)
-        if script_path.exists():
-            script_path.unlink(missing_ok=True)
 
     def generate_script(self, candidate: Dict) -> Path:
         template_path = ABAQUS_TEMPLATE_DIR / "t_stiffener_buckle.py.j2"
@@ -100,10 +84,10 @@ class FEMAgent(BaseAgent):
             "geometry_issue": "几何装配阶段出现异常，建议调整筋高、翼缘宽度或容差设置。",
             "convergence_fail": "特征值求解未稳定收敛，建议增加搜索模态数并收敛到更稳健的几何区间。",
             "blf_negative": "求得负特征值，通常意味着载荷方向或边界设置需要复核。",
-            "process_crash": "ABAQUS 进程异常退出，建议检查运行环境、日志和临时文件。",
+            "process_crash": "ABAQUS 进程异常退出，请查看结果中的 error_log 并检查运行环境。",
             "abaqus_unavailable": "未找到 ABAQUS 命令，无法执行真实有限元求解。",
         }
-        return mapping.get(error_type, "求解未完成，建议检查日志后重试。")
+        return mapping.get(error_type, "求解未完成，请查看结果中的 error_log。")
 
     def _annotate_result(self, candidate: Dict, result: Dict) -> Dict:
         annotated = dict(result)
@@ -152,7 +136,7 @@ class FEMAgent(BaseAgent):
     def _run_real(self, candidate: Dict, result_path: Path) -> Dict:
         candidate_id = candidate["candidate_id"]
         run_dir = self._run_dir(candidate_id)
-        self._cleanup_run_artifacts(candidate_id, keep_logs=False)
+        ensure_job_unlocked(run_dir)
         script_path = self.generate_script(candidate)
         self.emit(f"{candidate_id} 脚本已生成：{script_path.name}")
 
@@ -164,45 +148,36 @@ class FEMAgent(BaseAgent):
         )
         self.emit(f"{candidate_id} ABAQUS 作业完成，返回码 {return_code}")
 
-        if wait_for_result_file(
-            result_path=result_path,
-            timeout_seconds=self.abaqus_config["job_timeout_seconds"],
-            poll_interval_seconds=self.abaqus_config["poll_interval_seconds"],
-        ):
-            result = self._annotate_result(candidate, read_json(result_path))
-            write_json(result_path, result)
-            self._cleanup_run_artifacts(candidate_id, keep_logs=result["status"] != "success")
-            return result
+        if return_code == 0 and result_path.is_file():
+            return read_json(result_path)
 
         diagnosis = diagnose_failure(
             msg_text=read_tail_text(run_dir / f"{candidate_id}.msg"),
             dat_text=read_tail_text(run_dir / f"{candidate_id}.dat"),
             return_code=return_code,
         )
-        return self._annotate_result(
-            candidate,
-            {
-                "candidate_id": candidate_id,
-                "status": "failed",
-                "retry_count": 0,
-                "BLF_global": None,
-                "BLF_local": None,
-                "failure_mode": None,
-                "max_displacement_mm": None,
-                "weight_kg_per_m2": None,
-                "verdict": None,
-                "abaqus_odb": None,
-                "abaqus_inp": str(self._inp_path(candidate_id)) if self._inp_path(candidate_id).exists() else None,
-                "visualization_json": None,
-                "artifact_dir": str(run_dir),
-                "error_type": diagnosis["error_type"],
-                "error_log": {
-                    "stdout": stdout[-4000:],
-                    "stderr": stderr[-4000:],
-                    "reason": diagnosis["reason"],
-                },
+        return {
+            "candidate_id": candidate_id,
+            "status": "failed",
+            "retry_count": 0,
+            "BLF_global": None,
+            "BLF_local": None,
+            "failure_mode": None,
+            "max_displacement_mm": None,
+            "weight_kg_per_m2": None,
+            "verdict": None,
+            "abaqus_odb": None,
+            "abaqus_inp": str(self._inp_path(candidate_id)) if self._inp_path(candidate_id).exists() else None,
+            "visualization_json": None,
+            "artifact_dir": str(run_dir),
+            "error_type": diagnosis["error_type"],
+            "error_log": {
+                "return_code": return_code,
+                "stdout": stdout[-4000:],
+                "stderr": stderr[-4000:],
+                "reason": diagnosis["reason"],
             },
-        )
+        }
 
     def _abaqus_unavailable_result(self, candidate: Dict) -> Dict:
         candidate_id = candidate["candidate_id"]
@@ -238,7 +213,7 @@ class FEMAgent(BaseAgent):
         candidate_id = current["candidate_id"]
         result_path = self._result_path(candidate_id)
         run_dir = self._run_dir(candidate_id)
-        write_json(run_dir / "candidate_input.json", current)
+        ensure_job_unlocked(run_dir)
 
         if not is_abaqus_available(self.abaqus_config["command"]):
             self.emit(f"{candidate_id} 未找到 ABAQUS 命令，真实有限元求解无法启动")
@@ -249,26 +224,29 @@ class FEMAgent(BaseAgent):
                 result_path.unlink()
 
             write_json(self._input_path(candidate_id), current)
+            write_json(run_dir / "candidate_input.json", current)
             self.emit(f"{candidate_id} 第 {attempt + 1} 次真实 ABAQUS 求解")
-            result = self._run_real(current, result_path)
+            result = self._annotate_result(current, self._run_real(current, result_path))
             result["retry_count"] = attempt
+            if result["status"] != "success":
+                detail = result.get("error_log")
+                result["error_log"] = dict(detail) if isinstance(detail, dict) else {"reason": detail}
+                result["error_log"]["solver_logs"] = solver_log_tails(run_dir, [candidate_id])
+                if attempt == retries - 1:
+                    result["status"] = "max_retries_exceeded"
+            validate_or_raise("abaqus_result.schema.json", result)
+            write_json(result_path, result)
+            cleanup_job_artifacts(run_dir, [candidate_id])
 
             if result["status"] == "success":
-                self._cleanup_run_artifacts(candidate_id, keep_logs=True)
-                result = self._annotate_result(current, result)
-                validate_or_raise("abaqus_result.schema.json", result)
                 return result
 
             failure_type = result.get("error_type") or "failed"
             self.emit(f"{candidate_id} 失败类型：{failure_type}")
             if attempt == retries - 1:
-                final_result = self._annotate_result(current, dict(result))
-                final_result["status"] = "max_retries_exceeded"
-                validate_or_raise("abaqus_result.schema.json", final_result)
-                return final_result
+                return result
 
             current = self.apply_adjustment(current, failure_type, attempt)
-            write_json(run_dir / f"candidate_retry_{attempt + 1}.json", current)
             strategy = current.get("last_adjustment", {}).get("strategy", "默认重试")
             self.emit(f"{candidate_id} 准备重试，调整策略：{strategy}")
 
