@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
 )
 
 from gui.interactive_view import InteractivePlotWidget
+from core.display import format_number as _format_number, format_parameter
 from core.stiffener_profile import GEOMETRY_LABELS, TYPE_DISPLAY_NAMES
 from core.task_contract import describe_boundary_conditions, describe_load_conditions
 
@@ -32,15 +33,6 @@ SOURCE_LABELS = {
 def _format_generation_label(source: object) -> str:
     key = str(source or "UNKNOWN")
     return SOURCE_LABELS.get(key, key)
-
-
-def _format_number(value: object, digits: int = 3) -> str:
-    if value is None or value == "":
-        return "-"
-    try:
-        return f"{float(value):.{digits}f}"
-    except Exception:
-        return str(value)
 
 
 def _parse_layup_sequence(layup_text: str) -> list[str]:
@@ -124,7 +116,7 @@ class CandidateWidget(QWidget):
                 {"LLM": "LLM", "CASE_TRANSFER": "案例迁移", "DOE": "DOE"}.get(source, source),
                 _format_number(candidate.get("surrogate_BLF")),
                 _format_number(candidate.get("surrogate_weight")),
-                _format_number(candidate.get("rank_score"), 4),
+                _format_number(candidate.get("rank_score")),
                 _format_number(result.get("BLF_global") if result else None),
                 result.get("status", "未校核") if result else "未校核",
                 result.get("verdict", "-") if result else "-",
@@ -178,11 +170,11 @@ class CandidateWidget(QWidget):
             for index, angle in enumerate(_parse_layup_sequence(layup.get("skin_layup", "")))
         )
         geometry_items = "".join(
-            f"<li>{GEOMETRY_LABELS.get(key, key)}: {_format_number(value)}</li>"
+            f"<li>{GEOMETRY_LABELS.get(key, key)}: {format_parameter(key, value)}</li>"
             for key, value in geometry.items()
         )
         material_items = "".join(f"<li>{key}: {value}</li>" for key, value in material.items())
-        target_items = "".join(f"<li>{key}: {value}</li>" for key, value in design_targets.items())
+        target_items = "".join(f"<li>{key}: {format_parameter(key, value)}</li>" for key, value in design_targets.items())
         rule_errors = rule_check.get("errors") or ["无"]
         rule_suggestions = rule_check.get("suggestions") or ["无"]
         archive_id = candidate.get("persistent_candidate_id") or (result or {}).get("candidate_id", "-")
@@ -219,7 +211,7 @@ class CandidateWidget(QWidget):
             f"<p><b>来源补充：</b>{candidate.get('origin_summary') or '当前候选未附带额外来源说明。'}</p>"
             f"<p><b>代理预测：</b> BLF={_format_number(candidate.get('surrogate_BLF'))}，"
             f"重量={_format_number(candidate.get('surrogate_weight'))}，"
-            f"评分={_format_number(candidate.get('rank_score'), 4)}</p>"
+            f"评分={_format_number(candidate.get('rank_score'))}</p>"
             f"<p><b>代理模型初筛摘要：</b>{screening_summary}</p>"
             f"<p><b>优先校核原因：</b>{selection_reason}</p>"
             "<h4>几何设计参数</h4><ul>"
@@ -227,12 +219,12 @@ class CandidateWidget(QWidget):
             "<h4>材料系统</h4><ul>"
             f"{material_items}</ul>"
             "<h4>载荷与边界</h4><ul>"
-            f"<li>{describe_load_conditions(load_conditions)}</li>"
+            f"<li>{describe_load_conditions(load_conditions, display=True)}</li>"
             f"<li>{describe_boundary_conditions(candidate.get('boundary_conditions', {}))}</li></ul>"
             "<h4>设计目标</h4><ul>"
             f"{target_items}</ul>"
             f"<h4>铺层定义</h4><p>铺层字符串：{layup.get('skin_layup', '-')}</p>"
-            f"<p>比例：0°={_format_number(layup.get('skin_f0'))}，±45°={_format_number(layup.get('skin_f45'))}，90°={_format_number(layup.get('skin_f90'))}</p>"
+            f"<p>比例：0°={_format_number(layup.get('skin_f0'), None)}，±45°={_format_number(layup.get('skin_f45'), None)}，90°={_format_number(layup.get('skin_f90'), None)}</p>"
             f"<ul>{ply_items or '<li>暂无铺层明细</li>'}</ul>"
             "<h4>规则检查</h4>"
             f"<p>是否通过校验：{rule_check.get('is_valid', False)}</p>"

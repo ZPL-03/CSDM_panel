@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import Iterable
 
+from core.display import format_number as _fmt
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
     QHeaderView,
@@ -16,15 +18,6 @@ from PyQt6.QtWidgets import (
 )
 
 from gui.interactive_view import InteractivePlotWidget
-
-
-def _fmt(value: object, digits: int = 3) -> str:
-    if value is None or value == "":
-        return "-"
-    try:
-        return f"{float(value):.{digits}f}"
-    except Exception:
-        return str(value)
 
 
 class AbaqusWidget(QWidget):
@@ -134,7 +127,7 @@ class AbaqusWidget(QWidget):
             f"<p><b>INP：</b>{result.get('abaqus_inp', '-')}</p>"
             f"<p><b>模态数据：</b>{result.get('visualization_json', '-')}</p>"
             f"<p><b>工件目录：</b>{result.get('artifact_dir', '-')}</p>"
-            f"<p><b>特征值：</b>{result.get('mode_eigenvalues', [])}</p>"
+            f"<p><b>特征值：</b>{'、'.join(_fmt(value) for value in result.get('mode_eigenvalues', []))}</p>"
         )
         if result.get("error_log"):
             html += f"<h4>错误日志</h4><pre>{result.get('error_log')}</pre>"

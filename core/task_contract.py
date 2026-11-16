@@ -157,11 +157,15 @@ def normalize_load_conditions(load_conditions: Any) -> Dict[str, Any]:
     return load_condition_payload("axial_compression")
 
 
-def describe_load_conditions(load_conditions: Any) -> str:
+def describe_load_conditions(load_conditions: Any, *, display: bool = False) -> str:
+    """描述工况；显示出口可简化载荷，检索和计算说明保留原值。"""
     normalized = normalize_load_conditions(load_conditions)
     load_type = normalized["type"]
     nx_value = normalized.get("Nx_kN_per_m", 0.0)
     nxy_value = normalized.get("Nxy_kN_per_m", 0.0)
+    if display:
+        from core.display import format_number
+        nx_value, nxy_value = format_number(nx_value), format_number(nxy_value)
     if load_type == "compression_shear":
         return f"{normalized['label']}：Nx={nx_value} kN/m，Nxy={nxy_value} kN/m"
     if load_type == "in_plane_shear":

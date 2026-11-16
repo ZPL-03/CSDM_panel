@@ -16,6 +16,7 @@ from core.llm_backend import LLMBackend, auto_llm_enabled
 from core.paths import RESULTS_DIR
 from core.stiffener_profile import TYPE_DISPLAY_NAMES
 from core.task_contract import describe_boundary_conditions, describe_load_conditions, task_payload_from_request
+from core.display import NUMBER_DISPLAY_INSTRUCTION, format_number, format_parameter
 
 
 class ReportGenAgent(BaseAgent):
@@ -125,18 +126,18 @@ class ReportGenAgent(BaseAgent):
         if summary["passed_count"] > 0:
             overall = (
                 f"共完成 {summary['result_count']} 个样本校核，其中 {summary['passed_count']} 个满足 "
-                f"BLF 不低于 {summary.get('target_BLF')} 的目标。"
+                f"BLF 不低于 {format_number(summary.get('target_BLF'))} 的目标。"
             )
         else:
             overall = (
                 f"共完成 {summary['result_count']} 个样本校核，没有样本满足 "
-                f"BLF 不低于 {summary.get('target_BLF')} 的目标。"
+                f"BLF 不低于 {format_number(summary.get('target_BLF'))} 的目标。"
             )
         compare = (
             f"BLF 最优样本为 {summary.get('best_blf_candidate') or '-'}，"
-            f"BLF_global={summary.get('best_blf_value') or '-'}；"
+            f"BLF_global={format_number(summary.get('best_blf_value'))}；"
             f"面密度最低样本为 {summary.get('lightest_candidate') or '-'}，"
-            f"面密度={summary.get('lightest_weight_kg_per_m2') or '-'} kg/m^2。"
+            f"面密度={format_number(summary.get('lightest_weight_kg_per_m2'))} kg/m^2。"
         )
         suggestion = "后续应优先复核通过样本的屈曲模态、边界约束和制造可达性；未通过样本先定位失效模式，再决定是否调整筋距、筋高、蒙皮厚度或铺层比例。"
         scope = "有限元使用均质正交各向异性壳截面，不逐层离散铺层，不能据此验证铺层顺序或比例对屈曲的影响。线性特征值分析只评价理想结构的屈曲载荷系数，不证明损伤、初始缺陷或非线性极限承载能力。"
@@ -164,7 +165,7 @@ class ReportGenAgent(BaseAgent):
             "cap_width_mm",
             "cap_thickness_mm",
         ]
-        parts = [f"{key}={geometry.get(key)}" for key in keys if geometry.get(key) is not None]
+        parts = [f"{key}={format_parameter(key, geometry[key])}" for key in keys if geometry.get(key) is not None]
         return "，".join(parts) if parts else "暂无几何字段"
 
     def _render_deterministic_engineering_explanation(self, summary: Dict[str, Any]) -> str:
@@ -285,6 +286,7 @@ class ReportGenAgent(BaseAgent):
             "你是复合材料加筋壁板设计报告解释助手。"
             "依据输入的任务、候选和校核结果撰写中文工程说明，分析范围见 analysis_scope。"
             "数值、材料、工况、候选编号和校核结论以输入为准；引用数值时保留单位和对应对象。"
+            + NUMBER_DISPLAY_INSTRUCTION +
             "区分计算结果、机理解释和建议；参数影响需要对比计算支持，制造建议需说明待确认条件。"
             "围绕候选的材料、铺层、厚度、筋条几何和边界条件解释设计取舍。"
             "BLF 是临界载荷与参考载荷之比，小于一表示临界载荷低于完整参考载荷。"
@@ -328,9 +330,9 @@ class ReportGenAgent(BaseAgent):
             f"- 会话任务编号：`{task.get('task_id') or '-'}`",
             f"- 应用场景：{task_payload['application']}",
             f"- 筋条类型：{self._stiffener_type_label(task_payload)}",
-            f"- 工况：{describe_load_conditions(task_payload['load_conditions'])}",
+            f"- 工况：{describe_load_conditions(task_payload['load_conditions'], display=True)}",
             f"- 边界条件：{describe_boundary_conditions(task_payload['boundary_conditions'])}",
-            f"- BLF 目标：不低于 {task_payload['design_targets']['BLF_min']}",
+            f"- BLF 目标：不低于 {format_number(task_payload['design_targets']['BLF_min'])}",
             f"- 优化目标：{task_payload['design_targets']['primary_objective']}",
             f"- 候选来源比例：LLM:CASE_TRANSFER:DOE = "
             f"{task_payload['candidate_generation_preferences']['source_ratio']['llm']:g}:"
@@ -381,9 +383,9 @@ class ReportGenAgent(BaseAgent):
                     "",
                     f"### {result_label} / {result['candidate_id']}",
                     f"- 状态：{result['status']}",
-                    f"- BLF_global：{result.get('BLF_global')}",
-                    f"- BLF_local：{result.get('BLF_local')}",
-                    f"- 面密度：{result.get('weight_kg_per_m2')}",
+                    f"- BLF_global：{format_number(result.get('BLF_global'))}",
+                    f"- BLF_local：{format_number(result.get('BLF_local'))}",
+                    f"- 面密度：{format_number(result.get('weight_kg_per_m2'))}",
                     f"- 失效模式：{result.get('failure_mode')}",
                     f"- 结论：{result.get('verdict')}",
                     f"- 工程说明：{result.get('diagnosis_summary')}",

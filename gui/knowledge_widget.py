@@ -9,6 +9,7 @@ from PyQt6.QtWidgets import QTextBrowser
 
 from core.case_memory import CaseMemoryIndex
 from core.domain_knowledge import DomainKnowledgeBase
+from core.display import format_number
 from core.paths import ABAQUS_RUNS_DIR, CASES_DIR, CASE_LIBRARY_DIR, MODELS_DIR
 
 
@@ -54,10 +55,10 @@ class KnowledgeWidget(QTextBrowser):
                     "<p>",
                     f"<b>当前模型：</b>{metrics.get('selected_model', '-')}<br>",
                     f"<b>训练样本数：</b>{metrics.get('training_size', '-')}<br>",
-                    f"<b>RF MAPE：</b>{metrics.get('rf', {}).get('mape', '-')}<br>",
-                    f"<b>RF RMSE：</b>{metrics.get('rf', {}).get('rmse', '-')}<br>",
-                    f"<b>MLP MAPE：</b>{metrics.get('mlp', {}).get('mape', '-')}<br>",
-                    f"<b>MLP RMSE：</b>{metrics.get('mlp', {}).get('rmse', '-')}</p>",
+                    f"<b>RF MAPE：</b>{format_number(metrics.get('rf', {}).get('mape'))}<br>",
+                    f"<b>RF RMSE：</b>{format_number(metrics.get('rf', {}).get('rmse'))}<br>",
+                    f"<b>MLP MAPE：</b>{format_number(metrics.get('mlp', {}).get('mape'))}<br>",
+                    f"<b>MLP RMSE：</b>{format_number(metrics.get('mlp', {}).get('rmse'))}</p>",
                 ]
             )
 

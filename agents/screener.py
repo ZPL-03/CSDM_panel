@@ -6,6 +6,7 @@ from typing import Dict, List
 
 from agents.base import BaseAgent
 from core.config_loader import load_app_config
+from core.display import format_number
 from core.stiffener_profile import resolve_stiffener_type
 from core.surrogate_model import SurrogateModelManager
 from core.task_contract import effective_screen_top_k
@@ -87,9 +88,9 @@ class ScreenerAgent(BaseAgent):
                 "weight_component": round(self.weight_penalty * updated["surrogate_weight"], 4),
             }
             updated["screening_summary"] = (
-                f"代理预测 BLF={updated['surrogate_BLF']}，"
-                f"面密度={updated['surrogate_weight']} kg/m^2，"
-                f"按 {self.score_formula_text} 得分 {updated['rank_score']}。"
+                f"代理预测 BLF={format_number(updated['surrogate_BLF'])}，"
+                f"面密度={format_number(updated['surrogate_weight'])} kg/m^2，"
+                f"按 {self.score_formula_text} 得分 {format_number(updated['rank_score'])}。"
             )
             enriched.append(updated)
 

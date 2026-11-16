@@ -23,6 +23,7 @@ from PyQt6.QtWidgets import (
 
 from agents.orchestrator import OrchestratorAgent
 from core.conversation_flow import ConversationFlowController, ConversationState
+from core.display import format_number
 from core.paths import RESULTS_DIR
 from core.task_contract import (
     describe_boundary_conditions,
@@ -717,12 +718,12 @@ class MainWindow(QMainWindow):
             "<h3>当前任务</h3>"
             f"<p><b>会话任务编号：</b>{task.get('task_id')}</p>"
             f"<p><b>应用场景：</b>{task_payload.get('application')}</p>"
-            f"<p><b>工况：</b>{describe_load_conditions(task_payload.get('load_conditions', {}))}</p>"
+            f"<p><b>工况：</b>{describe_load_conditions(task_payload.get('load_conditions', {}), display=True)}</p>"
             f"<p><b>边界条件：</b>{describe_boundary_conditions(task_payload.get('boundary_conditions', {}))}</p>"
             f"<p><b>候选池：</b>{generated_count} / 目标 {candidate_pool_target}</p>"
             f"<p><b>初筛目标：</b>Top-{requested_top_k}（当前最多 {effective_top_k}）</p>"
             f"<p><b>材料：</b>{material.get('name')} | E1={material.get('E1_GPa')} GPa | 密度={material.get('density_kg_per_m3')} kg/m^3</p>"
-            f"<p><b>目标：</b>BLF >= {task_payload.get('design_targets', {}).get('BLF_min')}，{task_payload.get('design_targets', {}).get('primary_objective')}</p>"
+            f"<p><b>目标：</b>BLF >= {format_number(task_payload.get('design_targets', {}).get('BLF_min'))}，{task_payload.get('design_targets', {}).get('primary_objective')}</p>"
             f"<p><b>阶段：</b>{self.session.stage}</p>"
         )
 
