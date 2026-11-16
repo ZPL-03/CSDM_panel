@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from agents.report_gen import ReportGenAgent
 
 
@@ -140,9 +142,9 @@ def test_report_uses_llm_only_for_grounded_engineering_explanation() -> None:
 
     class ControlledBackend:
         def chat(self, system_prompt, user_prompt, max_tokens_override=None):
-            assert "不得新增候选编号、数值" in system_prompt
+            assert "analysis_scope" in system_prompt
             assert "制造与装配关注点" in user_prompt
-            assert "只做定性解释" in user_prompt
+            assert "结构化校核数据 JSON" in user_prompt
             return (
                 "### 制造与装配关注点\n"
                 "- 围绕候选筋条成形、胶接界面和边界夹持区域组织工艺评审。\n\n"
@@ -191,6 +193,26 @@ def test_report_explanation_receives_complete_layup_and_results() -> None:
     assert payload["screened_candidates"][0]["geometry"]["skin_thickness_mm"] == 2.5
     assert payload["results"][0]["BLF_global"] == 1.46
     assert "不进入当前有限元截面计算" in payload["analysis_scope"]
+
+
+@pytest.mark.parametrize("text,valid", [
+    ("1. T300/5208 蒙皮厚度为 2.5 mm，BLF_global=1.46。", True),
+    ("面密度为 12.5 kg/m²，铺层含 -45°，f0 为 28.6%。", True),
+    ("BLF_global=1.5，蒙皮厚度为 2.50 mm。", True),
+    ("BLF_global=1.4601。", False),
+    ("蒙皮厚度为 2.51 mm。", False),
+    ("f0 为 29.6%。", False),
+    ("材料为 T800/5228。", False),
+])
+def test_report_validates_numbers_against_input(text, valid) -> None:
+    task, results, candidates = _report_sample()
+    agent = ReportGenAgent()
+    payload = agent._build_llm_explanation_payload(agent._build_structured_summary(task, results, candidates))
+    if valid:
+        agent._validate_llm_engineering_text(text, payload)
+    else:
+        with pytest.raises(ValueError):
+            agent._validate_llm_engineering_text(text, payload)
 
 
 def test_report_states_actual_shell_model_and_layup_inputs() -> None:

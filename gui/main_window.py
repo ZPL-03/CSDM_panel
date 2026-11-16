@@ -2,19 +2,12 @@
 
 from __future__ import annotations
 
-import sys
 from dataclasses import dataclass, field
-from pathlib import Path
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
 
 from PyQt6 import sip
 from PyQt6.QtCore import QObject, QThread, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QCloseEvent, QDesktopServices
 from PyQt6.QtWidgets import (
-    QApplication,
     QGridLayout,
     QLabel,
     QLineEdit,
@@ -30,7 +23,7 @@ from PyQt6.QtWidgets import (
 
 from agents.orchestrator import OrchestratorAgent
 from core.conversation_flow import ConversationFlowController, ConversationState
-from core.paths import RESULTS_DIR, ensure_project_dirs
+from core.paths import RESULTS_DIR
 from core.task_contract import (
     describe_boundary_conditions,
     describe_load_conditions,
@@ -687,7 +680,7 @@ class MainWindow(QMainWindow):
             passed_count = sum(1 for item in payload["results"] if item.get("verdict") == "通过")
             self.chat_widget.add_message(
                 "SYSTEM",
-                f"手动入口：本轮 ABAQUS 校核完成，新增结果 {len(payload['results'])} 个，其中通过 {passed_count} 个。",
+                f"手动入口：ABAQUS 校核完成，得到 {len(payload['results'])} 个结果，其中通过 {passed_count} 个。",
             )
 
         elif action == "report":
@@ -745,15 +738,3 @@ class MainWindow(QMainWindow):
                     thread.wait(3000)
             self._clear_worker_refs()
             super().closeEvent(event)
-
-
-def main() -> int:
-    ensure_project_dirs()
-    app = QApplication(sys.argv)
-    window = MainWindow()
-    window.show()
-    return app.exec()
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())

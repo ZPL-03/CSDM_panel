@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
+from decimal import Decimal
 from pathlib import Path
 from typing import Any, Dict, List
 from xml.sax.saxutils import escape
@@ -122,12 +124,12 @@ class ReportGenAgent(BaseAgent):
     def _render_narrative(self, summary: Dict) -> str:
         if summary["passed_count"] > 0:
             overall = (
-                f"本轮共完成 {summary['result_count']} 个样本校核，其中 {summary['passed_count']} 个满足 "
+                f"共完成 {summary['result_count']} 个样本校核，其中 {summary['passed_count']} 个满足 "
                 f"BLF 不低于 {summary.get('target_BLF')} 的目标。"
             )
         else:
             overall = (
-                f"本轮共完成 {summary['result_count']} 个样本校核，当前没有样本满足 "
+                f"共完成 {summary['result_count']} 个样本校核，没有样本满足 "
                 f"BLF 不低于 {summary.get('target_BLF')} 的目标。"
             )
         compare = (
@@ -184,7 +186,7 @@ class ReportGenAgent(BaseAgent):
             [
                 "### 制造与装配关注点\n"
                 f"- 入选候选涉及材料体系：{material_text}。制造评审应围绕蒙皮厚度、筋高、筋距、腹板厚度和翼缘/帽顶尺寸的可达性展开。\n"
-                "- 对帽型、T 型、L 型和板式筋，应分别核查筋条成形、胶接或共固化界面、边界夹持区域以及筋条端部过渡区，避免报告之外新增结构形式。",
+                "- 按候选的筋型核查筋条成形、胶接或共固化界面、边界夹持区域和筋条端部过渡区。",
                 "### 铺层与刚度分配\n"
                 f"- 入选候选的铺层表达式包括：{layup_text}。解释刚度贡献时应以 0/±45/90 比例和对称均衡约束为基础。\n"
                 "- 有限元壳截面不逐层使用铺层序列；铺层对刚度的贡献属于待验证机理，不能解释为当前求解已证实的效果。",
@@ -201,6 +203,7 @@ class ReportGenAgent(BaseAgent):
         )
 
     def _material_codes(self, text: str) -> set[str]:
+        text = re.sub(r"\b(?:kg|g)\s*/\s*m2\b", "", text, flags=re.IGNORECASE)
         codes = re.findall(r"\b(?:T|M|IM)[0-9]+[A-Z0-9/-]*\b", text, flags=re.IGNORECASE)
         return {code.upper() for code in codes}
 
@@ -224,9 +227,40 @@ class ReportGenAgent(BaseAgent):
         }
 
     def _llm_text_uses_only_known_numbers(self, text: str, payload: Dict[str, Any]) -> bool:
-        for code in self._material_codes(json.dumps(payload, ensure_ascii=False, default=str)):
-            text = re.sub(re.escape(code), "", text, flags=re.IGNORECASE)
-        return re.search(r"[0-9]", text) is None
+        """核对输入中的数值，允许按显示精度舍入以及比例与百分数互换。"""
+        def numbers(value: Any) -> list[Decimal]:
+            if isinstance(value, dict):
+                return [number for item in value.values() for number in numbers(item)]
+            if isinstance(value, (list, tuple)):
+                return [number for item in value for number in numbers(item)]
+            if isinstance(value, bool) or value is None:
+                return []
+            if isinstance(value, (int, float)):
+                number = Decimal(str(value))
+                return [number] if number.is_finite() else []
+            content = unicodedata.normalize("NFKC", str(value))
+            content = re.sub(r"(?m)^\s*\d+[.)、]\s+", "", content)
+            content = re.sub(r"\b(?:TMP_|CASE_|C)\d+\b", "", content)
+            for code in self._material_codes(content):
+                content = re.sub(re.escape(code), "", content, flags=re.IGNORECASE)
+            content = re.sub(r"\b(?:[cmk]?m|s)\^?[23]\b", "", content)
+            pattern = r"(?<![A-Za-z0-9_])[+-]?(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?(?![A-Za-z0-9_])"
+            parsed = []
+            for match in re.finditer(pattern, content):
+                number = Decimal(match.group())
+                suffix = content[match.end():].lstrip()
+                if suffix.startswith("%"):
+                    number /= 100
+                elif suffix.startswith("‰"):
+                    number /= 1000
+                parsed.append(number)
+            return parsed
+
+        allowed = numbers(payload)
+        return all(
+            any(abs(value - known) <= Decimal(1).scaleb(value.as_tuple().exponent) / 2 for known in allowed)
+            for value in numbers(text)
+        )
 
     def _llm_text_uses_only_known_material_codes(self, text: str, payload: Dict[str, Any]) -> bool:
         known_codes = self._material_codes(json.dumps(payload, ensure_ascii=False, default=str))
@@ -249,25 +283,16 @@ class ReportGenAgent(BaseAgent):
         payload = self._build_llm_explanation_payload(summary)
         system_prompt = (
             "你是复合材料加筋壁板设计报告解释助手。"
-            "只能基于用户提供的完整结构化数据撰写中文工程解释。"
-            "不得新增候选编号、数值、材料名、工况或有限元结论；不得改写 verdict、BLF、面密度和排序。"
-            "可以从复合材料加筋壁板常用制造评审角度讨论铺放、共固化、胶接、筋条端部过渡、边界夹持和无损检测，"
-            "但不能把 JSON 中没有的设备、厂家、具体固化温度、检验阈值或替代材料牌号写成事实。"
-            "优化建议限定在当前候选变量域内，只讨论材料、铺层、厚度、筋条几何、边界、有限元和试验复核，"
-            "不要引入夹芯、蜂窝、金属衬套、圆柱壳或其他未在输入中出现的结构型式。"
-            "数值事实已经由报告模板输出，解释段禁止出现数字、角度、单位、阈值和候选编号，只做定性解释。"
-            "每类内容最多两条，区分已计算事实、机理推断和待验证建议。不得把输入已有的铺层、比例和特征值写成未提供。"
-            "没有对比试验或敏感性分析，不得声称某尺寸偏大偏小或某参数已经提高了承载能力。"
-            "有限元采用均质正交各向异性壳截面，未逐层使用设计铺层；必须说明铺层作用尚未由该有限元模型验证，不得用铺层比例解释当前特征值。"
-            "整体屈曲标签不能证明局部损伤未发生，也不能证明界面胶接可靠。"
-            "BLF 小于一时必须说明不能证明可承受完整参考载荷，代理预测与有限元差距较大时应提示代理适用性需复核。"
-            "输出 Markdown，直接从“### 制造与装配关注点”开始，五类内容各用一个三级标题和短横线项目；"
-            "报告模板已有“工程解释与制造建议”总标题，不要重复总标题，不要输出表格、JSON、编号列表或代码块。"
+            "依据输入的任务、候选和校核结果撰写中文工程说明，分析范围见 analysis_scope。"
+            "数值、材料、工况、候选编号和校核结论以输入为准；引用数值时保留单位和对应对象。"
+            "区分计算结果、机理解释和建议；参数影响需要对比计算支持，制造建议需说明待确认条件。"
+            "围绕候选的材料、铺层、厚度、筋条几何和边界条件解释设计取舍。"
+            "BLF 是临界载荷与参考载荷之比，小于一表示临界载荷低于完整参考载荷。"
+            "用 Markdown 分段，不重复报告中的完整数据表。"
         )
         user_prompt = (
             "请生成报告中的“工程解释与制造建议”段落，必须覆盖：制造与装配关注点、铺层与刚度分配、"
-            "屈曲与重量权衡、有限元结果解读、后续验证建议。只做定性解释，不要复述 JSON 中的数字，"
-            "不要给出新的数字、阈值、候选编号或替代材料牌号；如果结构化数据缺少某项，请明确说明当前结构化数据未提供。\n\n"
+            "屈曲与重量权衡、有限元结果解读、后续验证建议。建议应对应输入中的具体问题；缺少判断依据时说明所需信息。\n\n"
             f"结构化校核数据 JSON：\n{json.dumps(payload, ensure_ascii=False, indent=2, default=str)}"
         )
         answer = self.llm_backend.chat(
@@ -275,8 +300,6 @@ class ReportGenAgent(BaseAgent):
             user_prompt,
             max_tokens_override=2600,
         ).strip()
-        if not answer:
-            return ""
         self._validate_llm_engineering_text(answer, payload)
         return answer
 
@@ -288,6 +311,8 @@ class ReportGenAgent(BaseAgent):
                 if llm_text:
                     self._last_llm_explanation_used = True
                     return llm_text
+            except ValueError as exc:
+                self.emit_event("report_explanation_rejected", f"报告解释未通过校验：{exc}", {"reason": str(exc)})
             except Exception as exc:
                 self.emit(f"报告 LLM 工程解释生成失败，已使用确定性解释：{exc}")
         return self._render_deterministic_engineering_explanation(summary)
@@ -341,7 +366,7 @@ class ReportGenAgent(BaseAgent):
                     ]
                 )
         else:
-            lines.extend(["", "- 本轮未提供代理模型初筛上下文。"])
+            lines.extend(["", "- 未提供代理模型初筛上下文。"])
 
         lines.extend(
             [
