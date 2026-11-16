@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from abaqus.job_utils import ensure_job_unlocked  # noqa: E402
+from abaqus.job_utils import ensure_job_unlocked, job_transient_paths  # noqa: E402
 from core.paths import ABAQUS_DIR, ABAQUS_RUNS_DIR, CASES_DIR, CASE_LIBRARY_DIR, CHROMA_DIR, DATA_DIR  # noqa: E402
 
 
@@ -25,16 +25,15 @@ def candidate_artifact_paths(candidate_id: str) -> list[Path]:
         return []
     if not re.fullmatch(r"C[1-9][0-9]*", normalized):
         raise ValueError(f"无效求解编号：{candidate_id}")
-    ensure_job_unlocked(ABAQUS_RUNS_DIR / normalized)
-    if (ABAQUS_DIR / f"{normalized}.lck").exists():
+    run_dir = ABAQUS_RUNS_DIR / normalized
+    ensure_job_unlocked(run_dir)
+    job_names = [normalized, f"{normalized}_service", f"{normalized}_target", f"{normalized}_post"]
+    if any((ABAQUS_DIR / f"{name}.lck").exists() for name in job_names):
         raise ValueError(f"作业锁仍存在：{normalized}")
     return [
         IO_DIR / f"input_{normalized}.json",
         IO_DIR / f"result_{normalized}.json",
-        ABAQUS_RUNS_DIR / normalized,
-        ABAQUS_DIR / f"{normalized}.inp",
-        ABAQUS_DIR / f"{normalized}.odb",
-        ABAQUS_DIR / f"{normalized}_mode1.json",
+        *job_transient_paths(run_dir, job_names),
     ]
 
 

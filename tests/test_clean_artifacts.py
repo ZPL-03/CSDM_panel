@@ -55,15 +55,27 @@ def _snapshot_files() -> dict[Path, bytes]:
 
 
 def _candidate_files(candidate_id: str) -> list[Path]:
+    run_dir = clean_artifacts.ABAQUS_RUNS_DIR / candidate_id
     return [
         clean_artifacts.IO_DIR / f"input_{candidate_id}.json",
         clean_artifacts.IO_DIR / f"result_{candidate_id}.json",
-        clean_artifacts.ABAQUS_RUNS_DIR / candidate_id / f"{candidate_id}.odb",
-        clean_artifacts.ABAQUS_RUNS_DIR / candidate_id / f"{candidate_id}.sta",
+        run_dir / f"{candidate_id}.inp",
+        run_dir / f"{candidate_id}.odb",
+        run_dir / f"{candidate_id}.cae",
+        run_dir / f"{candidate_id}.sta",
         clean_artifacts.ABAQUS_DIR / f"{candidate_id}.inp",
         clean_artifacts.ABAQUS_DIR / f"{candidate_id}.odb",
         clean_artifacts.ABAQUS_DIR / f"{candidate_id}_mode1.json",
     ]
+
+
+def _candidate_transient_files(candidate_id: str) -> set[Path]:
+    run_dir = clean_artifacts.ABAQUS_RUNS_DIR / candidate_id
+    return {
+        clean_artifacts.IO_DIR / f"input_{candidate_id}.json",
+        clean_artifacts.IO_DIR / f"result_{candidate_id}.json",
+        run_dir / f"{candidate_id}.sta",
+    }
 
 
 def test_default_only_removes_python_caches():
@@ -152,7 +164,7 @@ def test_explicit_purge_uses_exact_ids(monkeypatch, arguments, delete_candidate,
     expected = _snapshot_files()
     deleted = {index}
     if delete_candidate:
-        deleted.update(selected_candidates)
+        deleted.update(_candidate_transient_files("C1"))
     if delete_case:
         deleted.update(selected_cases)
     monkeypatch.setattr(sys, "argv", ["clean_artifacts.py", *arguments])
@@ -160,7 +172,9 @@ def test_explicit_purge_uses_exact_ids(monkeypatch, arguments, delete_candidate,
     assert clean_artifacts.main() == 0
     assert _snapshot_files() == {path: content for path, content in expected.items() if path not in deleted}
     assert not clean_artifacts.CHROMA_DIR.exists()
-    assert (clean_artifacts.ABAQUS_RUNS_DIR / "C1").exists() == (not delete_candidate)
+    assert (clean_artifacts.ABAQUS_RUNS_DIR / "C1").exists()
+    if delete_candidate:
+        assert all(path.exists() for path in set(selected_candidates) - _candidate_transient_files("C1"))
 
 
 @pytest.mark.parametrize("arguments", [
