@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Dict
+from copy import deepcopy
 import re
 
 from jinja2 import Template
@@ -80,9 +81,9 @@ class FEMAgent(BaseAgent):
 
         error_type = str(result.get("error_type") or "failed")
         mapping = {
-            "mesh_error": "网格划分阶段出现异常，建议放宽网格尺寸后重试。",
-            "geometry_issue": "几何装配阶段出现异常，建议调整筋高、翼缘宽度或容差设置。",
-            "convergence_fail": "特征值求解未稳定收敛，建议增加搜索模态数并收敛到更稳健的几何区间。",
+            "mesh_error": "网格划分失败，需根据网格诊断检查几何拓扑、单元质量与网格设置。",
+            "geometry_issue": "几何装配失败，需检查输入尺寸、连接关系及装配容差。",
+            "convergence_fail": "特征值求解未收敛，需核对求解日志、载荷、约束与特征值搜索设置。",
             "blf_negative": "求得负特征值，通常意味着载荷方向或边界设置需要复核。",
             "process_crash": "ABAQUS 进程异常退出，请查看结果中的 error_log 并检查运行环境。",
             "abaqus_unavailable": "未找到 ABAQUS 命令，无法执行真实有限元求解。",
@@ -95,43 +96,6 @@ class FEMAgent(BaseAgent):
         annotated["boundary_summary"] = describe_boundary_conditions(candidate.get("boundary_conditions", {}))
         annotated["diagnosis_summary"] = self._diagnosis_summary(annotated)
         return annotated
-
-    def apply_adjustment(self, candidate: Dict, failure_type: str, attempt: int) -> Dict:
-        geometry = dict(candidate["geometry"])
-        adjustment: Dict[str, object] = {"attempt": attempt + 1, "failure_type": failure_type}
-
-        if failure_type == "mesh_error":
-            current_mesh_size = float(candidate.get("analysis", {}).get("mesh_size_mm", 0.0))
-            candidate.setdefault("analysis", {})
-            candidate["analysis"]["mesh_size_mm"] = round(max(current_mesh_size * 1.1, 8.0) if current_mesh_size else 10.0, 3)
-            geometry["pitch_mm"] = round(geometry["pitch_mm"] * 1.03, 3)
-            adjustment["strategy"] = "增大网格尺寸并略微放宽筋距"
-        elif failure_type == "geometry_issue":
-            geometry["flange_width_mm"] = round(max(geometry["flange_width_mm"] - 1.5, 10.0), 3)
-            geometry["stiffener_height_mm"] = round(max(geometry["stiffener_height_mm"] - 1.0, 12.0), 3)
-            adjustment["strategy"] = "收缩翼缘并降低筋高以改善装配容差"
-        elif failure_type == "convergence_fail":
-            candidate.setdefault("analysis", {})
-            candidate["analysis"]["buckling_modes"] = int(candidate["analysis"].get("buckling_modes", 10)) + 4
-            geometry["skin_thickness_mm"] = round(min(geometry["skin_thickness_mm"] + 0.2, 4.0), 3)
-            geometry["web_thickness_mm"] = round(min(geometry["web_thickness_mm"] + 0.15, 3.2), 3)
-            geometry["pitch_mm"] = round(max(geometry["pitch_mm"] * 0.92, 90.0), 3)
-            geometry["stiffener_height_mm"] = round(min(max(geometry["stiffener_height_mm"] * 0.9, 18.0), 38.0), 3)
-            geometry["flange_width_mm"] = round(min(max(geometry["flange_width_mm"], 14.0), 22.0), 3)
-            adjustment["strategy"] = "增加特征值搜索规模，并收敛到更稳的筋距、筋高和厚度组合"
-        elif failure_type == "blf_negative":
-            candidate.setdefault("analysis", {})
-            candidate["analysis"]["buckling_modes"] = max(int(candidate["analysis"].get("buckling_modes", 8)), 12) + 4
-            geometry["stiffener_height_mm"] = round(min(geometry["stiffener_height_mm"] + 2.0, 50.0), 3)
-            geometry["skin_thickness_mm"] = round(min(geometry["skin_thickness_mm"] + 0.15, 4.0), 3)
-            adjustment["strategy"] = "增加屈曲模态搜索数量，并略微提高筋高与蒙皮厚度"
-        else:
-            adjustment["strategy"] = "清理临时文件后重试"
-
-        adjusted = dict(candidate)
-        adjusted["geometry"] = geometry
-        adjusted["last_adjustment"] = adjustment
-        return adjusted
 
     def _run_real(self, candidate: Dict, result_path: Path) -> Dict:
         candidate_id = candidate["candidate_id"]
@@ -185,7 +149,7 @@ class FEMAgent(BaseAgent):
             candidate,
             {
                 "candidate_id": candidate_id,
-                "status": "max_retries_exceeded",
+                "status": "failed",
                 "retry_count": 0,
                 "BLF_global": None,
                 "BLF_local": None,
@@ -208,8 +172,7 @@ class FEMAgent(BaseAgent):
 
     def run(self, candidate: Dict) -> Dict:
         validate_or_raise("candidate.schema.json", candidate)
-        retries = int(self.abaqus_config["max_retries"])
-        current = dict(candidate)
+        current = deepcopy(candidate)
         candidate_id = current["candidate_id"]
         result_path = self._result_path(candidate_id)
         run_dir = self._run_dir(candidate_id)
@@ -219,35 +182,20 @@ class FEMAgent(BaseAgent):
             self.emit(f"{candidate_id} 未找到 ABAQUS 命令，真实有限元求解无法启动")
             return self._abaqus_unavailable_result(current)
 
-        for attempt in range(retries):
-            if result_path.exists():
-                result_path.unlink()
-
-            write_json(self._input_path(candidate_id), current)
-            write_json(run_dir / "candidate_input.json", current)
-            self.emit(f"{candidate_id} 第 {attempt + 1} 次真实 ABAQUS 求解")
-            result = self._annotate_result(current, self._run_real(current, result_path))
-            result["retry_count"] = attempt
-            if result["status"] != "success":
-                detail = result.get("error_log")
-                result["error_log"] = dict(detail) if isinstance(detail, dict) else {"reason": detail}
-                result["error_log"]["solver_logs"] = solver_log_tails(run_dir, [candidate_id])
-                if attempt == retries - 1:
-                    result["status"] = "max_retries_exceeded"
-            validate_or_raise("abaqus_result.schema.json", result)
-            write_json(result_path, result)
-            cleanup_job_artifacts(run_dir, [candidate_id])
-
-            if result["status"] == "success":
-                return result
-
-            failure_type = result.get("error_type") or "failed"
-            self.emit(f"{candidate_id} 失败类型：{failure_type}")
-            if attempt == retries - 1:
-                return result
-
-            current = self.apply_adjustment(current, failure_type, attempt)
-            strategy = current.get("last_adjustment", {}).get("strategy", "默认重试")
-            self.emit(f"{candidate_id} 准备重试，调整策略：{strategy}")
-
-        raise RuntimeError("FEM_AGENT 未按预期返回结果")
+        if result_path.exists():
+            result_path.unlink()
+        write_json(self._input_path(candidate_id), current)
+        write_json(run_dir / "candidate_input.json", current)
+        self.emit(f"{candidate_id} 开始 ABAQUS 求解")
+        result = self._annotate_result(current, self._run_real(current, result_path))
+        result["retry_count"] = 0
+        # 求解失败保留所提交的设计；诊断日志写入结果后再清理一次性工件。
+        if result["status"] != "success":
+            detail = result.get("error_log")
+            result["error_log"] = dict(detail) if isinstance(detail, dict) else {"reason": detail}
+            result["error_log"]["solver_logs"] = solver_log_tails(run_dir, [candidate_id])
+            self.emit(f"{candidate_id} 失败类型：{result.get('error_type') or 'failed'}")
+        validate_or_raise("abaqus_result.schema.json", result)
+        write_json(result_path, result)
+        cleanup_job_artifacts(run_dir, [candidate_id])
+        return result

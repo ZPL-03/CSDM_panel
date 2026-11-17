@@ -1,4 +1,5 @@
 from pathlib import Path
+from copy import deepcopy
 
 import pytest
 
@@ -67,7 +68,6 @@ def test_fem_agent_runs_real_abaqus(stiffener_type: str) -> None:
         config={
             "abaqus": {
                 "command": command,
-                "max_retries": 1,
                 "job_timeout_seconds": 900,
             }
         }
@@ -89,23 +89,32 @@ def test_fem_agent_runs_real_abaqus(stiffener_type: str) -> None:
     assert not job_transient_paths(agent._run_dir(candidate_id), [candidate_id])
 
 
-def test_failed_job_persists_diagnosis_before_cleanup(monkeypatch):
-    agent = FEMAgent(config={"abaqus": {"command": "abaqus", "max_retries": 1, "job_timeout_seconds": 10}})
+@pytest.mark.parametrize("message", ["solver failed", "mesh distortion", "numerical singularity", "geometry error"])
+def test_failed_job_preserves_design_and_diagnosis_before_cleanup(monkeypatch, message):
+    agent = FEMAgent(config={"abaqus": {"command": "abaqus", "job_timeout_seconds": 10}})
     run_dir = agent._run_dir("C1")
-    (run_dir / "C1.msg").write_text("solver failed", encoding="utf-8")
+    (run_dir / "C1.msg").write_text(message, encoding="utf-8")
     (run_dir / "C1.inp").write_text("input", encoding="utf-8")
     monkeypatch.setattr("agents.fem_agent.is_abaqus_available", lambda command: True)
+    calls = []
     def failed_command(*args, **kwargs):
+        calls.append(read_json(agent._input_path("C1")))
         write_json(agent._result_path("C1"), {"status": "success"})
         return 1, "", "process failed"
     monkeypatch.setattr("agents.fem_agent.run_command", failed_command)
 
-    result = agent.run(_real_fem_candidate("C1"))
+    candidate = _real_fem_candidate("C1")
+    original = deepcopy(candidate)
+    result = agent.run(candidate)
 
-    assert result["status"] == "max_retries_exceeded"
-    assert result["error_type"] == "process_crash"
+    assert result["status"] == "failed"
+    assert result["retry_count"] == 0
+    assert len(calls) == 1
+    assert candidate == original
+    assert calls[0] == original
+    assert result["error_type"]
     assert result["error_log"]["return_code"] == 1
-    assert result["error_log"]["solver_logs"] == {"C1.msg": "solver failed"}
+    assert result["error_log"]["solver_logs"] == {"C1.msg": message}
     assert read_json(agent._result_path("C1")) == result
     assert (run_dir / "C1.inp").exists()
     assert not (run_dir / "C1.msg").exists()

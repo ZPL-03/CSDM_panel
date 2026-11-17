@@ -16,7 +16,6 @@ paths:
 
 abaqus:
   command: abaqus
-  max_retries: 3
   job_timeout_seconds: 1800
 
 pipeline:

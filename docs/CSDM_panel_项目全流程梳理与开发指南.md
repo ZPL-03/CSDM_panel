@@ -21,7 +21,7 @@ CSDM_panel 是面向复合材料加筋壁板的多智能体设计原型系统，
 - `ORCHESTRATOR`：主控调度
 - `CANDIDATE_GEN`：候选生成
 - `SCREENER`：代理模型筛选
-- `FEM_AGENT`：ABAQUS 建模、求解与自动重试
+- `FEM_AGENT`：ABAQUS 建模、求解与失败诊断。求解失败保留提交的设计与日志，不自动调整几何或分析参数。
 - `KNOWLEDGE_AGENT`：知识回流与代理模型重训
 - `REPORT_GEN`：报告生成
 
@@ -115,7 +115,7 @@ CSDM_panel/
 - `orchestrator.py`：串联任务解析、候选生成、初筛、校核、回流和报告
 - `candidate_gen.py`：调度 LLM、CASE_TRANSFER、DOE 三条候选路径
 - `screener.py`：使用代理模型排序并标记入选理由
-- `fem_agent.py`：驱动 ABAQUS 运行与失败重试
+- `fem_agent.py`：驱动 ABAQUS 运行，保存结果与失败诊断，清理已结束作业的一次性工件
 - `knowledge_agent.py`：归档案例、写入正式案例库、写入案例记忆索引、按阈值触发模型重训
 - `report_gen.py`：输出 Markdown / PDF 报告
 
