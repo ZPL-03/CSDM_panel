@@ -340,6 +340,26 @@ def _table_rows(text: str) -> list[list[str]]:
             for line in text.splitlines() if line.strip().startswith("|")]
 
 
+@pytest.mark.parametrize("start,end,expected", [
+    (0, 0, ""), (None, None, ""), ("", "", ""),
+    (8, 8, "第 8 页"), (8, 10, "第 8-10 页"), (8, 0, "第 8 页"),
+])
+def test_context_page_locator_does_not_treat_unknown_zero_as_a_page(tmp_path, start, end, expected):
+    chunk = _chunk(chunk_id="PAGE", source_id="A", content_plain="panel buckling",
+                   page_start=start, page_end=end)
+    _write_index(tmp_path / "index.sqlite", [chunk])
+    _write_jsonl(tmp_path / "kg/entities.jsonl", [])
+    _write_jsonl(tmp_path / "kg/relations.compact.jsonl.gz", [_relation(chunk)])
+    _write_jsonl(tmp_path / "sources.jsonl.gz", [{"source_id": "A"}])
+    (tmp_path / "manifest.json").write_text("{}", encoding="utf-8")
+    knowledge = DomainKnowledgeBase({"external_knowledge": {"rag_index_path": str(tmp_path / "index.sqlite"),
+        "kg_dir": str(tmp_path / "kg"), "source_metadata_path": str(tmp_path / "sources.jsonl.gz"),
+        "manifest_path": str(tmp_path / "manifest.json")}})
+    context = knowledge.prepare_context(_task())
+    assert len(context["evidence"]) == 1
+    assert context["evidence"][0]["pages"] == expected
+
+
 @pytest.mark.parametrize("name", ["multilevel", "projection_view"])
 def test_v3_source_table_headers_units_and_projection_reach_prompt(tmp_path, monkeypatch, name):
     chunk = deepcopy(V3[name])

@@ -215,6 +215,8 @@ def test_report_includes_all_candidates_and_preserves_stage_snapshots(tmp_path):
     assert audit["llm_explanation_audit"]["selection"]["recommendation_candidate_id"] == "C1"
     assert response["generated_output_keys"] == ["overall"]
     assert response["report_outputs"]["overall"]["pdf_generated"] is True
+    assert "任务 BLF 下限：1.35" in response["content"]
+    assert "BLF 不低于 1.35" in response["content"]
     with fitz.open(response["pdf_path"]) as pdf:
         text = "".join(page.get_text() for page in pdf)
         assert "TMP_1" in text and "TMP_2" in text and "1.46" in text
@@ -298,7 +300,19 @@ def test_pdf_heading_levels_keep_with_following_content():
     assert all(paragraph.style.keepWithNext for paragraph in story[:6])
 
 
-@pytest.mark.parametrize("metric,value", [("skin_f0", 0.375), ("skin_f45", 0.3333333333333333),
-                                         ("skin_thickness_mm", 2.5536935420358624)])
-def test_bound_fact_display_retains_input_precision(metric, value):
-    assert f"={value}" in render_fact(dict(candidate_id="C1", metric=metric, value=value, unit="1", result_status="design_input"))
+@pytest.mark.parametrize("metric,value,unit,expected", [
+    ("BLF_global", 1.3682, "1", "1.3682"),
+    ("second_positive_BLF", 1.3841, "1", "1.3841"),
+    ("weight_kg_per_m2", 4.457706984276072, "kg/m^2", "4.4577"),
+    ("skin_thickness_mm", 1.6293750334818733, "mm", "1.629"),
+    ("stiffener_height_mm", 35.6138545429407, "mm", "35.614"),
+    ("skin_f0", 0.375, "1", "0.375"),
+    ("skin_f45", 0.3333333333333333, "1", "0.333333"),
+    ("rank_score", -0.273, "score", "-0.273"),
+    ("BLF_global", 0.00000001, "1", "1.0000e-08"),
+])
+def test_bound_fact_display_has_consistent_precision_without_changing_values(metric, value, unit, expected):
+    fact = dict(candidate_id="C1", metric=metric, value=value, unit=unit, result_status="design_input")
+    before = deepcopy(fact)
+    assert f"={expected}" in render_fact(fact)
+    assert fact == before

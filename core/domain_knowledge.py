@@ -706,7 +706,10 @@ class DomainKnowledgeBase:
         evidence = []
         for item in selected:
             start, end = item.get("page_start"), item.get("page_end")
-            pages = "" if start in (None, "") else f"第 {start}" + (f"-{end}" if end not in (None, "", start) else "") + " 页"
+            # 上游以 0 表示未知页码；只展示可确认的正整数页码。
+            pages = ""
+            if type(start) is int and start > 0:
+                pages = f"第 {start}" + (f"-{end}" if type(end) is int and end > start else "") + " 页"
             evidence.append({"chunk_id": item["chunk_id"], "source_label": labels[id(item)],
                              "title": item.get("title") or item.get("document_title") or item["chunk_id"],
                              "section": " > ".join(item.get("section_path") or []), "pages": pages})

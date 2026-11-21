@@ -5,7 +5,7 @@ from __future__ import annotations
 import json
 import math
 
-from core.display import format_parameter
+from core.display import format_number
 from core.laminate import parse_angles
 
 
@@ -95,13 +95,15 @@ def build_facts(candidates, results, target):
 
 
 def render_fact(fact):
+    """正文与结果表采用一致的显示精度，事实原值不参与舍入。"""
     value = fact["value"]
     if value is None:
         display = "未知"
     elif isinstance(value, bool):
         display = "满足" if value else "不满足"
     elif isinstance(value, (float, int)):
-        display = format_parameter(fact["metric"], value)
+        digits = 3 if fact["unit"] == "mm" else 6 if fact["metric"].startswith("skin_f") else 4
+        display = format_number(value, digits)
     else:
         display = json.dumps(value, ensure_ascii=False) if isinstance(value, list) else STATUS_LABELS.get(str(value), str(value))
     unit = {"1": "（无量纲）", "boolean": "", "status": "", "count": " 层", "deg": " 度"}.get(fact["unit"], " " + fact["unit"])

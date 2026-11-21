@@ -11,7 +11,7 @@ from typing import Dict, List
 from xml.sax.saxutils import escape
 
 from agents.base import BaseAgent
-from core.display import format_number, format_parameter
+from core.display import format_number
 from core.domain_knowledge import DomainKnowledgeBase
 from core.io_utils import write_json, write_text
 from core.laminate import ANALYSIS_VERSION, analysis_contract, section_layers
@@ -192,10 +192,10 @@ class ReportGenAgent(BaseAgent):
                  f"- 设计对象：{payload['application']}；筋型：{' / '.join(TYPE_DISPLAY_NAMES.get(kind, kind) for kind in types)}",
                  f"- 参考工况：{describe_load_conditions(payload['load_conditions'], display=True)}",
                  f"- 边界条件：{describe_boundary_conditions(payload['boundary_conditions'])}",
-                 f"- 任务 BLF 下限：{format_parameter('target_BLF', summary['target_BLF'])}（无量纲）；优化目标：{summary['primary_objective']}",
+                 f"- 任务 BLF 下限：{format_number(summary['target_BLF'], 4)}（无量纲）；优化目标：{summary['primary_objective']}",
                  "- 计算模型：逐层复合壳、理想 Tie 连接及线性特征值屈曲；帽形底部连接板位于腹板外侧。",
                  "- 分析边界：未计算材料损伤、初始缺陷敏感性、非线性极限承载和制造验收。",
-                 "- 显示精度：几何尺寸最多保留 3 位小数、层厚最多保留 6 位小数；完整原值在事实 JSON 中，判定和推荐不使用显示舍入值。",
+                 "- 显示精度：几何尺寸最多保留 3 位小数，层厚和铺层比例最多 6 位，BLF、面密度及目标比较值最多 4 位；完整原值在事实 JSON 中，判定和推荐不使用显示舍入值。",
                  "", "## 全部候选方案与生成依据", "",
                  f"- 生成 {summary['candidate_count']} 个候选，送检 {summary['selected_count']} 个，实际返回 {summary['result_count']} 条结果，未求解 {summary['not_evaluated_count']} 个。",
                  "- 会话编号保持生成顺序；正式编号关联有限元作业与案例，不因筛选顺序重编。"]
@@ -235,7 +235,7 @@ class ReportGenAgent(BaseAgent):
         for candidate in selected:
             lines.append(f"- {candidate['candidate_id']}：{candidate.get('selection_reason') or '按实际送检记录列出，未记录额外筛选理由。'}")
             if candidate.get("surrogate_status") == "available":
-                lines.append(f"  代理 BLF 估计 {format_number(candidate.get('surrogate_BLF'))}，评分 {format_number(candidate.get('rank_score'))}。")
+                lines.append(f"  代理 BLF 估计 {format_number(candidate.get('surrogate_BLF'), 4)}，评分 {format_number(candidate.get('rank_score'), 4)}。")
         lines.extend(["", "## 有限元校核结果", "",
                       f"- 成功求解 {summary['successful_count']} 个，求解失败 {summary['failed_count']} 个；成功结果中满足任务阈值 {summary['passed_count']} 个。",
                       "- BLF 为首个正特征值；第二个正特征值不等同于局部屈曲。模态未分类时不作局部或整体失效分类。",
@@ -255,7 +255,7 @@ class ReportGenAgent(BaseAgent):
         best = recommendation["selected"]
         if best:
             lines.extend([f"- 推荐：{best.get('session_candidate_id') or '-'} / {best['candidate_id']}。",
-                          f"- 依据：仅在当前逐层模型成功求解且 BLF 不低于 {format_number(recommendation['required_BLF'])} 的方案中，按“{recommendation['objective']}”比较。",
+                          f"- 依据：仅在当前逐层模型成功求解且 BLF 不低于 {format_number(recommendation['required_BLF'], 4)} 的方案中，按“{recommendation['objective']}”比较。",
                           f"- 目标比较值：{format_number(best['objective_value'], 4)} {best['unit']}；BLF={format_number(best['BLF_global'], 4)}。"])
         else:
             lines.append("- 没有同时具备完整通过证据和目标比较数据的方案，不给出最终推荐。")
