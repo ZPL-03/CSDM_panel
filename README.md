@@ -54,23 +54,16 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/start.ps1
 | `data/abaqus_runs/`、`data/io/` | 正式输入、CAE/INP/ODB、结果与模态数据 |
 | `knowledge/case_library/` | 成功且通过的正式案例 |
 | `knowledge/chroma_db/` | 独立案例记忆集合，BGE-M3 1024 维向量 |
-| `knowledge/external/` | CS_LLM RAG/KG 运行资产 |
+| `knowledge/external/` | 外部 RAG/KG 运行资产 |
 | `models/<筋型>/` | 该筋型 RF、来源元数据和独立验收 |
 
 业务数据、外部知识、模型、缓存和求解输出不进入源码 Git。正式案例与 FEM 文件在本机保留；维护重算先将正式原件移至项目外归档，普通设计入口拒绝覆盖已有正式工件。案例编号与候选正式编号一致，未归档作业也占用编号。
 
 ## 外部知识
 
-源目录为 CS_LLM 的 `dataset/processed/rag_kg_runtime/csllm`。项目只部署六个运行文件：SQLite 全文索引、压缩关系、实体、图谱统计、压缩来源和本地清单。SQLite 已含完整块正文，不迁移重复解析文档、训练 SFT、适配器或向量副本。
+项目使用六个外部知识运行文件：SQLite 全文索引、压缩关系、实体、图谱统计、压缩来源和本地清单。SQLite 已含完整块正文，不包含重复解析文档、训练 SFT、适配器或向量副本。
 
 导出时间为 `2026-11-20T16:38:22.769812+00:00`；155599 个 RAG 块、2217 个实体、234200 条关系、1931 条来源。准确字节数与 SHA256 以 `knowledge/external/manifest.json` 为准。
-
-```powershell
-conda run -n AGENT --no-capture-output python -X utf8 -B scripts/sync_external_knowledge.py --source D:\Project\VS_Code\CS_LLM\dataset\processed
-conda run -n AGENT --no-capture-output python -X utf8 -B scripts/sync_external_knowledge.py --verify-only
-```
-
-同步先验证全部文件、FTS 覆盖、实体端点、来源以及块级指纹与条件，再整体替换目录；旧资产归档在项目外，不解压合并。发布附件 `CSDM_panel_knowledge_20261121.tar.gz` 包含 `external/`，解压到 `knowledge/` 后执行 `--verify-only`。
 
 检索使用 SQLite FTS5 BM25 和任务/筋型召回融合。仅质量版本 3 且可检索的块可进入上下文。正文、表格、公式、适用条件和关系绑定整体保留；预算不足时整块排除。相同内容去重，同一来源最多两个块。来源按 DOI、来源编号、URL 合并；文献标题一致且已知 DOI、年份不冲突的副本也合并，章节标题不作为文献身份。文献数值不能替代当前候选求解结果。
 

@@ -66,25 +66,38 @@ class ConversationFlowController:
             target_total = requested_candidate_pool_size(task)
             top_k = requested_screen_top_k(task)
             return (
-                f"我已经把你的需求整理成结构化任务了，当前按 {describe_load_conditions(task_payload.get('load_conditions', {}))} "
-                f"和 {describe_boundary_conditions(task_payload.get('boundary_conditions', {}))} 来生成方案，候选池先按 {target_total} 个目标展开，后续初筛会保留 Top-{top_k}。"
+                f"需求已解析为结构化任务：工况为 {describe_load_conditions(task_payload.get('load_conditions', {}))}，"
+                f"边界为 {describe_boundary_conditions(task_payload.get('boundary_conditions', {}))}；"
+                f"候选池目标为 {target_total} 个，代理初筛目标为 Top-{top_k}。"
             )
 
         if stage == "candidate_summary":
-            return "我先把初始方案池铺开，再用代理模型做一轮便宜但有解释性的预筛选；如果实际生成数小于目标值，通常说明有一部分方案在规则约束下被提前拦住了。"
+            return (
+                f"候选池已生成并通过数量、物理唯一性和任务约束校验，共 {payload.get('candidate_count', 0)} 个；"
+                "代理初筛是否执行由下一步确认决定。"
+            )
         if stage == "screening_summary":
             decision = payload.get("decision", {})
             if decision.get("action") == "direct_fem":
                 return "代理不可用，候选按生成顺序和求解名额进入 FEM，未作性能排序。原因：" + decision["reason"]
             if payload.get("screen_skipped"):
                 return "代理初筛已跳过，全部候选等待 FEM 校核。"
-            return "初筛已经把候选范围收紧了，接下来更值得把有限元预算用在当前排序靠前、解释更充分的样本上。"
+            return (
+                f"代理初筛已完成，输入 {payload.get('input_count', 0)} 个候选，"
+                f"选择 {payload.get('output_count', 0)} 个进入 FEM；排序依据为当前任务的代理筛选契约。"
+            )
         if stage == "fem_summary":
-            return "有限元结果已经回来，现在可以根据通过情况、失效模式和重量表现来决定是否直接导出报告，或者继续迭代约束。"
+            return (
+                f"有限元校核已完成，共返回 {payload.get('result_count', 0)} 条结果，"
+                f"其中 {payload.get('passed_count', 0)} 条满足任务阈值；下一步为导出或跳过报告。"
+            )
         if stage == "report_summary":
-            return "报告部分已经收尾完成，你现在可以直接查看最新导出的 Markdown 或 PDF。"
+            report = payload.get("report")
+            if report:
+                return f"报告已导出：{report.get('markdown_path')}；PDF：{report.get('pdf_path')}。"
+            return "报告导出已跳过，当前会话没有报告工件。"
         if stage == "conversation_paused":
-            return "我先把当前状态停在这里，后面的候选和结果都还保留着，你随时可以继续往下推。"
+            return "流程已暂停在有限元校核前；当前候选和已生成的筛选结果仍保留在会话状态中。"
         return ""
 
     def _emit_commentary(self, stage: str, payload: Dict) -> None:

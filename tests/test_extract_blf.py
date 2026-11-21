@@ -131,3 +131,52 @@ def test_unconnected_nodes_reject_an_otherwise_positive_buckling_result(monkeypa
     assert result["status"] == "failed" and result["BLF_global"] is None
     assert result["error_type"] == "connection_error"
     assert result["error_log"]["node_sets"] == {"WarnNodeMissMainIntersect": 3}
+
+
+def test_invalid_candidate_json_is_recorded_as_input_error(tmp_path):
+    from abaqus import runtime_extract_blf as runtime
+
+    input_path = tmp_path / "input_C950.json"
+    result_path = tmp_path / "result_C950.json"
+    input_path.write_text("{invalid", encoding="utf-8")
+
+    runtime.extract_blf(str(tmp_path / "C950.odb"), str(result_path), str(input_path))
+
+    result = read_json(result_path)
+    assert result["status"] == "failed"
+    assert result["candidate_id"] == "C950"
+    assert result["error_type"] == "input_error"
+    assert result["error_log"]["input_json"] == str(input_path)
+    assert result["error_log"]["reason"]
+
+
+def test_missing_candidate_input_does_not_create_empty_candidate(tmp_path):
+    from abaqus import runtime_extract_blf as runtime
+
+    result_path = tmp_path / "result_C950.json"
+    runtime.extract_blf(
+        str(tmp_path / "C950.odb"),
+        str(result_path),
+        str(tmp_path / "input_C950.json"),
+    )
+
+    result = read_json(result_path)
+    assert result["status"] == "failed"
+    assert result["error_type"] == "input_error"
+    assert result["BLF_global"] is None
+
+
+def test_candidate_input_and_odb_ids_must_match(tmp_path):
+    from abaqus import runtime_extract_blf as runtime
+
+    input_path = tmp_path / "input_C950.json"
+    result_path = tmp_path / "result_C950.json"
+    write_json(input_path, _candidate_payload())
+
+    runtime.extract_blf(str(tmp_path / "C951.odb"), str(result_path), str(input_path))
+
+    result = read_json(result_path)
+    assert result["status"] == "failed"
+    assert result["candidate_id"] == "C951"
+    assert result["error_type"] == "input_error"
+    assert "编号与 ODB 文件编号不一致" in result["error_log"]["reason"]

@@ -91,7 +91,7 @@ class FEMAgent(BaseAgent):
             "connection_error": "连接存在未关联节点，结果中的节点集给出位置；检查部件中面和 Tie 定义。",
             "geometry_issue": "几何装配失败，需检查输入尺寸、连接关系及装配容差。",
             "convergence_fail": "特征值求解未收敛，需核对求解日志、载荷、约束与特征值搜索设置。",
-            "blf_negative": "求得负特征值，通常意味着载荷方向或边界设置需要复核。",
+            "blf_negative": "检测到负特征值；请检查结果中的原始特征值、载荷方向和边界设置。",
             "process_crash": "ABAQUS 进程异常退出，请查看结果中的 error_log 并检查运行环境。",
             "abaqus_unavailable": "未找到 ABAQUS 命令，无法执行真实有限元求解。",
         }
