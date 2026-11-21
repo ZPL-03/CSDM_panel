@@ -77,7 +77,9 @@ def build_facts(candidates, results, target):
         status = result.get("status", "not_evaluated")
         add(cid, "evaluation_status", status, "status", status)
         for metric, unit in (("BLF_global", "1"), ("BLF_local", "1"), ("second_positive_BLF", "1"), ("weight_kg_per_m2", "kg/m^2")):
-            add(cid, metric, result.get(metric), unit, status)
+            value = result.get(metric)
+            metric_status = status if value is not None else "unavailable" if status == "success" else status
+            add(cid, metric, value, unit, metric_status)
         add(cid, "target_BLF", target, "1", "task_input")
         add(cid, "target_met", result["BLF_global"] >= target if status == "success" else None, "boolean", status)
         for metric, value in candidate.get("geometry", {}).items():

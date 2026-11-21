@@ -153,7 +153,11 @@ class ReportGenAgent(BaseAgent):
         best = summary["recommendation"]["selected"]
         required = ([(best["candidate_id"], "BLF_global"), (best["candidate_id"], "objective_value"),
                      (None, "required_BLF")] if best else [(None, "recommendation_status")])
-        facts = [{**fact, "label": METRIC_LABELS.get(fact["metric"], fact["metric"])} for fact in summary["facts"]]
+        objective = summary["recommendation"].get("objective")
+        objective_label = ("总重量比较值（面密度乘投影面积）" if objective == "最小重量"
+                           else "面密度比较值" if objective == "最小面密度" else "优化目标比较值")
+        facts = [{**fact, "label": objective_label if fact["metric"] == "objective_value"
+                  else METRIC_LABELS.get(fact["metric"], fact["metric"])} for fact in summary["facts"]]
         return prepare_review_payload(
             facts, summary["recommendation"], format_fact_value,
             context={"analysis_scope": ANALYSIS_SCOPE, "task": summary["task"],
@@ -265,17 +269,19 @@ class ReportGenAgent(BaseAgent):
                 lines.append(f"\n- {result['candidate_id']} 求解失败：{result.get('error_log') or result.get('diagnosis_summary') or '未记录详细诊断'}")
         lines.extend(["", "## 最终推荐设计方案", ""])
         best = recommendation["selected"]
+        objective_label = ("总重量比较值（面密度乘投影面积）" if recommendation["objective"] == "最小重量"
+                           else "面密度比较值" if recommendation["objective"] == "最小面密度" else "目标比较值")
         if best:
             lines.extend([f"- 推荐：{best.get('session_candidate_id') or '-'} / {best['candidate_id']}。",
                           f"- 依据：仅在当前逐层模型成功求解且 BLF 不低于 {format_number(recommendation['required_BLF'], 4)} 的方案中，按“{recommendation['objective']}”比较。",
-                          f"- 目标比较值：{format_number(best['objective_value'], 4)} {best['unit']}；BLF={format_number(best['BLF_global'], 4)}。"])
+                          f"- {objective_label}：{format_number(best['objective_value'], 4)} {best['unit']}；BLF={format_number(best['BLF_global'], 4)}。"])
         else:
             lines.append("- 没有同时具备完整通过证据和目标比较数据的方案，不给出最终推荐。")
         for item in recommendation["excluded"]:
             lines.append(f"- {item['candidate_id']} 未参与推荐：{'；'.join(item['reasons'])}。")
         if recommendation["ranked"]:
             unit = recommendation["ranked"][0]["unit"]
-            lines.extend(["", f"| 校核方案 | 目标比较值 {unit} | BLF | 相对比较下限余量 % |",
+            lines.extend(["", f"| 校核方案 | {objective_label} {unit} | BLF | 相对比较下限余量 % |",
                           "| --- | --- | --- | --- |"])
             for item in recommendation["ranked"]:
                 margin = (item["BLF_global"] / recommendation["required_BLF"] - 1) * 100

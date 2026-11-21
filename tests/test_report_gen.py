@@ -69,6 +69,8 @@ def test_structured_facts_restore_original_values_and_compute_mass():
     fact = next(item for item in summary["facts"] if item["metric"] == "BLF_global")
     assert next(item for item in payload["facts"] if item["metric"] == "BLF_global")["value"] == fact["value"]
     assert fact["value"] == 1.46 and fact["unit"] == "1" and fact["result_status"] == "success"
+    assert next(item for item in summary["facts"] if item["metric"] == "BLF_local")["result_status"] == "unavailable"
+    assert next(item for item in payload["facts"] if item["metric"] == "objective_value")["label"] == "总重量比较值（面密度乘投影面积）"
     assert next(item for item in summary["facts"] if item["metric"] == "skin_f0")["value"] == pytest.approx(4 / 14)
     assert summary["recommendation"]["selected"]["objective_value"] == pytest.approx(12.5 * 0.7 * 0.6)
 

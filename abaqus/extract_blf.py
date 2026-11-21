@@ -14,14 +14,19 @@ from core.task_contract import describe_boundary_conditions, describe_load_condi
 def extract_blf(odb_path: Path, result_json: Path, input_json: Path | None = None) -> None:
     runtime.extract_blf(str(odb_path), str(result_json), str(input_json) if input_json else None)
     result = read_json(result_json)
-    candidate = runtime.load_candidate(str(input_json) if input_json else None,
-                                       result["candidate_id"], str(result_json))
-    result["load_summary"] = describe_load_conditions(candidate.get("load_conditions", {}))
-    result["boundary_summary"] = describe_boundary_conditions(candidate.get("boundary_conditions", {}))
-    result["diagnosis_summary"] = (
-        "首个正屈曲特征值提取完成；整体或局部模态尚未分类。"
-        if result["status"] == "success" else "结果提取失败，需检查 ODB 和作业日志。"
-    )
+    if result.get("error_type") == "input_error":
+        result["load_summary"] = None
+        result["boundary_summary"] = None
+        result["diagnosis_summary"] = "候选输入无效，未执行结果提取。"
+    else:
+        candidate = runtime.load_candidate(str(input_json) if input_json else None,
+                                           result["candidate_id"], str(result_json))
+        result["load_summary"] = describe_load_conditions(candidate.get("load_conditions", {}))
+        result["boundary_summary"] = describe_boundary_conditions(candidate.get("boundary_conditions", {}))
+        result["diagnosis_summary"] = (
+            "首个正屈曲特征值提取完成；整体或局部模态尚未分类。"
+            if result["status"] == "success" else "结果提取失败，需检查 ODB 和作业日志。"
+        )
     write_json(result_json, result)
 
 

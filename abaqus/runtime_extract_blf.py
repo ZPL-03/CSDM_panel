@@ -65,23 +65,36 @@ def safe_float(value, default):
 
 
 def candidate_id_from_paths(odb_path, input_json):
-    if input_json and os.path.exists(input_json):
-        try:
-            payload = read_json(input_json)
-            return str(payload.get("candidate_id", os.path.splitext(os.path.basename(odb_path))[0]))
-        except Exception:
-            return os.path.splitext(os.path.basename(odb_path))[0]
-    return os.path.splitext(os.path.basename(odb_path))[0]
+    fallback_id = os.path.splitext(os.path.basename(odb_path))[0]
+    if input_json is None:
+        return fallback_id
+    if not os.path.exists(input_json):
+        raise IOError("候选输入 JSON 不存在: %s" % input_json)
+    payload = read_json(input_json)
+    if not isinstance(payload, dict):
+        raise ValueError("候选输入 JSON 顶层必须是对象")
+    candidate_id = payload.get("candidate_id")
+    if not candidate_id:
+        raise ValueError("候选输入 JSON 缺少 candidate_id")
+    candidate_id = str(candidate_id)
+    if candidate_id != fallback_id:
+        raise ValueError("候选输入编号与 ODB 文件编号不一致: %s != %s" % (candidate_id, fallback_id))
+    return candidate_id
 
 
 def load_candidate(input_json, candidate_id, result_json):
-    if input_json and os.path.exists(input_json):
-        return read_json(input_json)
-
-    inferred_path = os.path.join(os.path.dirname(result_json), "input_%s.json" % candidate_id)
-    if os.path.exists(inferred_path):
-        return read_json(inferred_path)
-    return {"candidate_id": candidate_id, "geometry": {}, "design_targets": {}}
+    candidate_path = input_json
+    if candidate_path is None:
+        candidate_path = os.path.join(os.path.dirname(result_json), "input_%s.json" % candidate_id)
+    if not os.path.exists(candidate_path):
+        raise IOError("候选输入 JSON 不存在: %s" % candidate_path)
+    candidate = read_json(candidate_path)
+    if not isinstance(candidate, dict):
+        raise ValueError("候选输入 JSON 顶层必须是对象")
+    actual_id = candidate.get("candidate_id")
+    if str(actual_id) != str(candidate_id):
+        raise ValueError("候选输入编号与求解编号不一致: %s != %s" % (actual_id, candidate_id))
+    return candidate
 
 
 def estimate_weight_kg_per_m2(candidate):
@@ -218,8 +231,19 @@ def write_failure_result(candidate_id, odb_path, result_json, error_type, error_
 
 
 def extract_blf(odb_path, result_json, input_json=None):
-    candidate_id = candidate_id_from_paths(odb_path, input_json)
-    candidate = load_candidate(input_json, candidate_id, result_json)
+    candidate_id = os.path.splitext(os.path.basename(odb_path))[0]
+    try:
+        candidate_id = candidate_id_from_paths(odb_path, input_json)
+        candidate = load_candidate(input_json, candidate_id, result_json)
+    except Exception as exc:
+        write_failure_result(
+            candidate_id,
+            odb_path,
+            result_json,
+            "input_error",
+            {"input_json": input_json, "reason": str(exc)},
+        )
+        return
 
     try:
         from odbAccess import openOdb
