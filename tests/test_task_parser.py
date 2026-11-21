@@ -1,3 +1,6 @@
+import pytest
+
+from core.task_contract import normalize_task_payload
 from core.task_parser import TaskParser
 
 
@@ -35,7 +38,6 @@ def test_task_parser_supports_compression_shear_and_sscc() -> None:
     assert task_payload["boundary_conditions"]["type"] == "SSCC"
     assert task_payload["candidate_generation_preferences"]["total_candidates"] == 18
     assert task_payload["candidate_generation_preferences"]["source_ratio"] == {
-        "llm": 2.0,
         "case_transfer": 1.0,
         "doe": 1.0,
     }
@@ -159,3 +161,38 @@ def test_task_parser_supports_english_candidate_count_and_top_k() -> None:
     assert payload["boundary_conditions"]["type"] == "SSCC"
     assert payload["candidate_generation_preferences"]["total_candidates"] == 5
     assert payload["screening_preferences"]["top_k_candidates"] == 2
+
+
+@pytest.mark.parametrize("nx,nxy,load_type", [(0, 60, "in_plane_shear"), (120, 0, "axial_compression")])
+def test_explicit_zero_load_component_is_preserved(nx, nxy, load_type):
+    task = TaskParser().parse_instruction(f"Nx={nx},Nxy={nxy},生成2个候选，初筛1个")["task"]
+    assert task["load_conditions"]["type"] == load_type
+    assert task["load_conditions"]["Nx_kN_per_m"] == nx
+    assert task["load_conditions"]["Nxy_kN_per_m"] == nxy
+    assert task["user_input_facts"]["load_conditions"]["Nx_kN_per_m"] == nx
+
+
+@pytest.mark.parametrize("condition", ["Nx=-120", "Nxy=-60", "长度-360mm", "宽度0mm", "边界CFFF"])
+def test_invalid_explicit_engineering_input_is_rejected(condition):
+    with pytest.raises(ValueError):
+        TaskParser().parse_instruction(f"{condition}，生成2个候选，初筛1个")
+
+
+@pytest.mark.parametrize("count_text", ["生成100个候选，初筛1个", "生成2.5个候选，初筛1个", "生成0个候选，初筛1个", "生成2个候选，初筛31个", "生成2个候选，初筛1.5个"])
+def test_candidate_count_is_not_truncated_or_clipped(count_text):
+    with pytest.raises(ValueError):
+        TaskParser().parse_instruction(f"Nx=120，{count_text}")
+
+
+@pytest.mark.parametrize("payload", [
+    {"load_conditions": {"Nx_kN_per_m": float("nan")}},
+    {"load_conditions": {"type": "axial_compression", "Nx_kN_per_m": 120, "Nxy_kN_per_m": 60}},
+    {"load_conditions": {"type": "unknown"}},
+    {"boundary_conditions": {"type": "SSSS", "clamped_edges": ["X0"]}},
+    {"geometry_envelope": {"panel_length_mm": [500, 400]}},
+    {"candidate_generation_preferences": {"source_ratio": {"llm": -1}}},
+    {"candidate_generation_preferences": {"source_ratio": {"llm": 0, "case_transfer": 0, "doe": 0}}},
+])
+def test_structured_input_uses_same_validation(payload):
+    with pytest.raises(ValueError):
+        normalize_task_payload(payload)

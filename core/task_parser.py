@@ -1,13 +1,16 @@
-"""任务解析器：规则抽取 + 契约归一化。"""
+"""需求语义抽取、原文证据核对与任务契约归一化。"""
 
 from __future__ import annotations
 
 import re
+import json
+import math
 from typing import Any, Dict
 
 from core.config_loader import load_app_config, load_material_db
 from core.id_utils import next_task_id
 from core.schema_validator import validate_or_raise
+from core.llm_backend import LLMBackend, auto_llm_enabled
 from core.stiffener_profile import TYPE_DISPLAY_NAMES
 from core.task_contract import (
     DEFAULT_DESIGN_TARGETS,
@@ -17,11 +20,15 @@ from core.task_contract import (
     describe_boundary_conditions,
     describe_load_conditions,
     normalize_boundary_conditions,
+    normalize_candidate_generation_preferences,
     normalize_geometry_envelope,
     normalize_load_conditions,
     normalize_task_payload,
     task_payload_from_request,
 )
+
+NUMBER_PATTERN = r"([+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?)"
+BLF_PATTERN = r"(?:BLF|屈曲载荷因子|屈曲因子)\s*(?:至少|不小于|at least)?\s*[>=≥:：]*\s*" + NUMBER_PATTERN
 
 class TaskParser:
     """负责把自然语言设计需求解析成结构化任务。"""
@@ -33,32 +40,15 @@ class TaskParser:
 
     def _configured_source_ratio(self) -> Dict[str, float]:
         pipeline = dict(self.app_config.get("pipeline", {}))
-        ratio = pipeline.get("candidate_source_ratio")
-        if not isinstance(ratio, dict):
-            ratio = {"llm": 2.0, "case_transfer": 1.0, "doe": 1.0}
-        normalized = {
-            "llm": max(self._safe_ratio_value(ratio.get("llm"), 2.0), 0.0),
-            "case_transfer": max(self._safe_ratio_value(ratio.get("case_transfer"), 1.0), 0.0),
-            "doe": max(self._safe_ratio_value(ratio.get("doe"), 1.0), 0.0),
-        }
-        if sum(normalized.values()) <= 0.0:
-            return {"llm": 2.0, "case_transfer": 1.0, "doe": 1.0}
-        return normalized
-
-    def _safe_ratio_value(self, value: Any, default: float) -> float:
-        try:
-            return float(value)
-        except (TypeError, ValueError):
-            return default
+        return normalize_candidate_generation_preferences(
+            {"source_ratio": pipeline.get("candidate_source_ratio", {})}
+        )["source_ratio"]
 
     def _extract_float(self, pattern: str, text: str) -> float | None:
         match = re.search(pattern, text, flags=re.IGNORECASE)
         if not match:
             return None
-        try:
-            return float(match.group(1))
-        except (TypeError, ValueError):
-            return None
+        return float(match.group(1))
 
     def _extract_material(self, text: str) -> tuple[Dict[str, Any], bool]:
         lowered = text.lower()
@@ -90,7 +80,7 @@ class TaskParser:
             (
                 "HAT",
                 [
-                    r"帽\s*(?:型|形|式|状)?\s*(?:加筋|筋条|筋|壁板|方案)?",
+                    r"帽\s*(?:(?:型|形|式|状)\s*(?:加筋|筋条|筋|壁板|方案)?|(?:加筋|筋条|筋|壁板|方案))",
                     r"槽\s*型\s*(?:筋|加筋|筋条|壁板|方案)?",
                     r"(?<![A-Za-z0-9])hat(?:\s*型|\s*stiffener)?(?![A-Za-z0-9])",
                 ],
@@ -175,77 +165,22 @@ class TaskParser:
         return "复合材料加筋壁板"
 
     def _extract_load_conditions(self, text: str) -> Dict[str, Any]:
-        nx_value = None
-        nxy_value = None
-
-        axial_patterns = [
-            r"(?:\bNx\b|轴压|压缩载荷|压缩荷载|压缩)\s*(?:为|是)?\s*[:：=]?[\s,，]*([0-9]+(?:\.[0-9]+)?)\s*(?:[kK]\s*[nN]\s*/\s*[mM])?",
-            r"(?:受压|压缩工况)\s*[:：=]?[\s,，]*([0-9]+(?:\.[0-9]+)?)\s*(?:[kK]\s*[nN]\s*/\s*[mM])?",
-        ]
-        shear_patterns = [
-            r"(?:\bNxy\b|剪切载荷|剪切荷载|剪切|面内剪切)\s*(?:为|是)?\s*[:：=]?[\s,，]*([0-9]+(?:\.[0-9]+)?)\s*(?:[kK]\s*[nN]\s*/\s*[mM])?",
-            r"(?:受剪|剪切工况)\s*[:：=]?[\s,，]*([0-9]+(?:\.[0-9]+)?)\s*(?:[kK]\s*[nN]\s*/\s*[mM])?",
-        ]
-
-        compact_text = re.sub(r"\s+", "", text)
-        compact_axial_patterns = [r"(?:压缩载荷|压缩荷载|压缩|轴压|Nx)([0-9]+(?:\.[0-9]+)?)(?:[kK][nN]/[mM])?"]
-        compact_shear_patterns = [r"(?:剪切载荷|剪切荷载|剪切|面内剪切|Nxy)([0-9]+(?:\.[0-9]+)?)(?:[kK][nN]/[mM])?"]
-
-        for pattern in axial_patterns:
-            nx_value = self._extract_float(pattern, text)
-            if nx_value is not None:
-                break
+        axial_label = r"(?:Nx(?![A-Za-z])|轴压|压缩载荷|压缩荷载|压缩工况|压缩|受压)"
+        shear_label = r"(?:Nxy(?![A-Za-z])|面内剪切|剪切载荷|剪切荷载|剪切工况|剪切|受剪|shear)"
+        separator = r"\s*(?:为|是)?\s*[:：=]?[\s,，]*"
+        nx_value = self._extract_float(axial_label + separator + NUMBER_PATTERN, text)
+        nxy_value = self._extract_float(shear_label + separator + NUMBER_PATTERN, text)
+        has_axial = re.search(axial_label, text, re.IGNORECASE) is not None or "压剪" in text
+        has_shear = re.search(shear_label, text, re.IGNORECASE) is not None or "压剪" in text
+        # 缺省工况采用交互默认值；明确给出的零分量参与实际工况判定。
         if nx_value is None:
-            for pattern in compact_axial_patterns:
-                nx_value = self._extract_float(pattern, compact_text)
-                if nx_value is not None:
-                    break
-
-        for pattern in shear_patterns:
-            nxy_value = self._extract_float(pattern, text)
-            if nxy_value is not None:
-                break
+            nx_value = 850.0 if has_axial or not has_shear else 0.0
         if nxy_value is None:
-            for pattern in compact_shear_patterns:
-                nxy_value = self._extract_float(pattern, compact_text)
-                if nxy_value is not None:
-                    break
-
-        lowered = text.lower()
-        has_explicit_nx = re.search(r"\bNx\b", text, flags=re.IGNORECASE) is not None or re.search(r"Nx(?!y)", compact_text, flags=re.IGNORECASE) is not None
-        has_explicit_nxy = re.search(r"\bNxy\b", text, flags=re.IGNORECASE) is not None or re.search(r"Nxy", compact_text, flags=re.IGNORECASE) is not None
-        has_axial_text = any(token in text for token in ["轴压", "压缩载荷", "压缩荷载", "压缩", "受压"])
-        has_shear_text = any(token in text for token in ["剪切载荷", "剪切荷载", "剪切", "面内剪切", "受剪"])
-        has_axial = has_explicit_nx or has_axial_text
-        has_shear = has_explicit_nxy or has_shear_text or "shear" in lowered
-        explicit_compression_shear = "压剪" in text or ((has_explicit_nx or has_axial_text) and (has_explicit_nxy or has_shear_text or "shear" in lowered))
-
-        if not has_axial:
-            nx_value = None
-        if not has_shear:
-            nxy_value = None
-
-        if explicit_compression_shear:
-            return normalize_load_conditions(
-                {
-                    "type": "compression_shear",
-                    "Nx_kN_per_m": nx_value or 850.0,
-                    "Nxy_kN_per_m": nxy_value or 220.0,
-                }
-            )
-        if has_shear:
-            return normalize_load_conditions(
-                {
-                    "type": "in_plane_shear",
-                    "Nx_kN_per_m": 0.0,
-                    "Nxy_kN_per_m": nxy_value or 220.0,
-                }
-            )
+            nxy_value = 220.0 if has_shear else 0.0
         return normalize_load_conditions(
             {
-                "type": "axial_compression",
-                "Nx_kN_per_m": nx_value or 850.0,
-                "Nxy_kN_per_m": 0.0,
+                "Nx_kN_per_m": nx_value,
+                "Nxy_kN_per_m": nxy_value,
             }
         )
 
@@ -254,23 +189,16 @@ class TaskParser:
 
     def _extract_geometry_envelope(self, text: str) -> Dict[str, Any]:
         geometry = dict(DEFAULT_GEOMETRY_ENVELOPE)
-        length_value = self._extract_float(r"(?:长度|长)\D*([0-9]+(?:\.[0-9]+)?)\s*mm", text)
-        width_value = self._extract_float(r"(?:宽度|宽)\D*([0-9]+(?:\.[0-9]+)?)\s*mm", text)
-        height_value = self._extract_float(r"(?:筋高|最大筋高)\D*([0-9]+(?:\.[0-9]+)?)\s*mm", text)
-
-        if length_value is not None:
-            geometry["panel_length_mm"] = [max(300.0, length_value - 80.0), length_value + 80.0]
-        if width_value is not None:
-            geometry["panel_width_mm"] = [max(300.0, width_value - 80.0), width_value + 80.0]
-        if height_value is not None:
-            geometry["max_stiffener_height_mm"] = height_value
+        for key, value in self._extract_geometry_values(text).items():
+            geometry[key] = [value, value] if key in ("panel_length_mm", "panel_width_mm") else value
         return normalize_geometry_envelope(geometry)
 
     def _extract_geometry_values(self, text: str) -> Dict[str, float]:
         values: Dict[str, float] = {}
-        length_value = self._extract_float(r"(?:长度|长)\D*([0-9]+(?:\.[0-9]+)?)\s*mm", text)
-        width_value = self._extract_float(r"(?:宽度|宽)\D*([0-9]+(?:\.[0-9]+)?)\s*mm", text)
-        height_value = self._extract_float(r"(?:筋高|最大筋高)\D*([0-9]+(?:\.[0-9]+)?)\s*mm", text)
+        separator = r"\s*(?:为|是|不超过|小于等于)?\s*[:：=≤]?\s*"
+        length_value = self._extract_float(r"(?:长度|长)" + separator + NUMBER_PATTERN + r"\s*mm", text)
+        width_value = self._extract_float(r"(?<!帽顶)(?<!翼缘)(?:宽度|宽)" + separator + NUMBER_PATTERN + r"\s*mm", text)
+        height_value = self._extract_float(r"(?:最大筋高|筋高)" + separator + NUMBER_PATTERN + r"\s*mm", text)
         if length_value is not None:
             values["panel_length_mm"] = length_value
         if width_value is not None:
@@ -280,36 +208,35 @@ class TaskParser:
         return values
 
     def _extract_design_targets(self, text: str) -> Dict[str, Any]:
-        blf_value = self._extract_float(r"(?:BLF|屈曲载荷因子|屈曲因子)\D*([0-9]+(?:\.[0-9]+)?)", text)
+        blf_value = self._extract_float(BLF_PATTERN, text)
         objective = "最小重量"
         if "最小面密度" in text:
             objective = "最小面密度"
         elif "刚度优先" in text:
             objective = "刚度优先"
         return {
-            "BLF_min": blf_value or DEFAULT_DESIGN_TARGETS["BLF_min"],
+            "BLF_min": DEFAULT_DESIGN_TARGETS["BLF_min"] if blf_value is None else blf_value,
             "primary_objective": objective,
         }
 
     def _total_candidate_patterns(self) -> list[str]:
         return [
-            r"(?:总候选|候选总数|候选池|初始候选|候选方案综述)\D{0,6}([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
-            r"(?:生成|给出|提供|输出)\s*([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
-            r"([1-9][0-9]?)\s*(?:个)?候选",
-            r"(?:候选(?:数量)?|样本(?:数量)?)\D{0,6}([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
-            r"(?:generate|create|produce)\s*([1-9][0-9]?)\s*(?:candidates|designs|samples)?",
+            r"(?:总候选|候选总数|候选池|初始候选|候选方案综述)[\s为是:：=]{0,6}" + NUMBER_PATTERN,
+            r"(?:生成|给出|提供|输出)\s*" + NUMBER_PATTERN,
+            NUMBER_PATTERN + r"\s*(?:个)?候选",
+            r"(?:候选(?:数量)?|样本(?:数量)?)[\s为是:：=]{0,6}" + NUMBER_PATTERN,
+            r"(?:generate|create|produce)\s*" + NUMBER_PATTERN,
         ]
 
     def _top_k_patterns(self) -> list[str]:
         return [
-            r"(?:初筛保留|代理模型初筛保留|筛选后保留|初步保留)\s*([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
-            r"(?:初筛数量|筛选数量|TopK|Top-K)\D{0,4}([1-9][0-9]?)",
-            r"([1-9][0-9]?)\s*(?:个)?初筛",
-            r"(?:初筛|筛选|代理模型初筛)\D{0,8}(?:Top[- ]?|TOP[- ]?|top[- ]?)\s*([1-9][0-9]?)",
-            r"(?:初筛|筛选|代理模型初筛)\s*([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
-            r"(?:筛)\s*([1-9][0-9]?)\s*(?:个)?(?:候选|样本|方案)?",
-            r"(?:screen|select)\s*(?:top[- ]?)?\s*([1-9][0-9]?)",
-            r"(?:top[- ]?k|top)\D{0,8}([1-9][0-9]?)",
+            r"(?:初筛保留|代理模型初筛保留|筛选后保留|初步保留)\s*" + NUMBER_PATTERN,
+            r"(?:初筛数量|筛选数量|TopK|Top-K)[\s为是:：=]{0,4}" + NUMBER_PATTERN,
+            NUMBER_PATTERN + r"\s*(?:个)?初筛",
+            r"(?:初筛|筛选|代理模型初筛)\s*Top[- ]?\s*" + NUMBER_PATTERN,
+            r"(?:初筛|筛选|代理模型初筛|筛)\s*" + NUMBER_PATTERN,
+            r"(?:screen|select)\s*(?:top[- ]?)?\s*" + NUMBER_PATTERN,
+            r"(?:top[- ]?k|top)[\s为是:：=]{0,8}" + NUMBER_PATTERN,
         ]
 
     def _pattern_was_specified(self, patterns: list[str], text: str) -> bool:
@@ -319,20 +246,20 @@ class TaskParser:
         prefix = text[max(0, match.start() - 12): match.start()]
         return any(token in prefix for token in ["初筛", "筛选", "保留", "Top", "top", "TOP"])
 
-    def _extract_top_k_candidates(self, text: str) -> int:
+    def _extract_top_k_candidates(self, text: str) -> float:
         for pattern in self._top_k_patterns():
             match = re.search(pattern, text, flags=re.IGNORECASE)
             if match:
-                return int(max(1, min(float(match.group(1)), 30.0)))
+                return float(match.group(1))
         raise ValueError("任务缺少初筛保留数量，请在自然语言需求中明确指定。")
 
-    def _extract_total_candidates(self, text: str) -> int:
+    def _extract_total_candidates(self, text: str) -> float:
         for pattern in self._total_candidate_patterns():
             match = re.search(pattern, text, flags=re.IGNORECASE)
             if match:
                 if self._match_is_screening_context(text, match):
                     continue
-                return int(max(1, min(float(match.group(1)), 60.0)))
+                return float(match.group(1))
         raise ValueError("任务缺少候选池总数，请在自然语言需求中明确指定。")
 
     def _extract_candidate_generation_preferences(self, text: str) -> Dict[str, Any]:
@@ -432,7 +359,7 @@ class TaskParser:
             facts["candidate_generation"] = candidate_generation
 
         design_targets: Dict[str, Any] = {}
-        blf_value = self._extract_float(r"(?:BLF|屈曲载荷因子|屈曲因子)\D*([0-9]+(?:\.[0-9]+)?)", text)
+        blf_value = self._extract_float(BLF_PATTERN, text)
         if blf_value is not None:
             design_targets["BLF_min"] = blf_value
             facts["explicit_fields"].append("design_targets.BLF_min")
@@ -468,55 +395,119 @@ class TaskParser:
             "stiffener_type": self._extract_stiffener_type(text),
             "design_targets": self._extract_design_targets(text),
         }
+        hints = normalize_task_payload(hints)
         hints["user_input_facts"] = self._extract_user_input_facts(text, hints)
         return hints
 
-    def _apply_locked_rule_hints(self, hints: Dict[str, Any]) -> Dict[str, Any]:
-        """保留规则抽取出的高置信字段和用户显式事实。"""
-
-        normalized = dict(hints)
-        normalized.setdefault("candidate_generation_preferences", {})
-        normalized.setdefault("screening_preferences", {})
-
-        normalized["candidate_generation_preferences"]["total_candidates"] = int(
-            hints["candidate_generation_preferences"]["total_candidates"]
-        )
-        normalized["candidate_generation_preferences"]["source_allocation_mode"] = "ratio"
-        normalized["candidate_generation_preferences"]["source_ratio"] = dict(
-            hints.get("candidate_generation_preferences", {}).get("source_ratio", self.default_source_ratio)
-        )
-        normalized["screening_preferences"]["top_k_candidates"] = int(
-            hints["screening_preferences"]["top_k_candidates"]
-        )
-
-        user_facts = dict(hints.get("user_input_facts", {"explicit_fields": []}))
-        normalized["user_input_facts"] = user_facts
-        if "application" in user_facts:
-            normalized["application"] = hints.get("application")
-        if "load_conditions" in user_facts:
-            normalized["load_conditions"] = hints.get("load_conditions")
-        if "boundary_conditions" in user_facts:
-            normalized["boundary_conditions"] = hints.get("boundary_conditions")
-        if "geometry" in user_facts:
-            normalized["geometry_envelope"] = hints.get("geometry_envelope")
-        if "design_targets" in user_facts:
-            normalized["design_targets"] = hints.get("design_targets")
-
-        hint_material = dict(hints.get("material_system", {}))
-        if hint_material.get("is_user_specified", False):
-            normalized["material_system"] = hint_material
-
-        # 筋型由规则提取锁定，不交给 LLM 判断
-        hint_stype = hints.get("stiffener_type")
-        if hint_stype:
-            normalized["stiffener_type"] = hint_stype
-
-        return normalized
+    def _interpret_requirements(self, text: str) -> Dict[str, Any]:
+        """LLM 只抽取带原文引句的需求，程序检查字段、数值、单位与明确约束。"""
+        numeric_labels = {"total_candidates": "生成", "top_k_candidates": "初筛保留",
+                          "Nx_kN_per_m": "Nx", "Nxy_kN_per_m": "Nxy", "BLF_min": "BLF >=",
+                          "panel_length_mm": "长度", "panel_width_mm": "宽度",
+                          "max_stiffener_height_mm": "最大筋高"}
+        geometry_fields = {"skin_thickness_mm", "pitch_mm", "stiffener_height_mm", "web_thickness_mm",
+                           "flange_width_mm", "flange_thickness_mm", "cap_width_mm", "cap_thickness_mm"}
+        geometry_labels = {
+            "panel_length_mm": r"(?:长度|长)", "panel_width_mm": r"(?<!帽顶)(?<!翼缘)(?:宽度|宽)",
+            "max_stiffener_height_mm": r"最大筋高",
+            "skin_thickness_mm": r"(?:蒙皮厚度|蒙皮厚)", "pitch_mm": r"(?:筋条间距|筋距)",
+            "stiffener_height_mm": r"(?<!最大)筋高", "web_thickness_mm": r"(?:腹板厚度|腹板厚)",
+            "flange_width_mm": r"(?:翼缘宽度|翼缘宽)", "flange_thickness_mm": r"(?:翼缘厚度|翼缘厚)",
+            "cap_width_mm": r"(?:帽顶宽度|帽顶宽)", "cap_thickness_mm": r"(?:帽顶厚度|帽顶厚)",
+        }
+        explicit_geometry = {}
+        # 显式尺寸不能因单位不受支持或模型省略而退回默认设计包络。
+        for field, label in geometry_labels.items():
+            pattern = label + r"\s*(?:为|是|不超过|小于等于)?\s*[:：=≤]?\s*" + NUMBER_PATTERN
+            for match in re.finditer(pattern, text, re.IGNORECASE):
+                if not re.match(r"\s*mm(?![A-Za-z])", text[match.end():], re.IGNORECASE):
+                    raise ValueError(f"明确几何 {field} 必须使用 mm，不能省略或转换单位")
+                value = float(match.group(1))
+                if field in explicit_geometry and explicit_geometry[field] != value:
+                    raise ValueError(f"明确几何 {field} 包含冲突数值")
+                explicit_geometry[field] = value
+        allowed = set(numeric_labels) | geometry_fields | {"stiffener_types", "boundary_type", "material_key", "primary_objective"}
+        answer = LLMBackend().chat(
+            "你负责抽取复合材料加筋壁板的用户需求，不生成设计方案。只返回 JSON 对象，唯一字段 facts 为数组。"
+            "每项恰含 field、value、quote；quote 必须逐字引用用户原文中包含该值及其含义和单位的连续文字。"
+            "只提取明确给出的值，禁止推算、补默认值或转换单位。数值使用原文数字；几何单位必须为 mm，载荷为 kN/m。"
+            "stiffener_types 为 BLADE/T/L/HAT 数组，boundary_type 为 SSSS/SSCC/CCCC，material_key 为材料库键。"
+            "primary_objective 为 最小重量/最小面密度/刚度优先。不存在或含糊的信息不要输出。"
+            "字段白名单：" + ", ".join(sorted(allowed)) + "；材料库：" + ", ".join(self.material_db),
+            json.dumps({"instruction": text}, ensure_ascii=False), max_tokens_override=2600)
+        response = json.loads(answer)
+        if not isinstance(response, dict) or set(response) != {"facts"} or not isinstance(response["facts"], list):
+            raise ValueError("需求抽取必须返回 facts 数组")
+        extracted, canonical = {}, []
+        for item in response["facts"]:
+            if not isinstance(item, dict) or set(item) != {"field", "value", "quote"}:
+                raise ValueError("需求事实只允许 field、value、quote")
+            field, value, quote = item["field"], item["value"], item["quote"]
+            if not isinstance(field, str) or field not in allowed or field in extracted:
+                raise ValueError("需求字段未知或重复")
+            if not isinstance(quote, str) or not quote.strip() or quote not in text:
+                raise ValueError(f"需求 {field} 缺少用户原文证据")
+            if field in set(numeric_labels) | geometry_fields:
+                if (isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value)
+                        or value not in [float(token) for token in re.findall(NUMBER_PATTERN, quote)]):
+                    raise ValueError(f"需求 {field} 数值与原文不一致")
+                unit = "mm" if field.endswith("_mm") else "kN/m" if field.endswith("_kN_per_m") else ""
+                if unit and not re.search(re.escape(unit), quote, re.IGNORECASE):
+                    raise ValueError(f"需求 {field} 必须明确使用 {unit}")
+                if field in numeric_labels:
+                    canonical.append(f"{numeric_labels[field]} {value:g} {unit}")
+            elif field == "stiffener_types":
+                if not isinstance(value, list) or not value or value != list(dict.fromkeys(self._extract_stiffener_types(quote))):
+                    raise ValueError("需求筋型与引句不一致")
+                canonical.append("、".join(value) + "型筋")
+            elif field == "boundary_type":
+                if value not in {"SSSS", "SSCC", "CCCC"} or value != self._extract_boundary_conditions(quote)["type"]:
+                    raise ValueError("需求边界与引句不一致")
+                canonical.append(value)
+            elif field == "material_key":
+                if value not in self.material_db or self._extract_material(quote)[0].get("material_key") != value:
+                    raise ValueError("需求材料与引句不一致")
+                canonical.append(self.material_db[value]["display_name"])
+            elif field == "primary_objective":
+                if value not in {"最小重量", "最小面密度", "刚度优先"} or value not in quote:
+                    raise ValueError("需求目标与引句不一致")
+                canonical.append(value)
+            extracted[field] = value
+        # 原文的数字表达仍经规则解析；明确字段冲突不能被模型重写。
+        explicit = explicit_geometry
+        for key, value in explicit.items():
+            if extracted.get(key) != value:
+                raise ValueError(f"需求抽取遗漏或改变了明确几何 {key}")
+        for field, label in (("Nx_kN_per_m", r"(?:Nx(?![A-Za-z])|轴压|压缩载荷|压缩荷载|压缩|受压)"),
+                             ("Nxy_kN_per_m", r"(?:Nxy(?![A-Za-z])|面内剪切|剪切载荷|剪切荷载|剪切|受剪|shear)")):
+            value = self._extract_float(label + r"\s*(?:为|是)?\s*[:：=]?[\s,，]*" + NUMBER_PATTERN, text)
+            if value is not None and extracted.get(field) != value:
+                raise ValueError(f"需求抽取遗漏或改变了明确载荷 {field}")
+        boundary = self._user_boundary_conditions(text)
+        if boundary and extracted.get("boundary_type") != boundary["type"]:
+            raise ValueError("需求抽取遗漏或改变了明确边界")
+        types = self._extract_stiffener_types(text)
+        if types and extracted.get("stiffener_types") != types:
+            raise ValueError("需求抽取遗漏或改变了明确筋型")
+        material, specified = self._extract_material(text)
+        if specified and extracted.get("material_key") != material["material_key"]:
+            raise ValueError("需求抽取遗漏或改变了明确材料")
+        blf = self._extract_float(BLF_PATTERN, text)
+        if blf is not None and extracted.get("BLF_min") != blf:
+            raise ValueError("需求抽取遗漏或改变了明确 BLF 目标")
+        for field, patterns in (("total_candidates", self._total_candidate_patterns()),
+                                ("top_k_candidates", self._top_k_patterns())):
+            values = [value for pattern in patterns if (value := self._extract_float(pattern, text)) is not None]
+            if values and (len(set(values)) != 1 or extracted.get(field) != values[0]):
+                raise ValueError(f"需求抽取遗漏或改变了明确数量 {field}")
+        task = self._rule_hints("，".join(canonical))
+        task["application"] = self._extract_application(text)
+        task["fixed_geometry"] = {field: extracted[field] for field in geometry_fields if field in extracted}
+        task["requirement_extraction"] = {"method": "llm_grounded", "instruction": text, "facts": response["facts"]}
+        return task
 
     def parse_instruction(self, text: str) -> Dict[str, Any]:
-        hints = self._rule_hints(text)
-        merged = self._apply_locked_rule_hints(hints)
-        task = normalize_task_payload(merged)
+        task = self._interpret_requirements(text) if auto_llm_enabled() else self._rule_hints(text)
         validate_or_raise("task.schema.json", task)
         return build_task_request_record(
             task,

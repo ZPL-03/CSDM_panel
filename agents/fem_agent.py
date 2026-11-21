@@ -6,6 +6,9 @@ from pathlib import Path
 from typing import Dict
 from copy import deepcopy
 import re
+import shutil
+from datetime import datetime
+from uuid import uuid4
 
 from jinja2 import Template
 
@@ -18,7 +21,10 @@ from core.config_loader import load_app_config
 from core.io_utils import read_json, write_json
 from core.paths import ABAQUS_RUNS_DIR, ABAQUS_TEMPLATE_DIR, IO_DIR, ROOT_DIR
 from core.schema_validator import validate_or_raise
+from core.laminate import analysis_contract
+from core.rule_checker import RuleChecker
 from core.task_contract import (
+    validate_candidate_constraints,
     describe_boundary_conditions,
     describe_load_conditions,
 )
@@ -82,6 +88,7 @@ class FEMAgent(BaseAgent):
         error_type = str(result.get("error_type") or "failed")
         mapping = {
             "mesh_error": "网格划分失败，需根据网格诊断检查几何拓扑、单元质量与网格设置。",
+            "connection_error": "连接存在未关联节点，结果中的节点集给出位置；检查部件中面和 Tie 定义。",
             "geometry_issue": "几何装配失败，需检查输入尺寸、连接关系及装配容差。",
             "convergence_fail": "特征值求解未收敛，需核对求解日志、载荷、约束与特征值搜索设置。",
             "blf_negative": "求得负特征值，通常意味着载荷方向或边界设置需要复核。",
@@ -170,13 +177,35 @@ class FEMAgent(BaseAgent):
         validate_or_raise("abaqus_result.schema.json", result)
         return result
 
-    def run(self, candidate: Dict) -> Dict:
+    def run(self, candidate: Dict, *, archive_existing: bool = False) -> Dict:
         validate_or_raise("candidate.schema.json", candidate)
+        if candidate.get("task_constraints"):
+            validate_candidate_constraints(candidate, candidate["task_constraints"])
+            check = RuleChecker().run(candidate)
+            if not check["is_valid"]:
+                raise ValueError("候选不满足任务物理约束: " + "; ".join(check["errors"]))
+        expected_contract = analysis_contract(candidate)
         current = deepcopy(candidate)
         candidate_id = current["candidate_id"]
         result_path = self._result_path(candidate_id)
         run_dir = self._run_dir(candidate_id)
         ensure_job_unlocked(run_dir)
+        if any((run_dir / name).exists() for name in ("candidate_input.json", candidate_id + ".inp",
+                                                       candidate_id + ".odb", candidate_id + ".cae")):
+            if not archive_existing:
+                raise FileExistsError(f"{candidate_id} 已有正式输入或求解工件，拒绝覆盖，请分配独立编号")
+            # 维护入口保留正式原件；归档失败时停止，不提交替代作业。
+            archive = ROOT_DIR.parent / (ROOT_DIR.name + "_solver_archive") / (
+                datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + candidate_id + "_" + uuid4().hex[:8])
+            if run_dir.resolve().parent != ABAQUS_RUNS_DIR.resolve() or archive.resolve().is_relative_to(ROOT_DIR.resolve()):
+                raise ValueError("求解工件归档路径越界")
+            archive.mkdir(parents=True)
+            shutil.move(str(run_dir), str(archive / "run"))
+            for source in (self._input_path(candidate_id), result_path):
+                if source.is_file():
+                    shutil.move(str(source), str(archive / source.name))
+            run_dir.mkdir()
+            self.emit(f"{candidate_id} 正式原件归档：{archive}")
 
         if not is_abaqus_available(self.abaqus_config["command"]):
             self.emit(f"{candidate_id} 未找到 ABAQUS 命令，真实有限元求解无法启动")
@@ -188,6 +217,9 @@ class FEMAgent(BaseAgent):
         write_json(run_dir / "candidate_input.json", current)
         self.emit(f"{candidate_id} 开始 ABAQUS 求解")
         result = self._annotate_result(current, self._run_real(current, result_path))
+        if result.get("candidate_id") != candidate_id or (result["status"] == "success"
+                and result.get("analysis_contract") != expected_contract):
+            raise ValueError("求解结果未绑定当前候选的逐层物理截面契约；原始结果保留供核查")
         result["retry_count"] = 0
         # 求解失败保留所提交的设计；诊断日志写入结果后再清理一次性工件。
         if result["status"] != "success":

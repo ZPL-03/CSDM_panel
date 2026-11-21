@@ -1,482 +1,69 @@
-# CSDM_panel 项目全流程梳理与开发指南
+# CSDM_panel 架构与开发指南
 
-本文档描述当前仓库的实际运行方式、模块边界和继续开发入口。
-
-## 1. 项目概览
-
-CSDM_panel 是面向复合材料加筋壁板的多智能体设计原型系统，主链路为：
+## 职责与数据流
 
 ```text
-自然语言需求
-  -> 结构化任务
-  -> 候选设计生成
-  -> 代理模型初筛
-  -> ABAQUS 线性屈曲校核
-  -> 结果归档与知识回流
-  -> 报告输出
+用户自然语言
+ -> TaskParser：语义抽取、逐字引句、数值与明确约束核对
+ -> CandidateGenAgent：CASE_TRANSFER / DOE、筋型配额、规则、物理去重与精确数量
+ -> ScreenerAgent：按筋型加载独立 RF、验收与适用域
+ -> OrchestratorAgent：选择审计、正式编号、输入与结果身份检查
+ -> FEMAgent：实际逐层复合壳、Abaqus、输入与结果契约
+ -> KnowledgeAgent：评估档案、正式案例、案例记忆
+ -> ReportGenAgent：完整 RAG/KG、事实引用、受限建议、Markdown/PDF
 ```
 
-当前落地 6 个智能体：
-
-- `ORCHESTRATOR`：主控调度
-- `CANDIDATE_GEN`：候选生成
-- `SCREENER`：代理模型筛选
-- `FEM_AGENT`：ABAQUS 建模、求解与失败诊断。求解失败保留提交的设计与日志，不自动调整几何或分析参数。
-- `KNOWLEDGE_AGENT`：知识回流与代理模型重训
-- `REPORT_GEN`：报告生成
-
-## 2. 当前实现状态
-
-仓库中的运行资产和业务入口如下：
-
-- `data/cases/` 中当前有 350 个评估档案
-- `knowledge/case_library/` 中当前有 41 个正式案例
-- `knowledge/chroma_db/` 中当前 `csdm_case_memory` 案例记忆集合有 350 条索引记录
-- `data/abaqus_runs/` 中当前有 350 个样本工件目录
-- `models/surrogate_metrics.json` 当前选中模型为 `mlp`
-- 当前代理模型训练样本数为 350
-- `knowledge/external/` 包含 173228 个 RAG 文本块、2219 个实体、250606 条关系和 1931 条来源元数据
-
-主链路已经贯通，LLM 路径使用外部知识库/知识图谱做检索增强，输出工程自然语言候选表后由系统解析为结构化候选；案例迁移路径使用案例库与案例记忆索引；DOE 路径提供参数空间采样。
-
-## 3. 运行环境
-
-项目依赖以 `environment.yml` 为准，可使用 Conda 或等价 Python 环境安装。推荐先运行环境自检：
-
-```powershell
-python scripts/check_env.py
-```
-
-当前 `environment.yml` 约定：
-
-- Python 3.10 及以上版本
-- PyQt6
-- jinja2
-- PyYAML
-- python-dotenv
-- jsonschema
-- openai
-- chromadb
-- sentence-transformers
-- scikit-learn
-- matplotlib
-- pyvista / pyvistaqt
-- reportlab
-- pytest
-
-如果终端出现中文乱码，可先执行：
-
-```powershell
-chcp 65001
-```
-
-## 4. 目录结构
-
-```text
-CSDM_panel/
-├─ main.py                    # GUI 启动入口
-├─ agents/                    # 六大智能体
-├─ abaqus/                    # ABAQUS 建模模板、运行脚本、后处理脚本
-├─ config/                    # YAML 配置
-├─ core/                      # 路径、契约、知识检索、LLM、DOE、代理模型等公共能力
-├─ data/                      # IO、案例、Abaqus 工件、报告输出
-├─ docs/                      # 开发指南与接口约定
-├─ gui/                       # PyQt6 图形界面与可视化
-├─ knowledge/                 # 正式案例库、案例向量库、外部知识库/知识图谱
-├─ models/                    # 代理模型文件与指标
-├─ schemas/                   # JSON Schema
-├─ scripts/                   # 自检、训练、迁移、清理脚本
-└─ tests/                     # 自动化测试
-```
-
-### 4.1 `core/`
-
-`core/` 提供所有智能体共享的底层能力，当前关键模块包括：
-
-- `paths.py`：统一路径常量和目录初始化
-- `config_loader.py`：YAML 配置与 `.env` 加载
-- `io_utils.py`：JSON / 文本读写
-- `schema_validator.py`：Schema 校验
-- `id_utils.py`：身份字段与编号工具
-- `task_contract.py`：任务契约规范化、任务实例与任务语义工具
-- `stiffener_profile.py`：筋型、几何参数和可视化网格定义
-- `rule_checker.py`：候选几何与铺层规则检查
-- `doe_sampler.py`：DOE 采样
-- `llm_backend.py`：单一 OpenAI 兼容 LLM 后端
-- `rag_engine.py`：通用文本向量引擎，当前用于案例记忆集合
-- `domain_knowledge.py`：外部知识库/知识图谱运行时检索入口
-- `case_retriever.py`：结构化历史案例检索与案例记忆排序
-- `case_memory.py`：案例记忆文本、元数据和向量索引入口
-- `surrogate_model.py`：代理模型训练与预测
-- `conversation_flow.py`：UI 无关的对话流程控制器
-
-### 4.2 `agents/`
-
-- `orchestrator.py`：串联任务解析、候选生成、初筛、校核、回流和报告
-- `candidate_gen.py`：调度 LLM、CASE_TRANSFER、DOE 三条候选路径
-- `screener.py`：使用代理模型排序并标记入选理由
-- `fem_agent.py`：驱动 ABAQUS 运行，保存结果与失败诊断，清理已结束作业的一次性工件
-- `knowledge_agent.py`：归档案例、写入正式案例库、写入案例记忆索引、按阈值触发模型重训
-- `report_gen.py`：输出 Markdown / PDF 报告
-
-### 4.3 `knowledge/`
-
-当前知识资产分为两类：
-
-- 案例知识资产
-  - `knowledge/case_library/`：通过样本形成的正式案例库
-  - `knowledge/chroma_db/`：案例记忆集合所在的 Chroma 目录
-- 外部知识库/知识图谱资产
-  - `knowledge/external/rag/retrieval_index.sqlite`
-  - `knowledge/external/kg/entities.jsonl`
-  - `knowledge/external/kg/relations.compact.jsonl.gz`
-  - `knowledge/external/kg/kg_stats.json`
-  - `knowledge/external/provenance/source_metadata.compact.jsonl.gz`
-  - `knowledge/external/manifest.json`
-
-## 5. 主流程
-
-### 5.1 用户视角
-
-当前主交互是“对话驱动 + 三个关键确认节点”：
-
-1. 用户输入自然语言设计需求
-2. 系统解析任务并生成初始候选
-3. 系统询问是否进行代理模型初筛
-4. 系统询问是否进行 FEM 校核
-5. 系统询问是否导出报告
-
-报告导出面向已有有限元校核结果，可作为阶段报告使用；未校核候选仍保留在当前候选集中，不进入有限元结果章节和结论统计。
+LLM 负责需求理解与报告事实选择，不提供数值候选，不改写几何、铺层、求解值或结论。生产需求抽取失败时直接报错；自动化测试可通过 `CSDM_panel_DISABLE_LLM_AUTO=1` 显式使用规则解析和确定性报告。该开关不是线上失败降级。
 
-### 5.2 代码视角
+## 模块边界
 
-```text
-用户输入
-  -> ORCHESTRATOR.parse_instruction()
-  -> ORCHESTRATOR.generate_candidates()
-  -> CANDIDATE_GEN.run()
-       -> LLM 路径（外部知识库/知识图谱增强，自然语言候选表解析）
-       -> CASE_TRANSFER 路径
-       -> DOE 路径
-  -> ORCHESTRATOR.screen_candidates()
-  -> SCREENER.run()
-  -> ORCHESTRATOR.evaluate_candidate()
-  -> FEM_AGENT.run()
-  -> KNOWLEDGE_AGENT.run()
-  -> ORCHESTRATOR.generate_report()
-  -> REPORT_GEN.run()
-```
+| 模块 | 输入 | 输出与失败行为 |
+|---|---|---|
+| `core/task_parser.py` | 用户原文、材料目录 | 含原文证据的结构化任务；未知字段、数值或单位不一致、明确约束遗漏报错 |
+| `core/task_contract.py` | 规范化任务 | 筋型、几何、载荷、边界、铺层约束；非法范围不调整为默认值 |
+| `core/layup.py`、`core/laminate.py` | 部件层序、总厚度或逐层厚度、材料 | 实际层序、A/B/D、面密度与物理契约；层厚数量/总和不一致报错 |
+| `core/stiffener_profile.py` | 筋型和几何 | 部件位置、截面足迹、实际结构尺寸 |
+| `agents/candidate_gen.py` | 任务、案例和采样范围 | 唯一且数量准确的候选；约束内数量不足报错，不复制候选凑数 |
+| `core/surrogate_model.py` | 同筋型成功 FEM 档案或待预测候选 | 独立筋型模型及来源、验收、包络；不兼容或域外不预测 |
+| `agents/fem_agent.py` | 正式编号候选 | 原始输入、CAE/INP/ODB、结果；编号/契约不一致报错，失败保留诊断 |
+| `core/domain_knowledge.py` | 当前任务 | 完整证据块、绑定关系、合并来源和预算排除原因 |
+| `core/report_facts.py` | 当前候选和实际结果 | 不可由模型改值的事实表和受限建议 |
+| `core/conversation_flow.py`、`gui/` | 阶段事件与用户确认 | 可继续的会话状态、任务/候选/结果/报告展示 |
 
-### 5.3 数据流视角
+## 候选与检索
 
-```text
-自然语言
-  -> 会话内 task / TASK_x
-  -> 会话内 TMP_x 候选
-  -> 正式样本 Cx
-  -> data/io/input_Cx.json
-  -> data/abaqus_runs/Cx/*
-  -> data/io/result_Cx.json
-  -> data/cases/CASE_x.json
-  -> knowledge/case_library/CASE_x.json（仅通过样本）
-  -> knowledge/chroma_db/*
-  -> data/results/latest_report.md / latest_report.pdf
-```
+候选池先按指定筋型均分，多余名额按类型顺序分配；候选数小于筋型数时拒绝。每个筋型按 `CASE_TRANSFER:DOE=1:1` 计算初始迁移配额，取整数下界，余量由 DOE 提供。迁移不足时 DOE 补足。物理签名包括筋型、材料实际参数、几何和部件实际层序/层厚。相同签名只保留一次，所有来源使用统一任务约束。
 
-身份字段分工：
+案例检索以结构化条件为准，独立 Chroma 案例记忆仅辅助排序。迁移不复制历史身份、代理分数、工况或求解结论。固定材料来自当前用户任务，未固定时保留可迁移案例材料或从材料目录采样。
 
-- `task_id`：会话任务编号，用于当前任务摘要与报告展示
-- `candidate_id`：候选方案与正式样本标识
-- `case_id`：归档案例标识
+外部知识只来自 `knowledge/external/`，用于报告的参考问题和证据展示，不参与案例匹配结论或当前 BLF 回填。`prepare_context()` 对完整证据及绑定关系执行总字符预算，报告事实 JSON 保存实际采用上下文。
 
-## 6. 候选生成边界
+## 总体设计方案报告
 
-### 6.1 LLM 路径
+报告保留完整候选池，并分别记录送检选择和实际结果。全部候选、预筛送检、有限元校核、最终推荐、关键事实及验证建议的组织方式与耐压壳项目一致，物理指标仍采用加筋壁板的线性屈曲契约。候选提案、代理估计和实际求解不相互替代。
 
-- `DomainKnowledgeBase` 将任务转换为检索文本
-- 从 `knowledge/external/` 检索知识库片段与知识图谱关系
-- 启用外部知识但资产不完整时明确报错；显式关闭外部知识时不注入片段
-- Prompt 中包含规范化任务约束、用户明确输入事实、工况说明、边界说明、材料选项、检索依据和自然语言候选表约束
-- LLM 输出工程自然语言候选表，`CandidateGenAgent` 从表格解析 `geometry`、`layup`、`material_system` 和 `rationale`，并保存候选行 `origin_summary` 与回答原文 `llm_output_excerpt`
-- 候选进入下游前必须通过 `RuleChecker`
-- 铺层表达式经 `core/layup.py` 规范化，比例和层数按序列计算；LLM 声明的比例与序列不一致时拒绝候选并反馈具体错误
-- 不输出历史案例字段，也不要求 LLM 直接输出 JSON
+推荐由程序依据任务目标与完整求解证据计算。最小重量使用总质量，最小面密度使用单位投影面积的质量；刚度目标缺少直接比较量时不推荐。模型仅返回关键事实引用、程序推荐编号和允许的验证建议，不能改写数值、状态、推荐或引入自由结论。
 
-### 6.2 CASE_TRANSFER 路径
+正文展示去重文献引用和证据定位，不展示内部检索 JSON。完整事实及知识契约、模型响应、校验结果和 API 元数据保存在 `overall_design_report_facts.json`。三种报告工件在任务目录成组生成；API、契约或 PDF 失败直接暴露，不能用替代文本或旧文件宣称完成。
 
-- 使用 `CaseRetriever` 在 `data/cases/` 和 `knowledge/case_library/` 中查找相似案例
-- 结构化匹配条件包含筋型、工况、边界、材料兼容性和通过结论
-- 使用 `CaseMemoryIndex` 查询 `csdm_case_memory`，对结构化候选做相似度排序辅助
-- 只迁移“可直接复用”的通过案例
-- 不把历史案例原文注入 LLM Prompt
+## 代理契约
 
-### 6.3 DOE 路径
+`models/T`、`models/BLADE`、`models/L`、`models/HAT` 分别保存 `surrogate_rf.joblib`、`surrogate_metrics.json`、`surrogate_validation.json`。四类均为 101 维，部件不存在的特征为零。独立权重的类型标签必须等于候选类型，训练与验收禁止混入其他类型。多类型预测分别执行，再恢复输入顺序。
 
-- `DOESampler` 按参数范围采样
-- 作为补足与探索来源；LLM 或案例迁移有效候选不足时，由 DOE 补足候选池
-- 所有候选仍需通过 `RuleChecker`
-- 三路候选按材料、几何变量和铺层表达式形成结构等价签名；签名重复的候选不进入候选池，候选池缺口由 DOE 继续补足
+训练按物理设计分组留出，记录原始案例和样本指纹；每个类型至少 10 条兼容成功记录及 5 个物理设计。独立验收与全部训练/留出设计分离，按载荷/边界切片检查预先指定的平均及最大相对误差。训练包络只能拦截明显域外输入，不证明联合参数空间精度。
 
-### 6.4 候选来源比例
+没有通过独立验收的模型时，流程按 `unavailable_surrogate_policy` 选择 `direct_fem` 或 `stop`。直接 FEM 按生成顺序及求解预算取样，保存选择原因，不能表述成代理优选。
 
-候选池总数和初筛保留数量由自然语言需求明确给出。`pipeline.candidate_source_ratio` 控制三条来源的初始配额，当前为：
+## 身份与正式工件
 
-```yaml
-llm: 2
-case_transfer: 1
-doe: 1
-```
+临时候选编号为 `TMP_<n>`，进入 FEM 后为 `C<n>`；结果与 `CASE_<n>` 绑定。编号扫描包括正式案例、已有作业目录与输入快照；中断作业不允许复用编号。阶段入口检查数量、身份、物理唯一性和筛选前后物理输入一致。
 
-候选池目标为 12 时，初始配额为 LLM 6 个、案例迁移 3 个、DOE 3 个。若自然语言同时指定 T、HAT、BLADE 等多种筋型，各来源配额会继续按筋型序列拆分。配额只决定优先尝试数量；若 LLM 自然语言表格解析失败、规则检查失败，或案例迁移没有足够可迁移样本，DOE 会继续补足总数。
+普通 FEM 入口拒绝覆盖正式输入或 INP/ODB/CAE。维护入口在明确指定案例后先将原件归档到项目外，再独立提交；归档或求解失败直接暴露。成功结果必须具有与提交输入完全一致的 `analysis_contract`。
 
-## 7. 知识回流
+## 开发与验证
 
-`agents/knowledge_agent.py` 负责：
+使用 `environment.yml` 和 Conda `AGENT`。启动与环境检查见 README。物理运行时须兼容所部署的 Abaqus Python；修改 `core/laminate.py`、`abaqus/runtime_build_panel.py` 或 `abaqus/runtime_extract_blf.py` 会改变求解契约，既有记录不能自动视为兼容。
 
-- 把所有校核样本写入 `data/cases/`
-- 把通过样本写入 `knowledge/case_library/`
-- 把案例摘要和元数据写入案例记忆向量索引
-- 满足样本规模阈值时触发代理模型训练
+单元与集成测试应验证数值、状态、来源、排序、失败和真实行为，不锁定无关展示措辞。真实 FEM 必须显式 `--run-real-fem`；API、层序、网格与工况验收分别使用项目外独立目录，不复用失败报告冒充通过。完整命令和判据见 [物理模型与集成验收](物理模型与集成验收.md)。
 
-知识回流只写入案例侧资产，不反写 `knowledge/external/` 的外部知识库/知识图谱。
-
-HAT 型筋的底部连接板位于左右斜腹板外侧；`flange_width_mm` 表示左右腹板底边间距，外侧连接板宽度由 `flange_width_mm` 与 `cap_width_mm` 的差值派生。
-
-## 8. 知识检索与案例检索边界
-
-### 8.1 `core/domain_knowledge.py`
-
-外部知识库/知识图谱入口读取：
-
-- 完整文本块与全文索引：`knowledge/external/rag/retrieval_index.sqlite`
-- 知识图谱实体：`knowledge/external/kg/entities.jsonl`
-- 知识图谱关系：`knowledge/external/kg/relations.compact.jsonl.gz`
-- 来源元数据：`knowledge/external/provenance/source_metadata.compact.jsonl.gz`
-
-LLM 候选生成使用全文 BM25 与筋型聚焦召回融合后的证据，图谱关系按任务实体和已命中文本块排序。相同内容去重，同一来源最多两个片段；DOI、来源编号和 URL 共同用于引用合并，证据块编号、章节和页码随片段保留。完整解析文档不属于运行资产，SQLite 文本表已保存全部 RAG 内容。启用外部知识但文件缺失或损坏时抛出明确错误。
-
-`scripts/sync_external_knowledge.py --source <dataset/processed目录>` 校验 CS_LLM 导出指纹与最新 RAG 来源指纹，验证全部图谱实体和证据引用后部署。旧资产归档到项目外，项目内只保留清单列出的运行文件。`--verify-only` 对已部署资产执行同样的文件和引用校验。
-
-### 8.2 `core/case_retriever.py`
-
-结构化案例检索器直接读取案例 JSON，并可使用案例记忆向量索引做排序辅助，当前提供：
-
-- `retrieve_similar_cases(task, top_k=5)`
-- `retrieve_transferable_cases(task, top_k=5)`
-- `transfer_candidates(task, top_k=2)`
-
-它的职责是在历史案例中找可迁移设计。结构化硬约束决定能否迁移，向量索引只影响相似案例排序或非迁移场景下的观察召回。
-
-案例记忆使用用户级 Hugging Face 缓存中的 `BAAI/bge-m3`，输出 1024 维归一化文本向量。模型不存在或索引读写失败时明确报错，不以哈希伪向量、内存集合或自动清空索引替代。显式重建入口为 `python scripts/migrate_contracts.py --case-memory-only`。
-
-### 8.3 `core/rag_engine.py`
-
-`RAGEngine` 是通用文本向量引擎：
-
-- 默认案例记忆集合：`csdm_case_memory`
-- 支持 `upsert_records()` 和 `retrieve()` 兼容案例向量写法
-- 支持 `upsert_documents()` 和 `query_text()` 作为通用文本接口
-- 支持 `reset_collection()` 只重置当前集合
-
-## 9. ABAQUS 层
-
-### 9.1 双环境分离
-
-主程序走项目 Python 环境，Abaqus 脚本走 Abaqus 自带 Python，两边只通过 JSON 文件通信，不直接跨环境导入业务对象。
-
-### 9.2 真实运行脚本
-
-真实运行链路由以下文件组成：
-
-- `abaqus/templates/t_stiffener_buckle.py.j2`
-- `abaqus/runtime_build_panel.py`
-- `abaqus/runtime_extract_blf.py`
-
-### 9.3 真实有限元链路
-
-`FEM_AGENT` 只执行真实 Abaqus 求解。求解成功后产出 `.inp`、`.odb`、模态数据 JSON 与结果 JSON；未找到 Abaqus 命令或真实求解失败时写入结构化失败结果，不生成替代性假结果。
-
-## 10. 数据契约重点
-
-### 10.1 任务记录
-
-任务台账记录包含：
-
-- `task_id`
-- `created_at`
-- `source`
-- `task`
-
-其中 `task` 仅保留任务语义字段。任务解析阶段同步写入 `user_input_facts`，把用户明确给出的筋型、载荷、边界、目标、候选数量等事实与系统规范化字段分开；后续候选生成优先保留这些明确事实。
-
-### 10.2 候选 `candidate`
-
-当前候选包含：
-
-- `candidate_id`
-- `display_name`
-- `source`
-- `stiffener_type`
-- `geometry`
-- `layup`
-- `material_system`
-- `load_conditions`
-- `boundary_conditions`
-- `design_targets`
-- `rule_check`
-- `surrogate_BLF`
-- `surrogate_weight`
-- `rank_score`
-- `rationale`
-- `origin_summary`
-- `llm_output_excerpt`
-- `screening_summary`
-- `selection_reason`
-
-`display_name` 是必填显示编号，会话候选与 `TMP_<n>` 一致，正式 FEM 输入和案例设计与 `C<n>` 一致。`persistent_candidate_id` 只在候选进入 FEM 并分配正式 `C<n>` 编号后写入会话候选，FEM 前不保留空字段，也不写入正式 FEM 输入和案例设计。
-
-### 10.3 Abaqus 结果 `abaqus_result`
-
-关键字段包括：
-
-- `status`
-- `candidate_id`
-- `retry_count`
-- `BLF_global`
-- `BLF_local`
-- `failure_mode`
-- `weight_kg_per_m2`
-- `verdict`
-- `abaqus_odb`
-- `abaqus_inp`
-- `visualization_json`
-- `mode_eigenvalues`
-- `effective_mode_eigenvalues`
-- `analysis_flags`
-- `load_summary`
-- `boundary_summary`
-- `diagnosis_summary`
-
-### 10.4 案例记录 `case_record`
-
-一个 `CASE_x.json` 包含：
-
-- `case_id`
-- `candidate_id`
-- `created_at`
-- `source`
-- `task`
-- `design`
-- `abaqus_results`
-- `verdict`
-- `surrogate_BLF_error_pct`
-- `fem_agent_retry_count`
-
-`task_id` 是可选追溯字段。新回流样本在任务上下文存在时可以写入它，但案例编号、样本编号和案例迁移不依赖该字段。
-
-## 11. GUI 工作台
-
-程序以普通窗口启动，依据当前显示器可用区域设置初始尺寸。左侧任务摘要与对话区独立滚动，可拖动调整各自高度；输入及操作按钮固定可见。候选与有限元表格使用右侧工作区整行，下方并列展示详情和三维视图。
-
-`gui/knowledge_widget.py` 展示：
-
-- 评估档案数
-- 正式案例数
-- 案例记忆向量块数
-- 已归档 ODB 数
-- 模态可视化数据数
-- 代理模型指标
-- 外部知识库/知识图谱文本块、实体、关系数量
-- 来源元数据数与检索引擎
-- 知识资产清单路径、溯源资料目录和时间信息
-
-## 12. 常用脚本
-
-### 12.1 环境自检
-
-```powershell
-python scripts/check_env.py
-```
-
-### 12.2 启动 GUI
-
-```powershell
-python main.py
-```
-
-### 12.3 运行测试
-
-```powershell
-python -m pytest tests -q
-```
-
-### 12.4 构建初始案例
-
-```powershell
-python scripts/build_initial_cases.py --count 20 --task-count 4 --workers 2 --reset
-```
-
-### 12.5 重训代理模型
-
-```powershell
-python scripts/train_screener.py
-```
-
-### 12.6 案例记忆索引
-
-```powershell
-python scripts/migrate_contracts.py --case-memory-only
-```
-
-### 12.7 契约迁移与重建
-
-```powershell
-python scripts/migrate_contracts.py --retrain-surrogate
-```
-
-## 13. 推荐阅读顺序
-
-1. `README.md`
-2. `docs/接口约定.md`
-3. `core/paths.py`
-4. `core/task_contract.py`
-5. `core/conversation_flow.py`
-6. `agents/orchestrator.py`
-7. `agents/candidate_gen.py`
-8. `core/domain_knowledge.py`
-9. `core/case_retriever.py`
-10. `core/case_memory.py`
-11. `agents/screener.py`
-12. `agents/fem_agent.py`
-13. `agents/knowledge_agent.py`
-14. `agents/report_gen.py`
-15. `abaqus/runtime_build_panel.py`
-16. `abaqus/runtime_extract_blf.py`
-
-## 14. 当前边界说明
-
-有限元模型使用均质正交各向异性壳截面，不逐层离散设计铺层。铺层序列和比例用于候选约束及代理模型特征，不进入当前有限元截面计算，不能把铺层变化效果解释为该模型已验证的结论。线性屈曲分析也不替代缺陷敏感性、材料损伤、非线性承载能力和网格收敛验证。
-
-### 14.1 案例迁移不是 LLM 检索增强
-
-当前实现已经明确拆分：
-
-- 外部知识库/知识图谱只服务于 LLM 路径
-- 案例迁移走结构化硬过滤和案例记忆向量排序
-- 直接迁移不得把历史案例原文拼进 LLM Prompt
-
-### 14.2 知识资产只读取项目内目录
-
-运行时只读取 `knowledge/external/` 中的知识资产，不依赖项目外路径。
-
-### 14.3 评估档案与正式案例库不是同一层
-
-只有满足正式入库条件的案例才进入 `knowledge/case_library/`；全部校核结果仍会保存在 `data/cases/`。
-
-## 15. 下一步推荐方向
-
-- 验证外部知识库/知识图谱在加筋壁板候选生成中的命中质量
-- 持续积累真实 Abaqus 校核样本，提升代理模型精度
-- 扩展更多筋型、边界条件和多目标优化逻辑
-- 继续校核 LLM 工程候选表在不同筋型和不同表达方式下的解析稳健性
-- 继续完善 GUI 的交互反馈和异常处理
+源码、文档与配置属于一个部署版本。业务数据、知识、模型与机器 `.env` 分别管理。工作站目标为 `D:\Project\CSDM_panel`，不覆盖 `D:\Project\CSDM_cph`；同步前后核对文件清单与 SHA256，保留正式业务工件。

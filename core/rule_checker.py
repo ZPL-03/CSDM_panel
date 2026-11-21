@@ -2,28 +2,24 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import math
 from typing import Dict, List
 
 from core.config_loader import load_param_ranges
+from core.laminate import section_layers
+from core.layup import normalize_layup
+from core.task_contract import build_design_constraints, validate_candidate_constraints
 from core.stiffener_profile import (
     hat_incline_angle_deg,
     load_param_ranges_for_type,
     rule_check_param_keys,
     resolve_stiffener_type,
+    stiffener_footprints,
 )
 
 
-@dataclass
-class RuleCheckResult:
-    is_valid: bool
-    errors: List[str]
-    suggestions: List[str]
-    details: Dict[str, bool]
-
-
 class RuleChecker:
-    """执行一期固定范围内的几何与铺层规则校验。"""
+    """检查任务几何范围、物理铺层与采样比例约束。"""
 
     def __init__(self) -> None:
         self.param_ranges = load_param_ranges()
@@ -31,6 +27,10 @@ class RuleChecker:
     def _check_range(self, key: str, value: float, errors: List[str], details: Dict[str, bool],
                      type_ranges: Dict) -> None:
         rule = type_ranges.get(key, {})
+        if not math.isfinite(value) or value <= 0:
+            errors.append(f"{key} 必须为有限正数")
+            details[f"{key}_ok"] = False
+            return
         if rule.get("min") is not None and value < rule["min"]:
             errors.append(f"{key} 小于最小值 {rule['min']}")
             details[f"{key}_ok"] = False
@@ -55,101 +55,82 @@ class RuleChecker:
             return f"[{'/'.join(items)}]{suffix}"
         return str(layup_value or "")
 
-    def run(self, candidate: Dict, strict_solver_window: bool = False, stiffener_type: str = "T") -> Dict:
+    def run(self, candidate: Dict, stiffener_type: str | None = None,
+            task: Dict | None = None) -> Dict:
         geometry = candidate.get("geometry", {})
         layup = candidate.get("layup", {})
         errors: List[str] = []
         suggestions: List[str] = []
         details: Dict[str, bool] = {}
 
-        stype = resolve_stiffener_type(stiffener_type)
-        type_ranges = load_param_ranges_for_type(stype)
+        stype = resolve_stiffener_type(stiffener_type or candidate.get("stiffener_type"))
+        constraints = build_design_constraints(task, stype) if task is not None else candidate.get("task_constraints")
+        type_ranges = constraints["geometry_ranges"] if constraints else load_param_ranges_for_type(stype)
+        if constraints:
+            try:
+                validate_candidate_constraints(candidate, constraints)
+            except ValueError as exc:
+                errors.append(str(exc))
         for key in rule_check_param_keys(stype):
-            self._check_range(key, float(geometry.get(key, 0.0)), errors, details, type_ranges)
+            try:
+                value = float(geometry[key])
+            except (KeyError, TypeError, ValueError):
+                errors.append(f"{key} 缺失或不是数值")
+                details[f"{key}_ok"] = False
+                continue
+            self._check_range(key, value, errors, details, type_ranges)
 
-        layup_text = self._layup_text(layup.get("skin_layup", ""))
-        f0 = float(layup.get("skin_f0", 0.0))
-        f45 = float(layup.get("skin_f45", 0.0))
-        f90 = float(layup.get("skin_f90", 0.0))
-        min_ratio = float(self.param_ranges["layup"]["min_ratio_per_angle"])
+        layup_rules = constraints["layup_constraints"] if constraints else self.param_ranges["layup"]
+        try:
+            normalized = normalize_layup(self._layup_text(layup.get("skin_layup", "")))
+            for key in ("skin_f0", "skin_f45", "skin_f90"):
+                if key in layup and not math.isclose(float(layup[key]), normalized[key], abs_tol=0.002):
+                    errors.append(f"{key} 与物理层序不一致")
+            sections = section_layers({**candidate, "stiffener_type": stype})
+            details["symmetric"] = all(layers == list(reversed(layers)) for layers in sections.values())
+            details["balanced"] = all(math.isclose(
+                sum(p["thickness_mm"] for p in layers if p["angle_deg"] == 45),
+                sum(p["thickness_mm"] for p in layers if p["angle_deg"] == -45), abs_tol=1e-9)
+                for layers in sections.values())
+            allowed = set(layup_rules["allowed_angles"])
+            if any(p["angle_deg"] not in allowed for layers in sections.values() for p in layers):
+                errors.append("物理铺层使用了任务不允许的角度")
+            for property_name in ("symmetric", "balanced"):
+                if layup_rules.get(property_name) and not details[property_name]:
+                    errors.append(f"物理铺层不满足 {property_name} 约束")
+            min_ratio = float(layup_rules["min_ratio_per_angle"])
+            details["min_ratio_ok"] = all(normalized[key] >= min_ratio for key in ("skin_f0", "skin_f45", "skin_f90"))
+            if not details["min_ratio_ok"]:
+                errors.append("铺层角度族比例低于任务最小值")
+        except (ValueError, KeyError, TypeError) as exc:
+            errors.append(f"物理铺层无效: {exc}")
 
-        details["symmetric"] = layup_text.endswith("s")
-        details["balanced"] = f45 >= min_ratio
-        details["min_ratio_ok"] = all(value >= min_ratio for value in [f0, f45, f90] if value > 0)
+        try:
+            stiffener_footprints(stype, geometry)
+            details["footprint_ok"] = True
+        except (KeyError, TypeError, ValueError) as exc:
+            details["footprint_ok"] = False
+            errors.append(f"截面几何无效: {exc}")
 
-        if not details["symmetric"]:
-            errors.append("铺层未标记为对称层合板")
-            suggestions.append("将铺层格式改为 [...]s")
-        if not details["balanced"]:
-            errors.append("±45° 层比例过低，不满足平衡铺层要求")
-            suggestions.append("提高 ±45° 铺层比例")
-        if not details["min_ratio_ok"]:
-            errors.append("至少一个铺层角度比例低于最小约束")
-            suggestions.append("将各角度比例提高到 10% 以上")
-
-        pitch = float(geometry.get("pitch_mm", 0.0))
-        height = float(geometry.get("stiffener_height_mm", 0.0))
-        skin_t = float(geometry.get("skin_thickness_mm", 1.0))
-        details["height_pitch_ratio_ok"] = 0 < height / max(pitch, 1.0) <= 0.6
-        details["height_thickness_ratio_ok"] = height / max(skin_t, 0.1) <= 35
-        if not details["height_pitch_ratio_ok"]:
-            errors.append("筋高/筋距比例超出一期合理范围")
-            suggestions.append("减小筋高或增大筋距")
-        if not details["height_thickness_ratio_ok"]:
-            errors.append("筋高/蒙皮厚度比例过大")
-            suggestions.append("提高蒙皮厚度或降低筋高")
-
-        # HAT 专用几何约束
-        if stype == "HAT":
-            flange_w = float(geometry.get("flange_width_mm", 0.0))
-            cap_w = float(geometry.get("cap_width_mm", 0.0))
-            cap_flange_ratio = cap_w / max(flange_w, 0.1)
-            details["hat_cap_to_flange_ok"] = cap_flange_ratio <= 0.8
-            if not details["hat_cap_to_flange_ok"]:
-                errors.append("HAT 帽顶宽度/翼缘宽度比例超过 0.8")
-                suggestions.append("减小帽顶宽度或增大翼缘宽度")
-
-            incline_deg = hat_incline_angle_deg(flange_w, cap_w, height)
-            details["hat_web_incline_ok"] = incline_deg >= 20.0
-            if not details["hat_web_incline_ok"]:
-                if cap_w >= flange_w:
-                    errors.append("HAT 翼缘宽度必须大于帽顶宽度")
-                    suggestions.append("增大翼缘宽度或减小帽顶宽度")
-                else:
-                    errors.append(f"HAT 腹板倾角 {incline_deg:.1f}° 小于最小要求 20°")
-                    suggestions.append("增大筋高或减小翼缘与帽顶的宽度差")
-
-        safe_window_checks = {
-            "solver_skin_thickness_ok": 1.2 <= skin_t <= 3.2,
-            "solver_pitch_ok": 90.0 <= pitch <= 140.0,
-            "solver_height_ok": 18.0 <= height <= 38.0,
-            "solver_height_pitch_band_ok": 0.14 <= height / max(pitch, 1.0) <= 0.34,
-        }
-        if stype == "HAT":
-            safe_window_checks["solver_flange_width_ok"] = (
-                24.0 <= float(geometry.get("flange_width_mm", 0.0)) <= 50.0
-            )
-        elif stype != "BLADE":
-            safe_window_checks["solver_flange_width_ok"] = (
-                12.0 <= float(geometry.get("flange_width_mm", 0.0)) <= 22.0
-            )
-        details.update(safe_window_checks)
-        if strict_solver_window:
-            if not safe_window_checks["solver_skin_thickness_ok"]:
-                errors.append("蒙皮厚度超出当前真实求解安全区")
-                suggestions.append("将蒙皮厚度控制在 1.2-3.2 mm")
-            if not safe_window_checks["solver_pitch_ok"]:
-                errors.append("筋距超出当前真实求解安全区")
-                suggestions.append("将筋距控制在 90-140 mm")
-            if not safe_window_checks["solver_height_ok"]:
-                errors.append("筋高超出当前真实求解安全区")
-                suggestions.append("将筋高控制在 18-38 mm")
-            if not safe_window_checks.get("solver_flange_width_ok", True):
-                errors.append("翼缘宽度超出当前真实求解安全区")
-                suggestions.append("将翼缘宽度控制在 12-22 mm")
-            if not safe_window_checks["solver_height_pitch_band_ok"]:
-                errors.append("筋高/筋距比例超出当前真实求解安全带")
-                suggestions.append("将筋高/筋距比例控制在 0.14-0.34")
+        # HAT 的比例与倾角是配置设计约束，截面不重叠和 cap < flange 是几何条件。
+        if stype == "HAT" and details["footprint_ok"]:
+            design_rules = self.param_ranges.get("HAT_constraints", {})
+            flange_w, cap_w, height = (float(geometry[key]) for key in
+                                      ("flange_width_mm", "cap_width_mm", "stiffener_height_mm"))
+            if "cap_to_flange_width_max" in design_rules:
+                maximum = float(design_rules["cap_to_flange_width_max"])
+                if not math.isfinite(maximum) or not 0 < maximum <= 1:
+                    raise ValueError("HAT_constraints.cap_to_flange_width_max 必须在 (0,1] 内")
+                details["hat_cap_to_flange_ok"] = cap_w / flange_w <= maximum
+                if not details["hat_cap_to_flange_ok"]:
+                    errors.append(f"HAT 帽顶/底部跨度比例超过配置上限 {maximum:g}")
+            if "web_incline_min_deg" in design_rules:
+                minimum = float(design_rules["web_incline_min_deg"])
+                if not math.isfinite(minimum) or not 0 <= minimum < 90:
+                    raise ValueError("HAT_constraints.web_incline_min_deg 必须在 [0,90) 内")
+                details["hat_web_incline_ok"] = hat_incline_angle_deg(flange_w, cap_w, height) >= minimum
+                if not details["hat_web_incline_ok"]:
+                    errors.append(f"HAT 腹板倾角小于配置下限 {minimum:g} 度")
 
         return {
             "is_valid": not errors,

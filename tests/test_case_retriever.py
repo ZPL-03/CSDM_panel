@@ -32,6 +32,8 @@ def case_records():
     ):
         task = _task()
         task["load_conditions"]["type"] = load_type
+        if load_type == "axial_compression":
+            task["load_conditions"]["Nxy_kN_per_m"] = 0.0
         record = {
             "case_id": f"CASE_{index}",
             "task": task,
@@ -112,3 +114,11 @@ def test_case_memory_combines_chroma_filters() -> None:
     index = CaseMemoryIndex()
     index.engine = Engine()
     assert index.query(_task(), where={"transferable": "true"}) == []
+
+
+@pytest.mark.parametrize("contents", ["{", "[]"])
+def test_invalid_case_file_is_reported(contents):
+    (CASE_LIBRARY_DIR / "CASE_1.json").write_text(contents, encoding="utf-8")
+    retriever = CaseRetriever(use_vector_index=False)
+    with pytest.raises(ValueError):
+        retriever.retrieve_similar_cases(_task())

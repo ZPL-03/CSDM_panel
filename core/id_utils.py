@@ -8,7 +8,7 @@ import re
 import uuid
 
 from core.io_utils import read_json
-from core.paths import CASE_LIBRARY_DIR, CASES_DIR, TASKS_DIR
+from core.paths import CASE_LIBRARY_DIR, CASES_DIR, TASKS_DIR, ABAQUS_RUNS_DIR, IO_DIR
 
 
 TASK_PATTERN = re.compile(r"^TASK_(\d+)$")
@@ -160,14 +160,23 @@ def _case_record_paths() -> list:
 
 def _max_candidate_index() -> int:
     indices = []
+    # 未完成归档的作业也占用正式编号，避免覆盖崩溃或中断后保留的工件。
+    for path in ABAQUS_RUNS_DIR.glob("C*"):
+        parsed = _parse_index(path.name, CANDIDATE_PATTERN)
+        if parsed is not None:
+            indices.append(parsed)
+    for path in IO_DIR.glob("input_C*.json"):
+        parsed = _parse_index(path.stem.removeprefix("input_"), CANDIDATE_PATTERN)
+        if parsed is not None:
+            indices.append(parsed)
     for path in _case_record_paths():
         parsed_case = _parse_index(path.stem, CASE_PATTERN)
         if parsed_case is not None:
             indices.append(parsed_case)
         try:
             payload = read_json(path)
-        except Exception:
-            continue
+        except (ValueError, OSError) as exc:
+            raise ValueError(f"案例编号台账无法读取：{path}") from exc
         for value in [
             payload.get("design", {}).get("candidate_id"),
             payload.get("abaqus_results", {}).get("candidate_id"),
@@ -203,7 +212,7 @@ def next_case_id(candidate_id: str | None = None) -> str:
     next_index = _max_case_index() + 1
     preferred_index = candidate_index(candidate_id) if candidate_id else None
     if preferred_index is not None:
-        if preferred_index != next_index:
+        if preferred_index < next_index:
             raise ValueError(
                 f"候选编号 {candidate_id} 与案例编号不连续，当前下一正式编号应为 C{next_index}"
             )

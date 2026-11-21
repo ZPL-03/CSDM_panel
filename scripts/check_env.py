@@ -13,10 +13,10 @@ ROOT = Path(__file__).resolve().parent.parent
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
 
-from core.paths import ensure_project_dirs
-from core.config_loader import load_app_config
+from core.paths import ensure_project_dirs  # noqa: E402
+from core.config_loader import load_app_config  # noqa: E402
 
 load_dotenv(ROOT / ".env")
 
@@ -37,6 +37,9 @@ def torch_runtime_detail() -> tuple[bool, str]:
     try:
         import torch
 
+        device = load_app_config()["rag"]["embedding_device"]
+        if device == "cpu":
+            return True, f"torch {torch.__version__}, embedding_device=cpu；未调用 CUDA 检测"
         cuda_available = torch.cuda.is_available()
         device_name = torch.cuda.get_device_name(0) if cuda_available else "N/A"
         detail = (

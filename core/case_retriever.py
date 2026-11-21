@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import math
 from pathlib import Path
 from typing import Dict, Iterable, List
 
@@ -8,7 +9,7 @@ from core.case_memory import CaseMemoryIndex, is_pass_verdict
 from core.config_loader import load_app_config
 from core.io_utils import read_json
 from core.paths import CASE_LIBRARY_DIR, CASES_DIR
-from core.task_contract import equivalent_in_plane_load, normalize_boundary_conditions, normalize_load_conditions
+from core.task_contract import normalize_boundary_conditions, normalize_geometry_envelope, normalize_load_conditions
 
 
 @dataclass
@@ -77,10 +78,11 @@ class CaseRetriever:
         for path in self._candidate_paths():
             try:
                 payload = read_json(path)
-            except Exception:
-                continue
-            if isinstance(payload, dict):
-                yield payload, self._case_scope(path)
+            except (OSError, ValueError) as exc:
+                raise ValueError(f"案例文件无法读取: {path}") from exc
+            if not isinstance(payload, dict):
+                raise ValueError(f"案例记录必须为对象: {path}")
+            yield payload, self._case_scope(path)
 
     def _load_records(self) -> Iterable[Dict]:
         for payload, _scope in self._load_record_items():
@@ -107,25 +109,11 @@ class CaseRetriever:
         return str(material.get("name") or "").strip().lower()
 
     def _geometry_center(self, task: Dict) -> Dict[str, float]:
-        envelope = task.get("geometry_envelope", {})
-        panel_length = envelope.get("panel_length_mm", [600.0, 800.0])
-        panel_width = envelope.get("panel_width_mm", [500.0, 700.0])
-        try:
-            length_center = (float(panel_length[0]) + float(panel_length[1])) / 2.0
-        except Exception:
-            length_center = 700.0
-        try:
-            width_center = (float(panel_width[0]) + float(panel_width[1])) / 2.0
-        except Exception:
-            width_center = 600.0
-        try:
-            max_height = float(envelope.get("max_stiffener_height_mm", 50.0))
-        except Exception:
-            max_height = 50.0
+        envelope = normalize_geometry_envelope(task.get("geometry_envelope"))
         return {
-            "panel_length_mm": length_center,
-            "panel_width_mm": width_center,
-            "max_stiffener_height_mm": max_height,
+            "panel_length_mm": sum(envelope["panel_length_mm"]) / 2.0,
+            "panel_width_mm": sum(envelope["panel_width_mm"]) / 2.0,
+            "max_stiffener_height_mm": envelope["max_stiffener_height_mm"],
         }
 
     def _match_level(self, task: Dict, record: Dict) -> int:
@@ -155,9 +143,12 @@ class CaseRetriever:
         design_targets = task.get("design_targets", {})
         abaqus_results = record.get("abaqus_results", {})
         geometry_center = self._geometry_center(task)
-        load_gap = abs(
-            equivalent_in_plane_load(task.get("load_conditions", {}))
-            - equivalent_in_plane_load(design.get("load_conditions", {}))
+        task_load = normalize_load_conditions(task.get("load_conditions", {}))
+        design_load = normalize_load_conditions(design.get("load_conditions", {}))
+        # 同单位载荷分量的距离只用于相似案例排序，不代表屈曲承载能力。
+        load_gap = math.hypot(
+            task_load["Nx_kN_per_m"] - design_load["Nx_kN_per_m"],
+            task_load["Nxy_kN_per_m"] - design_load["Nxy_kN_per_m"],
         )
         length_gap = abs(float(geometry.get("panel_length_mm", geometry_center["panel_length_mm"])) - geometry_center["panel_length_mm"])
         width_gap = abs(float(geometry.get("panel_width_mm", geometry_center["panel_width_mm"])) - geometry_center["panel_width_mm"])

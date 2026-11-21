@@ -11,11 +11,10 @@ from core.id_utils import format_candidate_id
 from core.layup import normalize_layup
 from core.rule_checker import RuleChecker
 from core.stiffener_profile import (
-    load_param_ranges_for_type,
     required_geometry_params,
     resolve_stiffener_type,
 )
-from core.task_contract import task_payload_from_request
+from core.task_contract import task_payload_from_request, build_design_constraints
 
 
 class DOESampler:
@@ -89,7 +88,6 @@ class DOESampler:
         task: Dict,
         n_samples: int,
         start_index: int = 1,
-        strict_solver_window: bool = False,
         stiffener_type: str = "T",
         id_factory=None,
     ) -> List[Dict]:
@@ -98,26 +96,24 @@ class DOESampler:
         candidate_id_factory = id_factory or format_candidate_id
         stype = resolve_stiffener_type(stiffener_type)
         feature_order = required_geometry_params(stype)
-        type_ranges = load_param_ranges_for_type(stype)
+        constraints = build_design_constraints(task, stype)
+        type_ranges = constraints["geometry_ranges"]
 
         while len(valid_candidates) < n_samples and generation_round < 12:
-            batch_multiplier = 8 if strict_solver_window else 3
             remaining = n_samples - len(valid_candidates)
             lhs_values = self._lhs(
                 len(feature_order),
-                max(remaining * batch_multiplier, remaining),
-                seed_offset=generation_round,
+                remaining * 3,
+                seed_offset=generation_round + (start_index - 1) * 12,
             )
             rng = np.random.default_rng(self.random_seed + 1000 + generation_round)
 
             for row in lhs_values:
                 geometry = {}
                 for idx, feature in enumerate(feature_order):
-                    bounds = type_ranges.get(feature)
-                    if not bounds:
-                        bounds = {"min": 0.0, "max": 1.0}
+                    bounds = type_ranges[feature]
                     value = bounds["min"] + row[idx] * (bounds["max"] - bounds["min"])
-                    geometry[feature] = round(float(value), 3)
+                    geometry[feature] = float(value)
 
                 layup = self._layup_payload(rng)
                 candidate_index = start_index + len(valid_candidates)
@@ -130,6 +126,7 @@ class DOESampler:
                     "source": "DOE",
                     "stiffener_type": stype,
                     "geometry": geometry,
+                    "task_constraints": constraints,
                     "layup": layup,
                     "rule_check": {},
                     "surrogate_BLF": None,
@@ -142,7 +139,7 @@ class DOESampler:
                     "design_targets": task_payload["design_targets"],
                 }
                 rule_check = self.rule_checker.run(
-                    candidate, strict_solver_window=strict_solver_window, stiffener_type=stype,
+                    candidate, stiffener_type=stype, task=task,
                 )
                 candidate["rule_check"] = rule_check
                 if rule_check["is_valid"]:

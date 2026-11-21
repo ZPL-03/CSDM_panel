@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from pathlib import Path
 
 from PyQt6 import sip
 from PyQt6.QtCore import QObject, QThread, Qt, QUrl, pyqtSignal
@@ -148,7 +149,7 @@ class PipelineWorker(QObject):
                 task = self.payload["task"]
                 results = self.payload["results"]
                 candidates = self.payload.get("candidates", [])
-                report = orchestrator.generate_report(task, results, candidates)
+                report = orchestrator.generate_report(task, results, candidates, self.payload.get("screened_candidates"))
                 self.finished.emit(self.action, {"report": report})
                 return
 
@@ -386,7 +387,7 @@ class MainWindow(QMainWindow):
         self.reset_button.setEnabled(True)
         self.example_button.setEnabled(self.session.pending_confirmation is None)
         self.refresh_button.setEnabled(True)
-        self.open_report_button.setEnabled((RESULTS_DIR / "latest_report.md").exists() or (RESULTS_DIR / "latest_report.pdf").exists())
+        self.open_report_button.setEnabled(bool(self._available_report_paths()))
         self._update_overview_cards()
 
     def _update_overview_cards(self) -> None:
@@ -463,8 +464,15 @@ class MainWindow(QMainWindow):
         self.knowledge_widget.refresh()
         self.status_label.setText("状态：知识库视图已刷新")
 
+    def _available_report_paths(self) -> list[Path]:
+        """优先使用当前会话工件，重新启动后按任务报告的实际时间选择。"""
+        if self.session.report:
+            return [Path(self.session.report[key]) for key in ("pdf_path", "markdown_path") if self.session.report.get(key) and Path(self.session.report[key]).is_file()]
+        reports = sorted(RESULTS_DIR.glob("TASK_*/overall_design_report.pdf"), key=lambda path: path.stat().st_mtime, reverse=True)
+        return reports[:1]
+
     def _open_latest_report(self) -> None:
-        for path in [RESULTS_DIR / "latest_report.pdf", RESULTS_DIR / "latest_report.md"]:
+        for path in self._available_report_paths():
             if path.exists():
                 QDesktopServices.openUrl(QUrl.fromLocalFile(str(path)))
                 self.chat_widget.add_message("SYSTEM", f"已尝试打开报告：{path}")
@@ -485,14 +493,6 @@ class MainWindow(QMainWindow):
     def _pending_candidates(self, candidates: list[dict]) -> list[dict]:
         evaluated = set(self.session.results_by_session_id.keys())
         return [candidate for candidate in candidates if candidate.get("candidate_id") not in evaluated]
-
-    def _report_candidate_set(self) -> list[dict]:
-        evaluated = set(self.session.results_by_session_id.keys())
-        return [
-            candidate
-            for candidate in self.session.current_candidates
-            if str(candidate.get("candidate_id")) in evaluated
-        ]
 
     def _ordered_report_results(self) -> list[dict]:
         ordered_results: list[dict] = []
@@ -548,7 +548,6 @@ class MainWindow(QMainWindow):
     def _start_report(self) -> None:
         if not self.session.task or not self.session.results_by_session_id:
             return
-        report_candidates = self._report_candidate_set()
         ordered_results = self._ordered_report_results()
         if not ordered_results:
             return
@@ -557,7 +556,8 @@ class MainWindow(QMainWindow):
             {
                 "task": self.session.task,
                 "results": ordered_results,
-                "candidates": report_candidates,
+                "candidates": self.session.candidates,
+                "screened_candidates": self.session.current_candidates,
             },
             "正在生成报告",
         )

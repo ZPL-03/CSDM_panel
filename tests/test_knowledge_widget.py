@@ -18,7 +18,7 @@ def _app() -> QApplication:
 
 def test_knowledge_widget_renders_external_knowledge_status(monkeypatch) -> None:
     app = _app()
-    metrics_path = MODELS_DIR / "surrogate_metrics.json"
+    metrics_path = MODELS_DIR / "T" / "surrogate_metrics.json"
     original_metrics = metrics_path.read_text(encoding="utf-8") if metrics_path.exists() else None
     try:
         metrics_path.parent.mkdir(parents=True, exist_ok=True)
@@ -27,6 +27,7 @@ def test_knowledge_widget_renders_external_knowledge_status(monkeypatch) -> None
                 {
                     "selected_model": "rf",
                     "training_size": 128,
+                    "feature_order": ["x"],
                     "rf": {"mape": 0.12, "rmse": 0.08},
                     "mlp": {"mape": 0.15, "rmse": 0.11},
                 },

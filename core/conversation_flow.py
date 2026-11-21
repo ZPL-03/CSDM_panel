@@ -73,6 +73,11 @@ class ConversationFlowController:
         if stage == "candidate_summary":
             return "我先把初始方案池铺开，再用代理模型做一轮便宜但有解释性的预筛选；如果实际生成数小于目标值，通常说明有一部分方案在规则约束下被提前拦住了。"
         if stage == "screening_summary":
+            decision = payload.get("decision", {})
+            if decision.get("action") == "direct_fem":
+                return "代理不可用，候选按生成顺序和求解名额进入 FEM，未作性能排序。原因：" + decision["reason"]
+            if payload.get("screen_skipped"):
+                return "代理初筛已跳过，全部候选等待 FEM 校核。"
             return "初筛已经把候选范围收紧了，接下来更值得把有限元预算用在当前排序靠前、解释更充分的样本上。"
         if stage == "fem_summary":
             return "有限元结果已经回来，现在可以根据通过情况、失效模式和重量表现来决定是否直接导出报告，或者继续迭代约束。"
@@ -171,14 +176,16 @@ class ConversationFlowController:
             screened_candidates = self.orchestrator.screen_candidates(state.task, state.candidates)
             state.screened_candidates = screened_candidates
             state.evaluated_candidates = screened_candidates
+            decision = screened_candidates[0].get("screening_decision", {}) if screened_candidates else {}
             self._emit(
                 "screening_summary",
                 (
-                    f"代理模型初筛已完成：{len(state.candidates)} -> {len(screened_candidates)}，"
+                    f"候选选择方式 {decision.get('action', 'surrogate_ranking')}：{len(state.candidates)} -> {len(screened_candidates)}，"
                     f"请求 Top-{target_counts['requested_top_k']}。"
                 ),
                 {
                     "screened_candidates": screened_candidates,
+                    "decision": decision,
                     **target_counts,
                 },
             )
@@ -188,6 +195,7 @@ class ConversationFlowController:
                     "input_count": len(state.candidates),
                     "output_count": len(screened_candidates),
                     "selected_candidates": screened_candidates[:3],
+                    "decision": decision,
                     **target_counts,
                 },
             )
@@ -268,7 +276,7 @@ class ConversationFlowController:
             return state
 
         if approved:
-            state.report = self.orchestrator.generate_report(state.task, state.results, state.evaluated_candidates)
+            state.report = self.orchestrator.generate_report(state.task, state.results, state.candidates, state.evaluated_candidates)
             self._emit(
                 "report_summary",
                 (

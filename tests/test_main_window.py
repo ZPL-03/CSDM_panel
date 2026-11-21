@@ -63,22 +63,23 @@ def test_candidate_table_uses_contract_display_name() -> None:
         app.processEvents()
 
 
-def test_candidate_detail_shows_llm_answer_excerpt() -> None:
+def test_candidate_detail_preserves_design_and_preview_binding(monkeypatch) -> None:
     app = _app()
     window = MainWindow()
     try:
         candidate = _candidate()
-        candidate.update({
-            "source": "LLM",
-            "origin_summary": "| A1 | T300/5208 |",
-            "llm_output_excerpt": "## 候选方案\n<raw table>",
-        })
+        candidate["geometry"] = {"panel_length_mm": 360, "skin_thickness_mm": 2.375}
+        candidate["layup"] = {"skin_layup": "[0/45/-45/90]s", "skin_f0": 0.25,
+                              "skin_f45": 0.5, "skin_f90": 0.25}
+        shown = []
+        monkeypatch.setattr(window.candidate_widget.preview_widget, "show_candidate", shown.append)
 
         window.candidate_widget.update_candidates([candidate])
         html = window.candidate_widget.detail_browser.toHtml()
 
-        assert "LLM 回答原文" in html
-        assert "&lt;raw table&gt;" in html
+        assert shown[-1] is candidate
+        assert "2.375" in html and "360" in html
+        assert candidate["layup"]["skin_layup"] in window.candidate_widget.detail_browser.toPlainText()
     finally:
         window.close()
         app.processEvents()
@@ -204,12 +205,12 @@ def test_report_button_allows_partial_evaluated_results() -> None:
             },
         }
         window.session.evaluated_candidates = [_candidate("TMP_1"), _candidate("TMP_2")]
+        window.session.candidates = [_candidate("TMP_1"), _candidate("TMP_2"), _candidate("TMP_3")]
         window.session.results_by_session_id = {"TMP_1": {"candidate_id": "C1", "session_candidate_id": "TMP_1"}}
 
         window._update_button_states()
 
         assert window.report_button.isEnabled() is True
-        assert [item["candidate_id"] for item in window._report_candidate_set()] == ["TMP_1"]
 
         captured = {}
         window._run_action = lambda action, payload, status_text: captured.update(
@@ -218,7 +219,8 @@ def test_report_button_allows_partial_evaluated_results() -> None:
         window._start_report()
 
         assert captured["action"] == "report"
-        assert [item["candidate_id"] for item in captured["payload"]["candidates"]] == ["TMP_1"]
+        assert [item["candidate_id"] for item in captured["payload"]["candidates"]] == ["TMP_1", "TMP_2", "TMP_3"]
+        assert [item["candidate_id"] for item in captured["payload"]["screened_candidates"]] == ["TMP_1", "TMP_2"]
         assert [item["candidate_id"] for item in captured["payload"]["results"]] == ["C1"]
     finally:
         window.close()

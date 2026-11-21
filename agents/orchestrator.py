@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Callable, Dict, List
+import re
 
 from agents.base import BaseAgent
 from agents.candidate_gen import CandidateGenAgent
@@ -13,7 +14,10 @@ from agents.screener import ScreenerAgent
 from core.id_utils import format_candidate_id, next_candidate_index, task_file_name
 from core.io_utils import write_json
 from core.paths import TASKS_DIR
+from core.laminate import analysis_contract
 from core.task_contract import (
+    build_design_constraints,
+    validate_candidate_constraints,
     describe_boundary_conditions,
     describe_load_conditions,
     effective_screen_top_k,
@@ -23,6 +27,7 @@ from core.task_contract import (
     task_payload_from_request,
 )
 from core.task_parser import TaskParser
+from core.surrogate_model import SurrogateUnavailable
 
 
 class OrchestratorAgent(BaseAgent):
@@ -62,6 +67,9 @@ class OrchestratorAgent(BaseAgent):
         enriched["load_conditions"] = dict(candidate.get("load_conditions") or task_payload["load_conditions"])
         enriched["boundary_conditions"] = dict(candidate.get("boundary_conditions") or task_payload["boundary_conditions"])
         enriched["material_system"] = dict(candidate.get("material_system") or task_payload["material_system"])
+        constraints = build_design_constraints(task, enriched["stiffener_type"])
+        validate_candidate_constraints(enriched, constraints)
+        enriched["task_constraints"] = constraints
         return enriched
 
     def _promote_candidate_for_fem(self, task: Dict, candidate: Dict) -> Dict:
@@ -114,6 +122,7 @@ class OrchestratorAgent(BaseAgent):
             {**self._task_event_context(task), "target_total_candidates": target_total},
         )
         candidates = [self._attach_task_context(task, candidate) for candidate in self.candidate_gen.run(task)]
+        self._validate_pool(candidates, expected_count=target_total)
         source_counter: Dict[str, int] = {}
         for candidate in candidates:
             source = str(candidate.get("source", "UNKNOWN"))
@@ -130,6 +139,17 @@ class OrchestratorAgent(BaseAgent):
             },
         )
         return candidates
+
+    def _validate_pool(self, candidates: List[Dict], expected_count: int | None = None) -> None:
+        """公开阶段入口核对身份和物理唯一性，不信任上游返回的数量或编号。"""
+        ids = [candidate.get("candidate_id") for candidate in candidates]
+        if any(not isinstance(cid, str) or not re.fullmatch(r"(?:TMP_|C)[1-9][0-9]*", cid) for cid in ids):
+            raise ValueError("候选池包含无效编号")
+        signatures = [self.candidate_gen._candidate_signature(candidate) for candidate in candidates]
+        if len(set(ids)) != len(ids) or len(set(signatures)) != len(signatures):
+            raise ValueError("候选池存在重复编号或物理设计")
+        if expected_count is not None and len(candidates) != expected_count:
+            raise ValueError("候选池数量与任务要求不一致")
 
     def screen_candidates(self, task: Dict, candidates: List[Dict]) -> List[Dict]:
         score_formula = self.screener.score_formula_text
@@ -151,10 +171,39 @@ class OrchestratorAgent(BaseAgent):
                 "effective_top_k_candidates": effective_top_k,
             },
         )
-        screened = self.screener.run({"task": task, "candidates": candidates})
+        candidates = [self._attach_task_context(task, candidate) for candidate in candidates]
+        self._validate_pool(candidates)
+        try:
+            screened = self.screener.run({"task": task, "candidates": candidates})
+            decision = {"status": "available", "action": "surrogate_ranking"}
+        except SurrogateUnavailable as exc:
+            policy = self.screener.config["pipeline"]["unavailable_surrogate_policy"]
+            decision = {**exc.to_dict(), "action": policy, "selection_basis": "generation_order_not_performance"}
+            if policy not in ("direct_fem", "stop"):
+                raise ValueError(f"无效代理不可用策略: {policy}") from exc
+            screened = [] if policy == "stop" else [dict(candidate) for candidate in candidates[:effective_top_k]]
+            for candidate in screened:
+                candidate.update({"surrogate_BLF": None, "rank_score": None, "surrogate_weight": None,
+                                  "surrogate_status": exc.status,
+                                  "screening_summary": exc.reason,
+                                  "selection_reason": "代理不可用，按生成顺序和任务求解名额选择直接 FEM；不是性能排序。"})
+            self.emit_event("surrogate_unavailable", exc.reason, decision)
+        self._validate_pool(screened, expected_count=0 if decision["action"] == "stop" else effective_top_k)
+        source_contracts = {candidate["candidate_id"]: analysis_contract(candidate) for candidate in candidates}
+        for candidate in screened:
+            if source_contracts.get(candidate["candidate_id"]) != analysis_contract(candidate):
+                raise ValueError("筛选结果不属于输入候选或改变了物理输入")
+        decision.update({"input_ids": [c["candidate_id"] for c in candidates],
+                         "selected_ids": [c["candidate_id"] for c in screened],
+                         "requested_top_k": requested_top_k})
+        write_json(TASKS_DIR / "screening" / f"{task['task_id']}.json", decision)
+        if decision["action"] == "stop":
+            raise RuntimeError(f"预筛终止: {decision['reason']}")
+        for candidate in screened:
+            candidate["screening_decision"] = decision
         self.emit_event(
             "screening_completed",
-            f"代理模型初筛完成，请求 Top-{requested_top_k}，实际输出 {len(screened)} 个。",
+            f"候选选择完成，方式 {decision['action']}，请求 {requested_top_k}，实际输出 {len(screened)} 个。",
             {
                 **self._task_event_context(task),
                 "input_count": len(candidates),
@@ -163,6 +212,7 @@ class OrchestratorAgent(BaseAgent):
                 "requested_top_k_candidates": requested_top_k,
                 "effective_top_k_candidates": effective_top_k,
                 "selected_candidates": screened,
+                "decision": decision,
             },
         )
         return [self._attach_task_context(task, candidate) for candidate in screened]
@@ -176,18 +226,22 @@ class OrchestratorAgent(BaseAgent):
             {**self._task_event_context(task), "candidate": fem_candidate},
         )
         result = self.fem_agent.run(fem_candidate)
+        if result.get("candidate_id") != fem_candidate["candidate_id"]:
+            raise ValueError("有限元返回结果编号与提交候选不一致")
         result["session_candidate_id"] = fem_candidate.get("session_candidate_id")
         result["display_name"] = candidate.get("display_name") or fem_candidate.get("session_candidate_id")
         self.knowledge_agent.run({"task": task, "design": fem_candidate, "abaqus_results": result})
         return result
 
-    def generate_report(self, task: Dict, results: List[Dict], candidates: List[Dict] | None = None) -> Dict:
+    def generate_report(self, task: Dict, results: List[Dict], candidates: List[Dict] | None = None,
+                        screened_candidates: List[Dict] | None = None) -> Dict:
         self.emit_event(
             "report_started",
             "开始生成设计报告",
             {**self._task_event_context(task), "result_count": len(results)},
         )
-        return self.report_gen.run({"task": task, "results": results, "candidates": candidates or []})
+        return self.report_gen.run({"task": task, "results": results, "candidates": candidates or [],
+                                    "screened_candidates": screened_candidates})
 
     def run(self, user_instruction: str) -> Dict:
         self.emit("正在解析用户需求")
@@ -199,7 +253,7 @@ class OrchestratorAgent(BaseAgent):
         for candidate in top_candidates:
             results.append(self.evaluate_candidate(task, candidate))
 
-        report = self.generate_report(task, results, top_candidates)
+        report = self.generate_report(task, results, candidates, top_candidates)
         return {
             "task": task,
             "candidates": candidates,

@@ -16,6 +16,11 @@ from pathlib import Path
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parent.parent
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from core.domain_knowledge import _evidence_contract, validate_relation_evidence  # noqa: E402
+
 DESTINATION = ROOT / "knowledge" / "external"
 ASSETS = {
     "runtime/retrieval_index.sqlite": "rag/retrieval_index.sqlite",
@@ -60,7 +65,17 @@ def verify_assets(base: Path) -> dict:
     with closing(sqlite3.connect((base / "rag/retrieval_index.sqlite").as_uri() + "?mode=ro", uri=True)) as connection:
         if connection.execute("PRAGMA quick_check").fetchone()[0] != "ok":
             raise ValueError("RAG SQLite 索引完整性检查失败")
-        chunks = dict(connection.execute("SELECT chunk_id, source_id FROM chunks"))
+        chunks = {}
+        for chunk_id, source_id, payload in connection.execute("SELECT chunk_id, source_id, payload FROM chunks"):
+            chunk = json.loads(payload)
+            if (not isinstance(chunk, dict) or chunk.get("chunk_id") != chunk_id or chunk.get("source_id") != source_id):
+                raise ValueError(f"RAG 索引身份与证据正文不一致：{chunk_id}")
+            evidence = _evidence_contract(chunk)
+            if evidence is None:
+                raise ValueError(f"RAG 索引包含不可检索证据：{chunk_id}")
+            if chunk_id in chunks:
+                raise ValueError(f"RAG 证据块编号重复：{chunk_id}")
+            chunks[chunk_id] = evidence
         count = connection.execute("SELECT count(*) FROM chunks_fts").fetchone()[0]
         if count != len(chunks) or len(chunks) != manifest["rag_chunk_count"]:
             raise ValueError("RAG 文本和全文索引记录数不一致")
@@ -75,14 +90,17 @@ def verify_assets(base: Path) -> dict:
     source_ids = {row["source_id"] for row in sources}
     if len(entities) != manifest["kg_entity_count"] or len(sources) != manifest["source_metadata_count"]:
         raise ValueError("实体或来源记录数不一致")
-    if set(chunks.values()) - source_ids:
+    if len(source_ids) != len(sources) or len(nodes) != len(entities):
+        raise ValueError("来源编号或实体身份重复")
+    if {chunk["source_id"] for chunk in chunks.values()} - source_ids:
         raise ValueError("RAG 存在未登记的来源")
     relation_count = 0
     for row in read_rows(base / "kg/relations.compact.jsonl.gz"):
         relation_count += 1
         chunk_id = row.get("evidence_chunk_id")
-        if chunk_id not in chunks or chunks[chunk_id] != row.get("evidence_source_id"):
+        if chunk_id not in chunks:
             raise ValueError(f"图谱证据引用无效：{chunk_id}")
+        validate_relation_evidence(row, chunks[chunk_id])
         if (row["source_type"], row["source"]) not in nodes or (row["target_type"], row["target"]) not in nodes:
             raise ValueError(f"图谱关系引用未定义实体：{chunk_id}")
     if relation_count != manifest["kg_relation_count"]:
@@ -96,7 +114,7 @@ def verify_assets(base: Path) -> dict:
 def synchronize(processed_dir: Path, archive_dir: Path) -> dict:
     if archive_dir.is_relative_to(ROOT):
         raise ValueError("知识资产归档目录必须位于项目外")
-    package = processed_dir / "csgpt_runtime" / "csllm"
+    package = processed_dir / "rag_kg_runtime" / "csllm"
     upstream = json.loads((package / "provenance/manifest.json").read_text(encoding="utf-8"))
     file_index = {item["path"]: item for item in upstream["files"]}
     counts = upstream["record_counts"]

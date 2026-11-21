@@ -1,0 +1,451 @@
+{
+  "provenance": {
+    "project": "CS_LLM",
+    "quality_version": "3",
+    "files_sha256": {
+      "tests/fixtures/material_multilevel_header.html": "59d1f44d6379e467c2babb8a07e8e532b7d6232ce7351b4b6aacee6787c201ea",
+      "tests/fixtures/rag_source_tables.json": "da5770a947e345c9e0f3c89aba32a80726d218d157516810f53096ba8545a3cc",
+      "scripts/parse_source_documents.py": "e26f7750d7873a80e40fc0ce86d848feff90aac69b123b7df552513b567d7e37",
+      "scripts/rag_content_quality.py": "02a95ac1dffeb8d60bfcebf24ea2b303658e9611100534c86a7ba6f3d4030efa",
+      "scripts/build_rag_chunks.py": "d2e610d0f2c260613354027a1c070e71d5f4609f0171bedd8c26449e092b8c48"
+    }
+  },
+  "reference_quality": {
+    "content_quality_version": "3",
+    "content_quality_issues": [],
+    "retrieval_eligible": true,
+    "evidence_kind": "text",
+    "evidence_usage": "reference",
+    "applicability_context": [],
+    "table_evidence": []
+  },
+  "multilevel": {
+    "chunk_id": "span-fixture_table_047848722063",
+    "chunk_fingerprint": "047848722063551800656d39fea4f9accac7f03b",
+    "source_id": "span-fixture",
+    "title": "",
+    "content_markdown": "| 材料 | 弹性模量/GPa / 纵向 $E_f$ | 弹性模量/GPa / 横向 $E_{2f}$ | 剪切模量/GPa | 泊松比 / $v_{12f}$ | 泊松比 / $v_{23f}$ |\n| --- | --- | --- | --- | --- | --- |\n| 纤维 | 233 | 23.1 | 8.96 | 0.2 | 0.4 |\n| 基体 | | 4.62 | 8.27 | 0.36 | 0.36 |\n| 金属内衬 | | 71.7 | - | 0.33 | 0.33 |",
+    "content_plain": "材料 弹性模量/GPa / 纵向 E_f 弹性模量/GPa / 横向 E_{2f} 剪切模量/GPa 泊松比 / v_{12f} 泊松比 / v_{23f} \n\n纤维 233 23.1 8.96 0.2 0.4 \n基体 4.62 8.27 0.36 0.36 \n金属内衬 71.7 - 0.33 0.33",
+    "retrieval_unit": "table",
+    "retrieval_scope": "main",
+    "content_quality_version": "3",
+    "content_quality_issues": [],
+    "retrieval_eligible": true,
+    "evidence_kind": "table",
+    "evidence_usage": "source_conditions_only",
+    "applicability_context": [],
+    "table_evidence": [
+      {
+        "headers": [
+          "材料",
+          "弹性模量/GPa / 纵向 $E_f$",
+          "弹性模量/GPa / 横向 $E_{2f}$",
+          "剪切模量/GPa",
+          "泊松比 / $v_{12f}$",
+          "泊松比 / $v_{23f}$"
+        ],
+        "numeric_columns": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "structure_issues": [],
+        "identifier_columns": [
+          0
+        ],
+        "dimensionless_columns": [
+          4,
+          5
+        ],
+        "missing_header_columns": [],
+        "missing_unit_columns": [],
+        "table_role": "material_properties",
+        "condition_required": false,
+        "condition_columns": {
+          "geometry": [],
+          "layup": [],
+          "loading": [],
+          "material": [
+            0
+          ]
+        },
+        "condition_context_present": false,
+        "condition_context": [],
+        "usage": "source_conditions_only"
+      }
+    ]
+  },
+  "projection_source": {
+    "chunk_id": "SRC_77f5063925721396_table_2301656db9cc",
+    "chunk_fingerprint": "2301656db9ccf559bda11bcb1e4e4346a2145ad9",
+    "source_id": "SRC_77f5063925721396",
+    "title": "",
+    "content_markdown": "| 材料体系 | 模量E1(MPa) | 模量E2(MPa) | 模量E3(MPa) | 泊松比v12 | 泊松比v13 | 泊松比v23 | 剪切模量G12(MPa) | 剪切模量G13(MPa) | 剪切模量G23(MPa) | 纵向拉伸强度XT(MPa) | 纵向压缩强度XC(MPa) | 横向拉伸强度YT(MPa) | 横向压缩强度YC(MPa) | S12剪切强度(MPa) | S13剪切强度(MPa) | S23剪切强度(MPa) | 纵向拉伸断裂韧性Gft(N/mm) | 纵向压缩断裂韧性Gfc(N/mm) | 横向拉伸断裂韧性Gmt(N/mm) | 横向压缩断裂韧性Gmc(N/mm) | v21 | Q11 | Q22 | Q12 | Q66 | Tr | Q11* | Q22* | Q12* | Q66* | | Q11* | Q22* | Q12* | Q66* |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| T300/4211 | 126000 | 7900 | | 0.33 | | | 3700 | | | 1396 | 1030 | 33.9 | 167 | 65.5 | | | | | | | 0.02069047619047619 | 126866.22445684498 | 7954.310898484726 | 2624.922596499959 | 3700 | 142220.53535532972 | 0.892038720989744 | 0.05592941187157919 | 0.01845670591762113 | 0.02601593356933839 | | 0.8874124988179267 | 0.05525471702538186 | 0.013886493654277108 | 0.02866639207834562 |\n| T300/4211 | 126000 | 8000 | | 0.33 | | | 3700 | | | 1415 | 1232 | 35 | 157 | 63.9 | | | | | | | 0.02095238095238095 | 126877.26566545831 | 8055.699407330687 | 2658.3808044191264 | 3700 | 142332.965072789 | 0.8914116670061173 | 0.05659756615911856 | 0.018677196832509124 | 0.025995383417382067 | 标准差 | 0.0297208070062139 | 0.012858863256706175 | 0.007332723611887235 | 0.011007012687717761 |",
+    "content_plain": "材料体系 模量E1(MPa) 模量E2(MPa) 模量E3(MPa) 泊松比v12 泊松比v13 泊松比v23 剪切模量G12(MPa) 剪切模量G13(MPa) 剪切模量G23(MPa) 纵向拉伸强度XT(MPa) 纵向压缩强度XC(MPa) 横向拉伸强度YT(MPa) 横向压缩强度YC(MPa) S12剪切强度(MPa) S13剪切强度(MPa) S23剪切强度(MPa) 纵向拉伸断裂韧性Gft(N/mm) 纵向压缩断裂韧性Gfc(N/mm) 横向拉伸断裂韧性Gmt(N/mm) 横向压缩断裂韧性Gmc(N/mm) v21 Q11 Q22 Q12 Q66 Tr Q11* Q22* Q12* Q66* Q11* Q22* Q12* Q66* \n\nT300/4211 126000 7900 0.33 3700 1396 1030 33.9 167 65.5 0.02069047619047619 126866.22445684498 7954.310898484726 2624.922596499959 3700 142220.53535532972 0.892038720989744 0.05592941187157919 0.01845670591762113 0.02601593356933839 0.8874124988179267 0.05525471702538186 0.013886493654277108 0.02866639207834562 \nT300/4211 126000 8000 0.33 3700 1415 1232 35 157 63.9 0.02095238095238095 126877.26566545831 8055.699407330687 2658.3808044191264 3700 142332.965072789 0.8914116670061173 0.05659756615911856 0.018677196832509124 0.025995383417382067 标准差 0.0297208070062139 0.012858863256706175 0.007332723611887235 0.011007012687717761",
+    "retrieval_unit": "table",
+    "retrieval_scope": "main",
+    "content_quality_version": "3",
+    "content_quality_issues": [
+      "table_units_missing"
+    ],
+    "retrieval_eligible": false,
+    "evidence_kind": "table",
+    "evidence_usage": "review_required",
+    "applicability_context": [],
+    "table_evidence": [
+      {
+        "headers": [
+          "材料体系",
+          "模量E1(MPa)",
+          "模量E2(MPa)",
+          "模量E3(MPa)",
+          "泊松比v12",
+          "泊松比v13",
+          "泊松比v23",
+          "剪切模量G12(MPa)",
+          "剪切模量G13(MPa)",
+          "剪切模量G23(MPa)",
+          "纵向拉伸强度XT(MPa)",
+          "纵向压缩强度XC(MPa)",
+          "横向拉伸强度YT(MPa)",
+          "横向压缩强度YC(MPa)",
+          "S12剪切强度(MPa)",
+          "S13剪切强度(MPa)",
+          "S23剪切强度(MPa)",
+          "纵向拉伸断裂韧性Gft(N/mm)",
+          "纵向压缩断裂韧性Gfc(N/mm)",
+          "横向拉伸断裂韧性Gmt(N/mm)",
+          "横向压缩断裂韧性Gmc(N/mm)",
+          "v21",
+          "Q11",
+          "Q22",
+          "Q12",
+          "Q66",
+          "Tr",
+          "Q11*",
+          "Q22*",
+          "Q12*",
+          "Q66*",
+          "",
+          "Q11*",
+          "Q22*",
+          "Q12*",
+          "Q66*"
+        ],
+        "numeric_columns": [
+          1,
+          2,
+          4,
+          7,
+          10,
+          11,
+          12,
+          13,
+          14,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          32,
+          33,
+          34,
+          35
+        ],
+        "structure_issues": [],
+        "identifier_columns": [
+          0
+        ],
+        "dimensionless_columns": [
+          4,
+          5,
+          6,
+          21
+        ],
+        "missing_header_columns": [],
+        "missing_unit_columns": [
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          32,
+          33,
+          34,
+          35
+        ],
+        "table_role": "material_properties",
+        "condition_required": false,
+        "condition_columns": {
+          "geometry": [],
+          "layup": [],
+          "loading": [],
+          "material": [
+            0
+          ]
+        },
+        "condition_context_present": false,
+        "condition_context": [],
+        "usage": "source_conditions_only"
+      }
+    ]
+  },
+  "projection_view": {
+    "chunk_id": "SRC_77f5063925721396_table_952d06db3698",
+    "chunk_fingerprint": "952d06db36985658380df8e509535a89056ce829",
+    "source_id": "SRC_77f5063925721396",
+    "title": "",
+    "content_markdown": "| 材料体系 | 模量E1(MPa) | 模量E2(MPa) | 泊松比v12 | 剪切模量G12(MPa) | 纵向拉伸强度XT(MPa) | 纵向压缩强度XC(MPa) | 横向拉伸强度YT(MPa) | 横向压缩强度YC(MPa) | S12剪切强度(MPa) | v21 |\n| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |\n| T300/4211 | 126000 | 7900 | 0.33 | 3700 | 1396 | 1030 | 33.9 | 167 | 65.5 | 0.02069047619047619 |\n| T300/4211 | 126000 | 8000 | 0.33 | 3700 | 1415 | 1232 | 35 | 157 | 63.9 | 0.02095238095238095 |",
+    "content_plain": "材料体系 模量E1(MPa) 模量E2(MPa) 泊松比v12 剪切模量G12(MPa) 纵向拉伸强度XT(MPa) 纵向压缩强度XC(MPa) 横向拉伸强度YT(MPa) 横向压缩强度YC(MPa) S12剪切强度(MPa) v21 \n\nT300/4211 126000 7900 0.33 3700 1396 1030 33.9 167 65.5 0.02069047619047619 \nT300/4211 126000 8000 0.33 3700 1415 1232 35 157 63.9 0.02095238095238095",
+    "retrieval_unit": "table",
+    "retrieval_scope": "main",
+    "content_quality_version": "3",
+    "content_quality_issues": [],
+    "retrieval_eligible": true,
+    "evidence_kind": "table",
+    "evidence_usage": "source_conditions_only",
+    "applicability_context": [],
+    "table_evidence": [
+      {
+        "headers": [
+          "材料体系",
+          "模量E1(MPa)",
+          "模量E2(MPa)",
+          "泊松比v12",
+          "剪切模量G12(MPa)",
+          "纵向拉伸强度XT(MPa)",
+          "纵向压缩强度XC(MPa)",
+          "横向拉伸强度YT(MPa)",
+          "横向压缩强度YC(MPa)",
+          "S12剪切强度(MPa)",
+          "v21"
+        ],
+        "numeric_columns": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10
+        ],
+        "structure_issues": [],
+        "identifier_columns": [
+          0
+        ],
+        "dimensionless_columns": [
+          3,
+          10
+        ],
+        "missing_header_columns": [],
+        "missing_unit_columns": [],
+        "table_role": "material_properties",
+        "condition_required": false,
+        "condition_columns": {
+          "geometry": [],
+          "layup": [],
+          "loading": [],
+          "material": [
+            0
+          ]
+        },
+        "condition_context_present": false,
+        "condition_context": [],
+        "usage": "source_conditions_only",
+        "column_projection": {
+          "source_chunk_id": "SRC_77f5063925721396_table_2301656db9cc",
+          "source_chunk_fingerprint": "2301656db9ccf559bda11bcb1e4e4346a2145ad9",
+          "source_column_indices": [
+            0,
+            1,
+            2,
+            4,
+            7,
+            10,
+            11,
+            12,
+            13,
+            14,
+            21
+          ],
+          "excluded_columns": [
+            {
+              "index": 22,
+              "header": "Q11",
+              "issues": [
+                "table_units_missing"
+              ]
+            },
+            {
+              "index": 23,
+              "header": "Q22",
+              "issues": [
+                "table_units_missing"
+              ]
+            },
+            {
+              "index": 24,
+              "header": "Q12",
+              "issues": [
+                "table_units_missing"
+              ]
+            },
+            {
+              "index": 25,
+              "header": "Q66",
+              "issues": [
+                "table_units_missing"
+              ]
+            },
+            {
+              "index": 26,
+              "header": "Tr",
+              "issues": [
+                "table_units_missing"
+              ]
+            },
+            {
+              "index": 27,
+              "header": "Q11*",
+              "issues": [
+                "table_units_missing"
+              ]
+            },
+            {
+              "index": 28,
+              "header": "Q22*",
+              "issues": [
+                "table_units_missing"
+              ]
+            },
+            {
+              "index": 29,
+              "header": "Q12*",
+              "issues": [
+                "table_units_missing"
+              ]
+            },
+            {
+              "index": 30,
+              "header": "Q66*",
+              "issues": [
+                "table_units_missing"
+              ]
+            },
+            {
+              "index": 32,
+              "header": "Q11*",
+              "issues": [
+                "table_units_missing"
+              ]
+            },
+            {
+              "index": 33,
+              "header": "Q22*",
+              "issues": [
+                "table_units_missing"
+              ]
+            },
+            {
+              "index": 34,
+              "header": "Q12*",
+              "issues": [
+                "table_units_missing"
+              ]
+            },
+            {
+              "index": 35,
+              "header": "Q66*",
+              "issues": [
+                "table_units_missing"
+              ]
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "ambiguous": {
+    "chunk_id": "span-fixture_table_19768af460e4",
+    "chunk_fingerprint": "19768af460e4755ddbd42352a096f05311cc98b3",
+    "source_id": "span-fixture",
+    "title": "",
+    "content_markdown": "| 材料 | 弹性模量/GPa | 剪切模量/GPa | 泊松比 | | |\n| --- | --- | --- | --- | --- | --- |\n| 纵向 $E_f$ | 横向 $E_{2f}$ | $v_{12f}$ | $v_{23f}$ | | |\n| 纤维 | 233 | 23.1 | 8.96 | 0.2 | 0.4 |\n| 基体 | | 4.62 | 8.27 | 0.36 | |",
+    "content_plain": "材料 弹性模量/GPa 剪切模量/GPa 泊松比 \n\n纵向 E_f 横向 E_{2f} v_{12f} v_{23f} \n纤维 233 23.1 8.96 0.2 0.4 \n基体 4.62 8.27 0.36",
+    "retrieval_unit": "table",
+    "retrieval_scope": "main",
+    "content_quality_version": "3",
+    "content_quality_issues": [
+      "table_header_alignment_ambiguous",
+      "table_headers_missing",
+      "table_units_missing"
+    ],
+    "retrieval_eligible": false,
+    "evidence_kind": "table",
+    "evidence_usage": "review_required",
+    "applicability_context": [],
+    "table_evidence": [
+      {
+        "headers": [
+          "材料",
+          "弹性模量/GPa",
+          "剪切模量/GPa",
+          "泊松比",
+          "",
+          ""
+        ],
+        "numeric_columns": [
+          1,
+          2,
+          3,
+          4,
+          5
+        ],
+        "structure_issues": [
+          "table_header_alignment_ambiguous"
+        ],
+        "identifier_columns": [
+          0
+        ],
+        "dimensionless_columns": [
+          3
+        ],
+        "missing_header_columns": [
+          4,
+          5
+        ],
+        "missing_unit_columns": [
+          4,
+          5
+        ],
+        "table_role": "material_properties",
+        "condition_required": false,
+        "condition_columns": {
+          "geometry": [],
+          "layup": [],
+          "loading": [],
+          "material": [
+            0
+          ]
+        },
+        "condition_context_present": false,
+        "condition_context": [],
+        "usage": "source_conditions_only"
+      }
+    ]
+  }
+}

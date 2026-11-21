@@ -1,234 +1,304 @@
+"""报告的身份关联、事实选择、目标排序和实际 PDF 工件契约。"""
+
+from copy import deepcopy
+import json
 from pathlib import Path
 
+import fitz
 import pytest
 
 from agents.report_gen import ReportGenAgent
+from core.laminate import analysis_contract
+from core.report_facts import render_fact, validate_report_selection
 
 
 def _report_sample() -> tuple[dict, list[dict], list[dict]]:
-    task = {
-        "task_id": "TASK_1",
-        "task": {
-            "application": "机翼下蒙皮壁板",
-            "load_conditions": {
-                "type": "compression_shear",
-                "label": "压剪组合",
-                "Nx_kN_per_m": 900.0,
-                "Nxy_kN_per_m": 180.0,
-            },
-            "boundary_conditions": {
-                "type": "SSCC",
-                "label": "X 向简支 + Y 向固支（SSCC）",
-                "description": "X0/X1 简支，Y0/Y1 固支",
-                "simply_supported_edges": ["X0", "X1"],
-                "clamped_edges": ["Y0", "Y1"],
-            },
-            "material_system": {"name": "T300/5208"},
-            "stiffener_type": "帽型",
-            "design_targets": {"BLF_min": 1.35, "primary_objective": "最小重量"},
-            "candidate_generation_preferences": {
-                "total_candidates": 6,
-                "source_allocation_mode": "ratio",
-                "source_ratio": {"llm": 2.0, "case_transfer": 1.0, "doe": 1.0},
-            },
-            "screening_preferences": {"top_k_candidates": 3},
-        },
-    }
-    candidate = {
-        "candidate_id": "TMP_1",
-        "display_name": "TMP_1",
-        "persistent_candidate_id": "C1",
-        "source": "DOE",
-        "stiffener_type": "帽型",
-        "geometry": {
-            "panel_length_mm": 700.0,
-            "panel_width_mm": 600.0,
-            "skin_thickness_mm": 2.5,
-            "pitch_mm": 120.0,
-            "stiffener_height_mm": 28.0,
-            "web_thickness_mm": 2.0,
-            "flange_width_mm": 16.0,
-            "flange_thickness_mm": 2.0,
-        },
-        "layup": {
-            "skin_layup": "[45/-45/0/90/0/-45/45]s",
-            "skin_f0": 0.286,
-            "skin_f45": 0.571,
-            "skin_f90": 0.143,
-        },
-        "material_system": {"name": "T300/5208"},
-        "rationale": "兼顾屈曲稳定性和制造风险。",
-        "screening_summary": "代理模型初筛通过。",
-        "selection_reason": "排序靠前。",
-        "surrogate_BLF": 1.52,
-        "surrogate_weight": 12.5,
-    }
-    result = {
-        "candidate_id": "C1",
-        "session_candidate_id": "TMP_1",
-        "display_name": "C1",
-        "status": "completed",
-        "BLF_global": 1.46,
-        "BLF_local": 1.62,
-        "weight_kg_per_m2": 12.5,
-        "failure_mode": "整体屈曲",
-        "verdict": "通过",
-        "diagnosis_summary": "线性屈曲校核达到目标。",
-    }
+    task = {"task_id": "TASK_1", "task": {
+        "application": "机翼下蒙皮壁板",
+        "load_conditions": {"type": "compression_shear", "Nx_kN_per_m": 900.0, "Nxy_kN_per_m": 180.0},
+        "boundary_conditions": {"type": "SSCC"}, "material_system": {"name": "T300/5208"},
+        "stiffener_type": "T", "design_targets": {"BLF_min": 1.35, "primary_objective": "最小重量"},
+        "candidate_generation_preferences": {"total_candidates": 6, "source_allocation_mode": "ratio",
+                                             "source_ratio": {"case_transfer": 1.0, "doe": 1.0}},
+        "screening_preferences": {"top_k_candidates": 3},
+    }}
+    candidate = {"candidate_id": "TMP_1", "persistent_candidate_id": "C1", "source": "DOE", "stiffener_type": "T",
+                 "geometry": {"panel_length_mm": 700.0, "panel_width_mm": 600.0, "skin_thickness_mm": 2.5,
+                              "pitch_mm": 120.0, "stiffener_height_mm": 28.0, "web_thickness_mm": 2.0,
+                              "flange_width_mm": 16.0, "flange_thickness_mm": 2.0},
+                 "layup": {"skin_layup": "[45/-45/0/90/0/-45/45]s", "skin_f0": 0.286, "skin_f45": 0.571, "skin_f90": 0.143},
+                 "material_system": {"name": "T300/5208", "density_kg_per_m3": 1600, "E1_GPa": 181,
+                                     "E2_GPa": 10.3, "G12_GPa": 7.17, "nu12": 0.28},
+                 "load_conditions": deepcopy(task["task"]["load_conditions"]),
+                 "boundary_conditions": deepcopy(task["task"]["boundary_conditions"]),
+                 "rationale": "DOE 采样", "surrogate_status": "missing",
+                 "screening_decision": {"action": "direct_fem"}}
+    result = {"candidate_id": "C1", "session_candidate_id": "TMP_1", "status": "success", "BLF_global": 1.46,
+              "BLF_local": None, "second_positive_BLF": 1.62, "weight_kg_per_m2": 12.5, "verdict": "通过",
+              "analysis_contract": analysis_contract(candidate)}
     return task, [result], [candidate]
 
 
-def test_report_pdf_generation_handles_long_lines(tmp_path: Path) -> None:
-    agent = ReportGenAgent()
-    markdown_text = "\n".join(
-        [
-            "# CSDM_panel 设计报告",
-            "",
-            "## 工程摘要",
-            "",
-            "这是一段用于验证 PDF 自动换行的超长说明文本，" * 8,
-            "",
-            "- 入选理由：" + "代理预测 BLF=0.238，面密度=5.298 kg/m^2，按 score = 1.00 × BLF - 0.08 × 面密度 得分 -0.1858。 " * 6,
-            "- 工程说明：" + "线性屈曲校核已完成，前 13 个负特征值模态已跳过，按第 10 阶正特征值判定，当前结论为“不通过”。" * 5,
-        ]
-    )
-    pdf_path = tmp_path / "long_report.pdf"
-
-    agent._write_pdf(markdown_text, pdf_path)
-
-    assert pdf_path.exists()
-    assert pdf_path.stat().st_size > 0
+def _selection(payload, references=None, codes=None):
+    return json.dumps({"fact_refs": references if references is not None else [{"candidate_id": "C1", "metric": "BLF_global"}],
+                       "recommendation_candidate_id": (payload["recommendation"]["selected"] or {}).get("candidate_id"),
+                       "follow_up_codes": codes if codes is not None else list(payload["follow_up_codes"])})
 
 
-def test_report_pdf_renders_all_markdown_heading_levels() -> None:
-    agent = ReportGenAgent()
-    headings = ["# 标题", "## 章节", "### 小节", "#### 关注点", "##### 细节", "###### 约束 ###"]
-    story = agent._build_pdf_story("\n\n".join(headings + ["####### 普通文本", "正文含 # 字符"]), "Helvetica")
+def _backend():
+    class Backend:
+        calls = 0
+        last_response = {"finish_reason": "stop", "model": "test-model"}
 
-    assert [paragraph.getPlainText() for paragraph in story] == [
-        "标题", "章节", "小节", "关注点", "细节", "约束", "####### 普通文本", "正文含 # 字符",
-    ]
-    assert [paragraph.style.name for paragraph in story] == [
-        "CSDM_panelTitle", "CSDM_panelHeading2", *["CSDM_panelHeading3"] * 4,
-        "CSDM_panelBody", "CSDM_panelBody",
-    ]
-    assert all(paragraph.style.keepWithNext for paragraph in story[:6])
-
-
-def test_report_falls_back_to_structured_engineering_explanation() -> None:
-    task, results, candidates = _report_sample()
-    agent = ReportGenAgent()
-
-    markdown = agent._render_markdown(task, results, candidates)
-
-    assert "## 工程解释与制造建议" in markdown
-    assert "### 制造与装配关注点" in markdown
-    assert "有限元结论中通过 1 个" in markdown
-    assert agent._last_llm_explanation_used is False
-
-
-def test_report_places_engineering_explanation_after_fem_results() -> None:
-    task, results, candidates = _report_sample()
-    agent = ReportGenAgent()
-
-    markdown = agent._render_markdown(task, results, candidates)
-
-    assert markdown.index("## 有限元校核结果") < markdown.index("## 工程解释与制造建议")
-
-
-def test_report_uses_llm_only_for_grounded_engineering_explanation() -> None:
-    task, results, candidates = _report_sample()
-    agent = ReportGenAgent()
-
-    class ControlledBackend:
-        def chat(self, system_prompt, user_prompt, max_tokens_override=None):
-            assert "analysis_scope" in system_prompt
-            assert "制造与装配关注点" in user_prompt
-            assert "结构化校核数据 JSON" in user_prompt
-            return (
-                "### 制造与装配关注点\n"
-                "- 围绕候选筋条成形、胶接界面和边界夹持区域组织工艺评审。\n\n"
-                "### 有限元结果解读\n"
-                "- 结果解释沿用结构化校核结论。"
-            )
-
-    agent.llm_backend = ControlledBackend()
-
-    markdown = agent._render_markdown(task, results, candidates)
-
-    assert "胶接界面和边界夹持区域" in markdown
-    assert "代理模型初筛通过" in markdown
-    assert agent._last_llm_explanation_used is True
-
-
-def test_report_rejects_ungrounded_llm_explanation_without_text_repair() -> None:
-    task, results, candidates = _report_sample()
-    agent = ReportGenAgent()
-
-    class ControlledBackend:
-        def __init__(self):
-            self.calls = 0
-
-        def chat(self, system_prompt, user_prompt, max_tokens_override=None):
+        def chat(self, system_prompt, user_prompt, **kwargs):
             self.calls += 1
-            return "### 屈曲建议\n- 建议增加 0.3 mm，并可考虑 T800 替代材料。"
-
-    backend = ControlledBackend()
-    agent.llm_backend = backend
-
-    markdown = agent._render_markdown(task, results, candidates)
-
-    assert "有限元结论中通过 1 个" in markdown
-    assert "0.3 mm" not in markdown
-    assert "T800" not in markdown
-    assert backend.calls == 1
-    assert agent._last_llm_explanation_used is False
+            return _selection(json.loads(user_prompt))
+    return Backend()
 
 
-def test_report_explanation_receives_complete_layup_and_results() -> None:
+def test_structured_facts_restore_original_values_and_compute_mass():
+    task, results, candidates = _report_sample()
+    agent = ReportGenAgent()
+    summary = agent._build_structured_summary(task, results, candidates)
+    payload = agent._build_llm_explanation_payload(summary)
+    resolved = validate_report_selection(_selection(payload), payload)
+    fact = next(item for item in summary["facts"] if item["metric"] == "BLF_global")
+    assert resolved["facts"] == [fact]
+    assert fact["value"] == 1.46 and fact["unit"] == "1" and fact["result_status"] == "success"
+    assert next(item for item in summary["facts"] if item["metric"] == "skin_f0")["value"] == pytest.approx(4 / 14)
+    assert summary["recommendation"]["selected"]["objective_value"] == pytest.approx(12.5 * 0.7 * 0.6)
+
+
+@pytest.mark.parametrize("field,value", [("candidate_id", "C2"), ("metric", "unknown_metric"), ("value", 1.4601),
+                                        ("unit", "kN/m"), ("result_status", "not_evaluated")])
+def test_unknown_references_and_value_fields_are_rejected(field, value):
     task, results, candidates = _report_sample()
     agent = ReportGenAgent()
     payload = agent._build_llm_explanation_payload(agent._build_structured_summary(task, results, candidates))
-    assert payload["screened_candidates"][0]["skin_f0"] == 0.286
-    assert payload["screened_candidates"][0]["geometry"]["skin_thickness_mm"] == 2.5
-    assert payload["results"][0]["BLF_global"] == 1.46
-    assert "不进入当前有限元截面计算" in payload["analysis_scope"]
+    reference = {"candidate_id": "C1", "metric": "BLF_global", field: value}
+    with pytest.raises(ValueError):
+        validate_report_selection(_selection(payload, [reference]), payload)
 
 
-@pytest.mark.parametrize("text,valid", [
-    ("1. T300/5208 蒙皮厚度为 2.5 mm，BLF_global=1.46。", True),
-    ("面密度为 12.5 kg/m²，铺层含 -45°，f0 为 28.6%。", True),
-    ("BLF_global=1.5，蒙皮厚度为 2.50 mm。", True),
-    ("BLF_global=1.4601。", False),
-    ("蒙皮厚度为 2.51 mm。", False),
-    ("f0 为 29.6%。", False),
-    ("材料为 T800/5228。", False),
-])
-def test_report_validates_numbers_against_input(text, valid) -> None:
-    task, results, candidates = _report_sample()
-    agent = ReportGenAgent()
-    payload = agent._build_llm_explanation_payload(agent._build_structured_summary(task, results, candidates))
-    if valid:
-        agent._validate_llm_engineering_text(text, payload)
-    else:
+@pytest.mark.parametrize("value", [1, 1.0, -0.273, None])
+def test_fact_references_preserve_type_unit_and_status(value):
+    fact = {"candidate_id": "C1", "metric": "metric", "value": value, "unit": "1", "result_status": "success"}
+    payload = {"facts": [fact], "recommendation": {"selected": None}, "follow_up_codes": {}}
+    reference = {"candidate_id": "C1", "metric": "metric"}
+    resolved = validate_report_selection(_selection(payload, [reference]), payload)
+    assert resolved["facts"] == [fact] and type(resolved["facts"][0]["value"]) is type(value)
+    for refs in ([reference, reference], [fact]):
         with pytest.raises(ValueError):
-            agent._validate_llm_engineering_text(text, payload)
+            validate_report_selection(_selection(payload, refs), payload)
 
 
-def test_report_states_actual_shell_model_and_layup_inputs() -> None:
+def test_model_cannot_override_recommendation_or_add_inapplicable_advice():
     task, results, candidates = _report_sample()
     agent = ReportGenAgent()
-    agent.llm_backend = None
-    markdown = agent._render_markdown(task, results, candidates)
-    assert "均质正交各向异性壳截面" in markdown
-    assert "不能据此验证铺层顺序或比例对屈曲的影响" in markdown
-    assert "铺层设计输入：[45/-45/0/90/0/-45/45]s" in markdown
-    assert "比例 f0=0.286" in markdown
+    payload = agent._build_llm_explanation_payload(agent._build_structured_summary(task, results, candidates))
+    answer = json.loads(_selection(payload))
+    answer["recommendation_candidate_id"] = "C2"
+    with pytest.raises(ValueError):
+        validate_report_selection(json.dumps(answer), payload)
+    for codes in (["inspect_failed_job"], ["review_mesh", "review_mesh"], ["assert_manufacturing_safe"]):
+        with pytest.raises(ValueError):
+            validate_report_selection(_selection(payload, codes=codes), payload)
+    duplicate = _selection(payload).replace('"recommendation_candidate_id":', '"fact_refs": [], "recommendation_candidate_id":')
+    with pytest.raises(ValueError, match="重复字段"):
+        validate_report_selection(duplicate, payload)
 
 
-def test_report_does_not_equate_low_blf_target_with_reference_load_capacity() -> None:
+@pytest.mark.parametrize("response", ["C1 已通过，制造已认证。", '{"fact_refs":[],"text":"无依据结论"}'])
+def test_rejected_model_response_fails_export_without_publishing(tmp_path, response):
+    task, results, candidates = _report_sample()
+    agent = ReportGenAgent()
+    class Backend:
+        def chat(self, *args, **kwargs):
+            return response
+    agent.llm_backend = Backend()
+    with pytest.raises(ValueError):
+        agent.run({"task": task, "results": results, "candidates": candidates, "output_dir": tmp_path})
+    assert agent._last_llm_explanation_used is False
+    assert agent._last_llm_explanation_audit["status"] == "rejected"
+    assert agent._last_llm_explanation_audit["raw_response"] == response
+    assert not list(tmp_path.rglob("overall_design_report*"))
+
+
+def test_api_failure_is_not_replaced_by_deterministic_llm_success(tmp_path):
+    task, results, candidates = _report_sample()
+    agent = ReportGenAgent()
+    class Backend:
+        def chat(self, *args, **kwargs):
+            raise RuntimeError("API unavailable")
+    agent.llm_backend = Backend()
+    with pytest.raises(RuntimeError, match="API unavailable"):
+        agent.run({"task": task, "results": results, "candidates": candidates, "output_dir": tmp_path})
+    assert agent._last_llm_explanation_audit["status"] == "failed"
+    assert not list(tmp_path.rglob("overall_design_report*"))
+
+
+def test_failed_and_uncomputed_results_remain_unknown():
+    task, results, candidates = _report_sample()
+    results[0].update(status="failed", verdict="通过", BLF_global=99)
+    other = deepcopy(candidates[0])
+    other.update(candidate_id="TMP_2", persistent_candidate_id="C2")
+    summary = ReportGenAgent()._build_structured_summary(task, results, candidates + [other])
+    assert summary["passed_count"] == 0 and summary["recommendation"]["selected"] is None
+    assert summary["failed_count"] == 1 and summary["not_evaluated_count"] == 1
+    values = {(fact["candidate_id"], fact["metric"]): fact["value"] for fact in summary["facts"]}
+    assert values["C1", "BLF_global"] is None and values["C2", "target_met"] is None
+
+
+def test_exact_threshold_and_negative_predicted_score():
+    task, results, candidates = _report_sample()
+    task["task"]["design_targets"]["BLF_min"] = 1.5
+    results[0].update(BLF_global=1.4999999, verdict="不通过")
+    candidates[0].update(surrogate_status="available", rank_score=-0.273)
+    agent = ReportGenAgent()
+    summary = agent._build_structured_summary(task, results, candidates)
+    assert summary["passed_count"] == 0 and summary["recommendation"]["selected"] is None
+    payload = agent._build_llm_explanation_payload(summary)
+    resolved = validate_report_selection(_selection(payload, [{"candidate_id": "C1", "metric": "rank_score"}]), payload)
+    assert resolved["facts"][0]["value"] == -0.273
+    results[0]["verdict"] = "通过"
+    with pytest.raises(ValueError, match="冲突"):
+        agent._build_structured_summary(task, results, candidates)
+
+
+def test_low_blf_does_not_qualify_as_full_reference_load_recommendation():
     task, results, candidates = _report_sample()
     task["task"]["design_targets"]["BLF_min"] = 0.1
     results[0]["BLF_global"] = 0.2
-    markdown = ReportGenAgent()._render_markdown(task, results, candidates)
-    assert "不能据此认定可承受完整参考载荷" in markdown
+    agent = ReportGenAgent()
+    summary = agent._build_structured_summary(task, results, candidates)
+    assert summary["passed_count"] == 1 and summary["recommendation"]["selected"] is None
+    assert "check_reference_load" in agent._build_llm_explanation_payload(summary)["follow_up_codes"]
+
+
+@pytest.mark.parametrize("mutation", ["duplicate_result", "unbound_result", "wrong_formal", "wrong_layup", "duplicate_selected"])
+def test_candidate_and_result_binding_rejects_identity_or_physical_conflict(mutation):
+    task, results, candidates = _report_sample()
+    selected = deepcopy(candidates)
+    if mutation == "duplicate_result":
+        results += deepcopy(results)
+    elif mutation == "unbound_result":
+        results[0].update(session_candidate_id="TMP_99")
+    elif mutation == "wrong_formal":
+        results[0]["candidate_id"] = "C99"
+    elif mutation == "wrong_layup":
+        results[0]["analysis_contract"]["sections"]["skin"][0]["angle_deg"] = 90
+    else:
+        selected += deepcopy(selected)
+    with pytest.raises(ValueError):
+        ReportGenAgent()._build_structured_summary(task, results, candidates, selected)
+
+
+def test_report_includes_all_candidates_and_preserves_stage_snapshots(tmp_path):
+    task, results, candidates = _report_sample()
+    selected = deepcopy(candidates)
+    candidates[0].pop("persistent_candidate_id")
+    other = deepcopy(candidates[0])
+    other["candidate_id"] = "TMP_2"
+    candidates.append(other)
+    original = deepcopy(candidates)
+    agent = ReportGenAgent()
+    agent.llm_backend = _backend()
+    response = agent.run({"task": task, "results": results, "candidates": candidates,
+                          "screened_candidates": selected, "output_dir": tmp_path})
+    audit = json.loads(Path(response["facts_path"]).read_text(encoding="utf-8"))
+    summary = audit["summary"]
+    assert summary["candidate_count"] == 2 and summary["selected_count"] == 1 and summary["not_evaluated_count"] == 1
+    assert summary["all_candidates"][0]["persistent_candidate_id"] == "C1"
+    assert summary["all_candidates"][1]["report_selected"] is False
+    assert candidates == original and agent.llm_backend.calls == 1
+    assert audit["llm_explanation_audit"]["status"] == "accepted"
+    assert audit["llm_explanation_audit"]["selection"]["recommendation_candidate_id"] == "C1"
+    assert response["generated_output_keys"] == ["overall"]
+    assert response["report_outputs"]["overall"]["pdf_generated"] is True
+    with fitz.open(response["pdf_path"]) as pdf:
+        text = "".join(page.get_text() for page in pdf)
+        assert "TMP_1" in text and "TMP_2" in text and "1.46" in text
+        assert "证据契约" not in text and "`" not in text
+
+
+def test_mass_and_areal_density_objectives_do_not_use_same_ranking():
+    task, results, candidates = _report_sample()
+    second = deepcopy(candidates[0])
+    second.update(candidate_id="TMP_2", persistent_candidate_id="C2")
+    second["geometry"]["panel_length_mm"] *= 2
+    second_result = deepcopy(results[0])
+    second_result.update(candidate_id="C2", session_candidate_id="TMP_2", weight_kg_per_m2=10.0,
+                         analysis_contract=analysis_contract(second))
+    agent = ReportGenAgent()
+    assert agent._build_structured_summary(task, results + [second_result], candidates + [second])["recommendation"]["selected"]["candidate_id"] == "C1"
+    task["task"]["design_targets"]["primary_objective"] = "最小面密度"
+    assert agent._build_structured_summary(task, results + [second_result], candidates + [second])["recommendation"]["selected"]["candidate_id"] == "C2"
+    task["task"]["design_targets"]["primary_objective"] = "刚度优先"
+    assert agent._build_structured_summary(task, results, candidates)["recommendation"]["selected"] is None
+
+
+def test_legacy_result_does_not_become_current_physical_model_recommendation():
+    task, results, candidates = _report_sample()
+    results[0].pop("analysis_contract")
+    summary = ReportGenAgent()._build_structured_summary(task, results, candidates)
+    assert summary["passed_count"] == 1 and summary["physical_section_count"] == 0
+    assert summary["recommendation"]["selected"] is None
+
+
+def test_task_report_directories_do_not_overwrite_each_other(tmp_path, monkeypatch):
+    import agents.report_gen as module
+    monkeypatch.setattr(module, "RESULTS_DIR", tmp_path)
+    task, results, candidates = _report_sample()
+    agent = ReportGenAgent()
+    first = agent.run({"task": task, "results": results, "candidates": candidates})
+    first_bytes = Path(first["pdf_path"]).read_bytes()
+    task["task_id"] = "TASK_2"
+    second = agent.run({"task": task, "results": results, "candidates": candidates})
+    assert Path(first["pdf_path"]).parent != Path(second["pdf_path"]).parent
+    assert Path(first["pdf_path"]).read_bytes() == first_bytes
+    task["task_id"] = "../outside"
+    with pytest.raises(ValueError):
+        agent.run({"task": task, "results": results, "candidates": candidates})
+
+
+def test_pdf_failure_preserves_existing_complete_report(tmp_path, monkeypatch):
+    task, results, candidates = _report_sample()
+    agent = ReportGenAgent()
+    response = agent.run({"task": task, "results": results, "candidates": candidates, "output_dir": tmp_path})
+    original = {path.name: path.read_bytes() for path in tmp_path.iterdir() if path.is_file()}
+    def fail(*args):
+        raise RuntimeError("PDF failed")
+    monkeypatch.setattr(agent, "_write_pdf", fail)
+    with pytest.raises(RuntimeError, match="PDF failed"):
+        agent.run({"task": task, "results": results, "candidates": candidates, "output_dir": tmp_path})
+    assert {path.name: path.read_bytes() for path in tmp_path.iterdir() if path.is_file()} == original
+    assert Path(response["pdf_path"]).is_file()
+
+
+def test_pdf_parser_renders_markdown_tables_inline_and_long_text(tmp_path):
+    agent = ReportGenAgent()
+    markdown = "# 标题\n\n## 结果\n\n| 对象 | 内容 |\n| --- | --- |\n| C1 | **通过** `1.46` |\n\n" + "自动换行检查，" * 150
+    path = tmp_path / "report.pdf"
+    agent._write_pdf(markdown, path)
+    with fitz.open(path) as pdf:
+        text = "".join(page.get_text() for page in pdf)
+        assert "C1" in text and "1.46" in text
+        assert "| ---" not in text and "**" not in text and "`" not in text
+        for page in pdf:
+            for word in page.get_text("words"):
+                assert 0 <= word[0] < word[2] <= page.rect.width
+                assert 0 <= word[1] < word[3] <= page.rect.height
+
+
+def test_pdf_heading_levels_keep_with_following_content():
+    agent = ReportGenAgent()
+    headings = ["# 标题", "## 章节", "### 小节", "#### 关注点", "##### 细节", "###### 约束 ###"]
+    story = agent._build_pdf_story("\n\n".join(headings + ["####### 普通文本", "正文含 # 字符"]), "Helvetica")
+    assert [paragraph.getPlainText() for paragraph in story] == ["标题", "章节", "小节", "关注点", "细节", "约束", "####### 普通文本", "正文含 # 字符"]
+    assert all(paragraph.style.keepWithNext for paragraph in story[:6])
+
+
+@pytest.mark.parametrize("metric,value", [("skin_f0", 0.375), ("skin_f45", 0.3333333333333333),
+                                         ("skin_thickness_mm", 2.5536935420358624)])
+def test_bound_fact_display_retains_input_precision(metric, value):
+    assert f"={value}" in render_fact(dict(candidate_id="C1", metric=metric, value=value, unit="1", result_status="design_input"))

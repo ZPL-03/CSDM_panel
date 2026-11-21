@@ -15,6 +15,17 @@ from core import paths
 os.environ.setdefault("CSDM_panel_DISABLE_LLM_AUTO", "1")
 
 
+def pytest_addoption(parser):
+    parser.addoption("--run-real-fem", action="store_true", help="执行隔离目录中的真实 Abaqus 作业")
+
+
+def pytest_collection_modifyitems(config, items):
+    if not config.getoption("--run-real-fem"):
+        for item in items:
+            if "real_fem" in item.keywords:
+                item.add_marker(pytest.mark.skip(reason="真实 Abaqus 作业需显式 --run-real-fem"))
+
+
 @pytest.fixture(scope="session")
 def test_models(tmp_path_factory):
     target = tmp_path_factory.mktemp("panel-models") / "models"

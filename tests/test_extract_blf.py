@@ -23,6 +23,7 @@ class _DummyStep:
 class _DummyAssembly:
     def __init__(self) -> None:
         self.instances = {}
+        self.nodeSets = {}
 
 
 class _DummyOdb:
@@ -91,8 +92,42 @@ def test_extract_blf_uses_first_positive_eigenvalue(monkeypatch, tmp_path: Path)
     payload = read_json(result_json)
     assert payload["status"] == "success"
     assert payload["BLF_global"] == 0.035
-    assert payload["BLF_local"] == 0.072
+    assert payload["BLF_local"] is None
+    assert payload["failure_mode"] is None
+    assert payload["second_positive_BLF"] == 0.072
     assert payload["analysis_flags"]["negative_modes_skipped"] == 2
     assert payload["analysis_flags"]["first_positive_mode_index"] == 3
     assert payload["mode_eigenvalues"][:3] == [-0.21, -0.08, 0.035]
     assert payload["effective_mode_eigenvalues"][:2] == [0.035, 0.072]
+
+
+def test_single_positive_mode_has_no_invented_local_blf(monkeypatch, tmp_path):
+    from abaqus import runtime_extract_blf as runtime
+    odb_path, input_path, result_path = tmp_path / "C950.odb", tmp_path / "input.json", tmp_path / "result.json"
+    odb_path.write_text("fixture", encoding="utf-8")
+    write_json(input_path, _candidate_payload())
+    odb = _DummyOdb([-0.2, 1.199999999])
+    captured = []
+    monkeypatch.setitem(sys.modules, "odbAccess", types.SimpleNamespace(openOdb=lambda path: odb))
+    monkeypatch.setattr(runtime, "export_mode_visualization", lambda _odb, frame, path: captured.append(frame))
+    runtime.extract_blf(str(odb_path), str(result_path), str(input_path))
+    result = read_json(result_path)
+    assert result["status"] == "success"
+    assert result["verdict"] == "不通过"
+    assert result["BLF_global"] == 1.199999999
+    assert result["BLF_local"] is None and result["second_positive_BLF"] is None
+    assert captured == [odb.steps["Buckling"].frames[2]]
+
+
+def test_unconnected_nodes_reject_an_otherwise_positive_buckling_result(monkeypatch, tmp_path):
+    from abaqus import runtime_extract_blf as runtime
+    input_path, result_path = tmp_path / "input.json", tmp_path / "result.json"
+    write_json(input_path, _candidate_payload())
+    odb = _DummyOdb([2.0, 3.0])
+    odb.rootAssembly.nodeSets["WarnNodeMissMainIntersect"] = types.SimpleNamespace(nodes=([1, 2], [3]))
+    monkeypatch.setitem(sys.modules, "odbAccess", types.SimpleNamespace(openOdb=lambda path: odb))
+    runtime.extract_blf(str(tmp_path / "C950.odb"), str(result_path), str(input_path))
+    result = read_json(result_path)
+    assert result["status"] == "failed" and result["BLF_global"] is None
+    assert result["error_type"] == "connection_error"
+    assert result["error_log"]["node_sets"] == {"WarnNodeMissMainIntersect": 3}

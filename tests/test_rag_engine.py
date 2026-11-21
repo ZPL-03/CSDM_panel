@@ -38,8 +38,18 @@ def test_query_error_preserves_existing_collection(tmp_path) -> None:
     assert isinstance(engine.collection, Collection)
 
 
-def test_real_bge_embedding_and_persistent_retrieval(tmp_path) -> None:
+def test_real_cpu_bge_embedding_and_persistent_retrieval_without_cuda(monkeypatch, tmp_path) -> None:
+    import torch
+    from core.rag_engine import _load_embedder
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("CPU 嵌入不得探测或初始化 CUDA Runtime")
+
+    for name in ("is_available", "device_count", "_lazy_init"):
+        monkeypatch.setattr(torch.cuda, name, forbidden)
+    _load_embedder.cache_clear()
     engine = RAGEngine(chroma_dir=tmp_path)
+    assert engine.embedding_device == "cpu"
     vector = engine._embedding("复合材料加筋壁板的压缩屈曲")
     assert len(vector) == 1024
     assert np.linalg.norm(vector) == pytest.approx(1.0, abs=1e-5)
@@ -58,3 +68,26 @@ def test_document_count_mismatch_is_explicit(tmp_path) -> None:
     engine = RAGEngine(chroma_dir=tmp_path)
     with pytest.raises(ValueError, match="数量不一致"):
         engine.upsert_documents(["case"], [])
+
+
+def test_cpu_embedder_never_probes_cuda(monkeypatch, tmp_path):
+    import sys
+    from types import SimpleNamespace
+    from core.rag_engine import _load_embedder
+    from scripts.check_env import torch_runtime_detail
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("CPU 配置不得调用 CUDA Runtime")
+    monkeypatch.setitem(sys.modules, "torch", SimpleNamespace(__version__="test", cuda=SimpleNamespace(is_available=forbidden)))
+    devices = []
+    def constructor(path, *, device):
+        devices.append(device)
+        return object()
+    monkeypatch.setitem(sys.modules, "sentence_transformers", SimpleNamespace(SentenceTransformer=constructor))
+    _load_embedder.cache_clear()
+    try:
+        _load_embedder(str(tmp_path), True, "cpu")
+        assert devices == ["cpu"]
+        assert torch_runtime_detail()[0] is True
+    finally:
+        _load_embedder.cache_clear()

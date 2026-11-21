@@ -6,7 +6,6 @@ import pytest
 from core.stiffener_profile import (
     ALL_GEOMETRY_PARAMS,
     CANONICAL_GEOMETRY_ORDER,
-    DEFAULT_GEOMETRY,
     REQUIRED_GEOMETRY_PARAMS,
     STIFFENER_TYPES,
     TYPE_DISPLAY_NAMES,
@@ -20,10 +19,56 @@ from core.stiffener_profile import (
     normalize_geometry,
     required_geometry_params,
     resolve_stiffener_type,
+    stiffener_footprints,
     rule_check_param_keys,
     stiffener_positions,
     validate_stiffener_type,
 )
+
+
+@pytest.mark.parametrize("value", ["plate", "flat", "steel", "invalid", "T/unknown", "unknown_xyz", 3])
+def test_explicit_unknown_type_does_not_match_single_letter_alias(value):
+    with pytest.raises(ValueError):
+        validate_stiffener_type(value)
+    with pytest.raises(ValueError):
+        resolve_stiffener_type(value)
+
+
+def test_unspecified_natural_language_uses_default_but_structured_type_is_strict():
+    from core.task_contract import normalize_task_payload
+    from core.task_parser import TaskParser
+
+    task = TaskParser().parse_instruction("压缩120kN/m，生成1个候选，初筛1个")
+    assert task["task"]["stiffener_type"] == "T"
+    assert "stiffener_type" not in task["task"]["user_input_facts"]["explicit_fields"]
+    with pytest.raises(ValueError):
+        normalize_task_payload({"stiffener_type": "plate"})
+
+
+@pytest.mark.parametrize("stype,expected", [("BLADE", (59, 61)), ("T", (52, 68)),
+                                           ("L", (59, 76)), ("HAT", (30, 90))])
+def test_section_footprint_includes_single_sided_flange_and_hat_outer_feet(stype, expected):
+    footprints = stiffener_footprints(stype, default_geometry(stype))
+    assert len(footprints) == 5
+    assert footprints[0] == pytest.approx(expected)
+    assert footprints[-1] == pytest.approx(tuple(value + 480 for value in expected))
+
+
+@pytest.mark.parametrize("stype,overrides", [
+    ("L", {"panel_width_mm": 300, "pitch_mm": 200, "flange_width_mm": 60}),
+    ("HAT", {"panel_width_mm": 449, "pitch_mm": 100, "flange_width_mm": 80, "cap_width_mm": 40}),
+    ("BLADE", {"panel_width_mm": 224.9, "pitch_mm": 50, "web_thickness_mm": 60}),
+    ("HAT", {"flange_width_mm": 20, "cap_width_mm": 20}),
+])
+def test_unbuildable_section_footprints_are_rejected(stype, overrides):
+    with pytest.raises(ValueError):
+        stiffener_footprints(stype, {**default_geometry(stype), **overrides})
+
+
+@pytest.mark.parametrize("value", [None, "bad", 0, -1, float("nan"), float("inf")])
+def test_explicit_invalid_geometry_does_not_become_default(value):
+    with pytest.raises(ValueError):
+        normalize_geometry("T", {"skin_thickness_mm": value})
 
 
 class TestStiffenerTypeValidation:
@@ -43,7 +88,8 @@ class TestStiffenerTypeValidation:
     def test_validate_default_fallback(self):
         assert resolve_stiffener_type(None) == "T"
         assert resolve_stiffener_type("") == "T"
-        assert resolve_stiffener_type("unknown_xyz") == "T"
+        with pytest.raises(ValueError):
+            resolve_stiffener_type("unknown_xyz")
 
     def test_validate_raises_on_unknown(self):
         with pytest.raises(ValueError):
@@ -85,13 +131,13 @@ class TestParameterManagement:
 
 
 class TestFeatureVector:
-    def test_canonical_order_is_8(self):
-        assert len(CANONICAL_GEOMETRY_ORDER) == 8
+    def test_canonical_order_covers_all_geometry(self):
+        assert CANONICAL_GEOMETRY_ORDER == ALL_GEOMETRY_PARAMS
 
     def test_blade_feature_vector_zero_flange(self):
         geom = default_geometry("BLADE")
         features = geometry_to_feature_vector(geom)
-        assert len(features) == 8
+        assert len(features) == 10
         assert features[0] == 700.0  # panel_length
         assert features[6] == 0.0  # flange_width → 0
         assert features[7] == 0.0  # flange_thickness → 0
@@ -101,6 +147,12 @@ class TestFeatureVector:
         features = geometry_to_feature_vector(geom)
         assert features[6] == 16.0  # flange_width
         assert features[7] == 2.0  # flange_thickness
+
+    def test_hat_feature_vector_includes_cap(self):
+        geometry = default_geometry("HAT")
+        features = dict(zip(CANONICAL_GEOMETRY_ORDER, geometry_to_feature_vector(geometry)))
+        assert features["cap_width_mm"] == geometry["cap_width_mm"]
+        assert features["cap_thickness_mm"] == geometry["cap_thickness_mm"]
 
     def test_all_geometry_params_superset(self):
         assert len(ALL_GEOMETRY_PARAMS) == 10
@@ -118,8 +170,11 @@ class TestStiffenerPositions:
         assert positions[-1] == 540.0
 
     def test_zero_pitch(self):
-        positions = stiffener_positions(600.0, 0.0)
-        assert positions == [300.0]
+        with pytest.raises(ValueError):
+            stiffener_positions(600.0, 0.0)
+
+    def test_half_count_uses_the_same_rule_in_solver_and_display(self):
+        assert stiffener_positions(600.0, 240.0) == [60.0, 300.0, 540.0]
 
 
 class TestParamRanges:

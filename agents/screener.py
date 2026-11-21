@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from typing import Dict, List
+import math
 
 from agents.base import BaseAgent
 from core.config_loader import load_app_config
 from core.display import format_number
-from core.stiffener_profile import resolve_stiffener_type
-from core.surrogate_model import SurrogateModelManager
+from core.laminate import areal_density
+from core.surrogate_model import SurrogateModelManager, SurrogateUnavailable
 from core.task_contract import effective_screen_top_k
 
 
@@ -28,60 +29,23 @@ class ScreenerAgent(BaseAgent):
         return f"score = {self.blf_weight:.2f} × BLF - {self.weight_penalty:.2f} × 面密度"
 
     def _estimate_weight(self, candidate: Dict) -> float:
-        geometry = candidate["geometry"]
-        material = candidate.get("material_system", {})
-        density = float(material.get("density_kg_per_m3", 1600.0))
-        panel_length = float(geometry["panel_length_mm"])
-        panel_width = float(geometry["panel_width_mm"])
-        skin_t = float(geometry["skin_thickness_mm"])
-        height = float(geometry["stiffener_height_mm"])
-        web_t = float(geometry["web_thickness_mm"])
-        pitch = max(float(geometry["pitch_mm"]), 1.0)
-        stype = resolve_stiffener_type(candidate.get("stiffener_type"))
-
-        panel_area_m2 = max(panel_length * panel_width * 1e-6, 1e-9)
-        skin_volume_m3 = panel_length * panel_width * skin_t * 1e-9
-        stiffener_count = max(1, int(round(panel_width / pitch)))
-
-        if stype == "BLADE":
-            stiffener_area = web_t * height
-        elif stype == "HAT":
-            flange_w = float(geometry.get("flange_width_mm", 40.0))
-            flange_t = float(geometry.get("flange_thickness_mm", 2.0))
-            cap_w = float(geometry.get("cap_width_mm", 20.0))
-            cap_t = float(geometry.get("cap_thickness_mm", 2.0))
-            half_diff = (flange_w - cap_w) / 2.0
-            incline_len = (half_diff ** 2 + height ** 2) ** 0.5
-            stiffener_area = (2.0 * web_t * incline_len + cap_w * cap_t
-                              + flange_w * flange_t)
-        elif stype == "L":
-            flange_w = float(geometry.get("flange_width_mm", 16.0))
-            flange_t = float(geometry.get("flange_thickness_mm", 2.0))
-            stiffener_area = web_t * height + flange_w * flange_t * 0.5
-        else:  # T
-            flange_w = float(geometry.get("flange_width_mm", 16.0))
-            flange_t = float(geometry.get("flange_thickness_mm", 2.0))
-            stiffener_area = web_t * height + flange_w * flange_t
-
-        stiffener_volume_m3 = stiffener_count * panel_length * stiffener_area * 1e-9
-        total_mass_kg = density * (skin_volume_m3 + stiffener_volume_m3)
-        return round(total_mass_kg / panel_area_m2, 3)
+        return areal_density(candidate)
 
     def run(self, input_data: Dict) -> List[Dict]:
         task = input_data["task"]
         candidates = input_data["candidates"]
         predictions = self.model_manager.predict_candidates(candidates, task)
+        if len(predictions) != len(candidates) or any(not math.isfinite(float(value)) or value <= 0 for value in predictions):
+            raise SurrogateUnavailable("invalid_prediction", "预测数量或有限正 BLF 条件不满足")
         requested_top_k = effective_screen_top_k(task, len(candidates)) or int(self.config["pipeline"]["top_k"])
 
         enriched: List[Dict] = []
         for candidate, predicted_blf in zip(candidates, predictions):
             updated = dict(candidate)
-            updated["surrogate_BLF"] = round(float(predicted_blf), 3)
+            updated["surrogate_BLF"] = float(predicted_blf)
             updated["surrogate_weight"] = self._estimate_weight(candidate)
-            updated["rank_score"] = round(
-                float(self.blf_weight * updated["surrogate_BLF"] - self.weight_penalty * updated["surrogate_weight"]),
-                4,
-            )
+            updated["rank_score"] = self.blf_weight * updated["surrogate_BLF"] - self.weight_penalty * updated["surrogate_weight"]
+            updated["surrogate_status"] = "available"
             updated["screening_breakdown"] = {
                 "formula": self.score_formula_text,
                 "blf_component": round(self.blf_weight * updated["surrogate_BLF"], 4),

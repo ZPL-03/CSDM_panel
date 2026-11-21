@@ -43,7 +43,6 @@ def test_doe_sampler_varies_material_when_task_is_not_fixed() -> None:
         _task_payload(is_user_specified=False),
         n_samples=4,
         start_index=1,
-        strict_solver_window=True,
         id_factory=lambda index: f"TMP_{index}",
     )
 
@@ -59,7 +58,6 @@ def test_doe_sampler_keeps_fixed_material_when_user_specifies_material() -> None
         _task_payload(is_user_specified=True),
         n_samples=3,
         start_index=1,
-        strict_solver_window=True,
         id_factory=lambda index: f"TMP_{index}",
     )
 

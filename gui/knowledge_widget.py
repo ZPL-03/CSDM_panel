@@ -11,6 +11,7 @@ from core.case_memory import CaseMemoryIndex
 from core.domain_knowledge import DomainKnowledgeBase
 from core.display import format_number
 from core.paths import ABAQUS_RUNS_DIR, CASES_DIR, CASE_LIBRARY_DIR, MODELS_DIR
+from core.stiffener_profile import STIFFENER_TYPES
 
 
 class KnowledgeWidget(QTextBrowser):
@@ -19,8 +20,6 @@ class KnowledgeWidget(QTextBrowser):
     def refresh(self) -> None:
         archive_cases = sorted(CASES_DIR.glob("CASE_*.json"))
         formal_cases = sorted(CASE_LIBRARY_DIR.glob("CASE_*.json"))
-        metrics_path = MODELS_DIR / "surrogate_metrics.json"
-        metrics = json.loads(metrics_path.read_text(encoding="utf-8")) if metrics_path.exists() else {}
         knowledge_status = DomainKnowledgeBase().status()
         try:
             case_memory_count = CaseMemoryIndex().engine.count()
@@ -48,19 +47,16 @@ class KnowledgeWidget(QTextBrowser):
             "不替代结构化迁移约束。</p>",
         ]
 
-        if metrics:
-            lines.extend(
-                [
-                    "<h3>代理模型指标</h3>",
-                    "<p>",
-                    f"<b>当前模型：</b>{metrics.get('selected_model', '-')}<br>",
-                    f"<b>训练样本数：</b>{metrics.get('training_size', '-')}<br>",
-                    f"<b>RF MAPE：</b>{format_number(metrics.get('rf', {}).get('mape'))}<br>",
-                    f"<b>RF RMSE：</b>{format_number(metrics.get('rf', {}).get('rmse'))}<br>",
-                    f"<b>MLP MAPE：</b>{format_number(metrics.get('mlp', {}).get('mape'))}<br>",
-                    f"<b>MLP RMSE：</b>{format_number(metrics.get('mlp', {}).get('rmse'))}</p>",
-                ]
-            )
+        lines.append("<h3>代理模型指标</h3>")
+        for kind in STIFFENER_TYPES:
+            metrics_path = MODELS_DIR / kind / "surrogate_metrics.json"
+            if not metrics_path.is_file():
+                lines.append(f"<p><b>{kind}：</b>无独立筋型权重</p>")
+                continue
+            metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
+            lines.append(f"<p><b>{kind}：</b>训练样本 {metrics['training_size']}；"
+                         f"维度 {len(metrics['feature_order'])}；RF MAPE {format_number(metrics['rf']['mape'])}；"
+                         "预测可用性由权重、数据、特征、独立验收及当前输入适用域共同校验。</p>")
 
         knowledge_ready = "可用" if knowledge_status.get("ready") else "未就绪"
         lines.extend(

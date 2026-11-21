@@ -6,29 +6,21 @@
 
 CSDM_panel 当前保留两类知识能力：
 
-- 外部知识库/知识图谱：位于 `knowledge/external/`，服务于 LLM 候选生成。
+- 外部知识库/知识图谱：位于 `knowledge/external/`，服务于报告解释与可追溯证据。
 - 案例库与案例记忆：位于 `data/cases/`、`knowledge/case_library/` 和 `knowledge/chroma_db/`，服务于案例归档、案例迁移和相似案例排序。
 
 ## 外部知识库/知识图谱
 
 外部知识库/知识图谱资产包括：
 
-- `knowledge/external/rag/rag_chunks.jsonl`
-- `knowledge/external/rag/rag_chunks_index.csv`
+- `knowledge/external/rag/retrieval_index.sqlite`
 - `knowledge/external/kg/entities.jsonl`
-- `knowledge/external/kg/relations.jsonl`
+- `knowledge/external/kg/relations.compact.jsonl.gz`
 - `knowledge/external/kg/kg_stats.json`
-- `knowledge/external/provenance/source_registry/`
-- `knowledge/external/provenance/source_registry/source_metadata.jsonl`
-- `knowledge/external/provenance/structured_text/documents.jsonl`
-- `knowledge/external/provenance/structured_text/blocks.jsonl`
-- `knowledge/external/provenance/structured_text/table_records.jsonl`
-- `knowledge/external/provenance/structured_text/figure_records.jsonl`
-- `knowledge/external/provenance/structured_text/formula_records.jsonl`
-- `knowledge/external/provenance/structured_text/markdown_documents/`
+- `knowledge/external/provenance/source_metadata.compact.jsonl.gz`
 - `knowledge/external/manifest.json`
 
-运行时入口为 `core/domain_knowledge.py`。候选生成智能体只在 LLM 路径中注入这些检索结果，CASE_TRANSFER 与 DOE 路径不读取该资产。
+运行时入口为 `core/domain_knowledge.py`。报告智能体将完整检索证据与适用条件提供给 LLM，并保存到事实 JSON；CASE_TRANSFER 与 DOE 不使用外部文献回填设计性能。
 
 ## 案例库与案例记忆
 
@@ -36,7 +28,7 @@ CSDM_panel 当前保留两类知识能力：
 
 - `data/cases/`：全部已校核样本评估档案。
 - `knowledge/case_library/`：满足入库条件的正式案例。
-- `knowledge/chroma_db/`：案例记忆向量索引，可由 `scripts/migrate_contracts.py --case-memory-only` 重建。
+- `knowledge/chroma_db/`：案例记忆向量索引，可由 `conda run -n AGENT python -B scripts/rebuild_case_memory.py` 重建；源记录在索引更新前完成校验，不回写业务 JSON。
 
 案例迁移以结构化硬约束为主，案例记忆向量索引只参与召回和排序，不替代工程约束。
 
@@ -47,7 +39,7 @@ CSDM_panel 当前保留两类知识能力：
 - 写入 `data/cases/`
 - 按结论写入 `knowledge/case_library/`
 - 更新 `csdm_case_memory`
-- 在样本数量满足阈值时触发代理模型重训
+- 自动代理训练由配置控制，默认关闭；正式训练与独立 FEM 切片验收由 `scripts/train_screener.py --stiffener-type T` 执行
 
 `KNOWLEDGE_AGENT` 不更新 `knowledge/external/` 下的外部知识库/知识图谱资产。
 

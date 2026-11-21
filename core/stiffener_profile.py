@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import math
 from functools import lru_cache
-from typing import Any, Dict, List
+from typing import Dict, List
 
 from core.config_loader import load_param_ranges as _load_param_ranges_raw
+from core.laminate import stiffener_positions
 
 # ═══════════════════════════════════════════════════════════════════
 # 常量定义
@@ -107,15 +108,15 @@ GEOMETRY_LABELS: Dict[str, str] = {
 
 # 中文别名 → 标准类型名
 _TYPE_ALIASES: Dict[str, str] = {
-    "板式": "BLADE", "板式筋": "BLADE", "blade": "BLADE",
+    "板式": "BLADE", "板式筋": "BLADE", "blade": "BLADE", "blade stiffener": "BLADE",
     "平板筋": "BLADE", "刀型": "BLADE", "刀型筋": "BLADE",
     "t型": "T", "t 型": "T", "t形": "T", "t": "T",
-    "t型筋": "T", "t 型筋": "T", "t形筋": "T",
+    "t型筋": "T", "t 型筋": "T", "t形筋": "T", "t stiffener": "T", "t-stiffener": "T",
     "帽型": "HAT", "帽形": "HAT", "帽型筋": "HAT",
     "帽形筋": "HAT", "帽加筋": "HAT", "帽筋": "HAT",
-    "hat": "HAT", "hat型": "HAT", "槽型": "HAT", "槽型筋": "HAT",
+    "hat": "HAT", "hat型": "HAT", "槽型": "HAT", "槽型筋": "HAT", "hat stiffener": "HAT",
     "l型": "L", "l 型": "L", "l形": "L", "l": "L",
-    "l型角材": "L", "角材": "L", "角型": "L", "角型筋": "L",
+    "l型角材": "L", "角材": "L", "角型": "L", "角型筋": "L", "l stiffener": "L", "l-stiffener": "L",
 }
 
 
@@ -125,8 +126,8 @@ _TYPE_ALIASES: Dict[str, str] = {
 
 def validate_stiffener_type(name: str) -> str:
     """标准化类型名。接受中文别名，返回大写英文标准名。未知值抛出 ValueError。"""
-    if not name:
-        return "T"
+    if not isinstance(name, str) or not name.strip():
+        raise ValueError("筋型必须是非空字符串")
     key = str(name).strip()
     direct = key.upper()
     if direct in STIFFENER_TYPES:
@@ -134,8 +135,8 @@ def validate_stiffener_type(name: str) -> str:
     lowered = key.lower()
     if lowered in _TYPE_ALIASES:
         return _TYPE_ALIASES[lowered]
-    for alias, stype in _TYPE_ALIASES.items():
-        if alias in lowered:
+    for stype, display in TYPE_DISPLAY_NAMES.items():
+        if lowered == display.lower():
             return stype
     raise ValueError(
         f"未知筋型 '{name}'，支持的筋型：{', '.join(STIFFENER_TYPES)}"
@@ -143,11 +144,10 @@ def validate_stiffener_type(name: str) -> str:
 
 
 def resolve_stiffener_type(raw: str | None) -> str:
-    """宽松解析：未知值回退为 'T' 而非报错。"""
-    try:
-        return validate_stiffener_type(raw or "T")
-    except ValueError:
+    """未提供类型时采用 T；明确提供的类型必须通过完整名称校验。"""
+    if raw is None or isinstance(raw, str) and not raw.strip():
         return "T"
+    return validate_stiffener_type(raw)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -156,7 +156,7 @@ def resolve_stiffener_type(raw: str | None) -> str:
 
 def required_geometry_params(stype: str) -> List[str]:
     """返回该类型必需的几何参数列表。"""
-    return list(REQUIRED_GEOMETRY_PARAMS.get(validate_stiffener_type(stype), REQUIRED_GEOMETRY_PARAMS["T"]))
+    return list(REQUIRED_GEOMETRY_PARAMS[validate_stiffener_type(stype)])
 
 
 def all_geometry_params() -> List[str]:
@@ -166,38 +166,25 @@ def all_geometry_params() -> List[str]:
 
 def default_geometry(stype: str) -> Dict[str, float]:
     """返回该类型的默认几何值。"""
-    return dict(DEFAULT_GEOMETRY.get(validate_stiffener_type(stype), DEFAULT_GEOMETRY["T"]))
+    return dict(DEFAULT_GEOMETRY[validate_stiffener_type(stype)])
 
 
 def normalize_geometry(stype: str, raw_geom: Dict | None) -> Dict[str, float]:
-    """补全默认值并验证必需键存在。"""
+    """缺省字段使用类型默认值，显式几何数值必须有限且为正。"""
     stype = validate_stiffener_type(stype)
     defaults = default_geometry(stype)
     geometry = dict(defaults)
     if isinstance(raw_geom, dict):
         for key in defaults:
-            if key in raw_geom and raw_geom[key] is not None:
+            if key in raw_geom:
                 try:
-                    geometry[key] = float(raw_geom[key])
-                except (TypeError, ValueError):
-                    pass
+                    value = float(raw_geom[key])
+                except (TypeError, ValueError) as exc:
+                    raise ValueError(f"{key} 必须为有限正数") from exc
+                if not math.isfinite(value) or value <= 0:
+                    raise ValueError(f"{key} 必须为有限正数")
+                geometry[key] = value
     return geometry
-
-
-# ═══════════════════════════════════════════════════════════════════
-# 筋条位置计算（从 render_utils + runtime_build_panel 提取的统一实现）
-# ═══════════════════════════════════════════════════════════════════
-
-def stiffener_positions(panel_width_mm: float, pitch_mm: float) -> List[float]:
-    """计算筋条在面板宽度方向的位置列表。"""
-    if pitch_mm <= 0:
-        return [panel_width_mm / 2.0]
-    count = max(1, int(round(panel_width_mm / pitch_mm)))
-    if count == 1:
-        return [panel_width_mm / 2.0]
-    occupied = pitch_mm * (count - 1)
-    edge_margin = max((panel_width_mm - occupied) / 2.0, 0.0)
-    return [edge_margin + index * pitch_mm for index in range(count)]
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -227,7 +214,7 @@ def load_param_ranges_for_type(stype: str) -> Dict[str, Dict[str, float]]:
 # ML 特征向量转换
 # ═══════════════════════════════════════════════════════════════════
 
-# 标准 8 几何特征顺序（与 FEATURE_ORDER 前 8 一致）
+# 几何特征包含四种筋型的参数超集，与代理特征前十项一致。
 CANONICAL_GEOMETRY_ORDER = [
     "panel_length_mm",
     "panel_width_mm",
@@ -237,11 +224,13 @@ CANONICAL_GEOMETRY_ORDER = [
     "web_thickness_mm",
     "flange_width_mm",
     "flange_thickness_mm",
+    "cap_width_mm",
+    "cap_thickness_mm",
 ]
 
 
 def geometry_to_feature_vector(geometry: Dict) -> List[float]:
-    """将 geometry dict 转为固定 8 浮点列表，缺失参数填 0.0。"""
+    """将几何参数转为十项浮点列表；调用者须先验证该筋型的必需参数。"""
     return [float(geometry.get(key, 0.0)) for key in CANONICAL_GEOMETRY_ORDER]
 
 
@@ -251,25 +240,39 @@ def geometry_to_feature_vector(geometry: Dict) -> List[float]:
 
 def rule_check_param_keys(stype: str) -> List[str]:
     """返回该类型需要范围检查的几何参数键列表。"""
-    return list(REQUIRED_GEOMETRY_PARAMS.get(validate_stiffener_type(stype), []))
+    return required_geometry_params(stype)
 
 
-def solver_safe_window_keys(stype: str) -> Dict[str, tuple]:
-    """返回该类型的求解安全区检查（参数名 → (min, max)）。"""
-    base = {
-        "solver_skin_thickness_ok": (1.2, 3.2),
-        "solver_pitch_ok": (90.0, 140.0),
-        "solver_height_ok": (18.0, 38.0),
-        "solver_height_pitch_band_ok": (0.14, 0.34),
-    }
+def stiffener_footprints(stype: str, geometry: Dict) -> List[tuple[float, float]]:
+    """按装配中面及壳厚计算完整截面在 Y 轴的投影，拒绝越板或相邻筋重叠。"""
     stype = validate_stiffener_type(stype)
+    values = {key: float(geometry[key]) for key in required_geometry_params(stype)}
+    if any(not math.isfinite(value) or value <= 0 for value in values.values()):
+        raise ValueError("筋条几何必须为有限正数")
+    half_web = values["web_thickness_mm"] / 2
     if stype == "BLADE":
-        return base
-    if stype == "HAT":
-        base["solver_flange_width_ok"] = (24.0, 50.0)
+        left, right = -half_web, half_web
+    elif stype == "T":
+        extent = max(values["flange_width_mm"] / 2, half_web)
+        left, right = -extent, extent
+    elif stype == "L":
+        left, right = -half_web, max(values["flange_width_mm"], half_web)
     else:
-        base["solver_flange_width_ok"] = (12.0, 22.0)
-    return base
+        flange, cap, height = (values[key] for key in ("flange_width_mm", "cap_width_mm", "stiffener_height_mm"))
+        if cap >= flange:
+            raise ValueError("HAT 帽顶宽度必须小于底部腹板跨度 flange_width_mm")
+        foot = (flange - cap) / 2
+        # 外侧连接板向两侧各伸出 foot；斜腹板厚度沿 Y 的投影也计入足迹。
+        extent = max(flange / 2 + foot, flange / 2 + half_web * height / math.hypot(height, foot))
+        left, right = -extent, extent
+    width = values["panel_width_mm"]
+    footprints = [(center + left, center + right) for center in stiffener_positions(width, values["pitch_mm"])]
+    tolerance = 1e-9 * max(width, 1)
+    if footprints[0][0] < -tolerance or footprints[-1][1] > width + tolerance:
+        raise ValueError("筋条完整截面足迹超出蒙皮宽度")
+    if any(first[1] > second[0] + tolerance for first, second in zip(footprints, footprints[1:])):
+        raise ValueError("相邻筋条完整截面足迹重叠")
+    return footprints
 
 
 def hat_incline_angle_deg(flange_width: float, cap_width: float, stiffener_height: float) -> float:
@@ -335,7 +338,6 @@ def build_stiffener_part_specs(
     返回列表包含每根筋条所有部件的规格。
     """
     stype = validate_stiffener_type(stype)
-    panel_length = float(geometry.get("panel_length_mm", 700.0))
     panel_width = float(geometry.get("panel_width_mm", 600.0))
     skin_t = float(geometry.get("skin_thickness_mm", 2.5))
     pitch = float(geometry.get("pitch_mm", 120.0))
@@ -488,8 +490,6 @@ def build_stiffener_meshes(
 
     每种筋型返回不同颜色和结构的网格以正确表示几何形状。
     """
-    import numpy as np
-
     try:
         import pyvista as pv
     except ImportError:

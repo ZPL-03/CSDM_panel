@@ -19,9 +19,10 @@ abaqus:
   job_timeout_seconds: 1800
 
 pipeline:
+  unavailable_surrogate_policy: direct_fem
+  auto_retrain_surrogate: false
   top_k: 5
   candidate_source_ratio:
-    llm: 2
     case_transfer: 1
     doe: 1
   min_case_records_for_retrain: 50
@@ -31,6 +32,7 @@ pipeline:
     weight_penalty: 0.08
 
 rag:
+  embedding_device: cpu
   embedding_model: BAAI/bge-m3
   local_files_only: true
 
@@ -49,14 +51,10 @@ external_knowledge:
   manifest_path: knowledge/external/manifest.json
   top_k: 5
   kg_top_k: 8
-  max_snippet_chars: 1200
+  max_context_chars: 24000
 
 conversation:
   confirmation_steps:
     - screen_candidates
     - fem_evaluation
     - export_report
-
-report:
-  output_markdown: data/results/latest_report.md
-  output_pdf: data/results/latest_report.pdf

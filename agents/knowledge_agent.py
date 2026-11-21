@@ -12,11 +12,10 @@ from core.id_utils import next_case_id
 from core.io_utils import write_json
 from core.paths import CASE_LIBRARY_DIR, CASES_DIR
 from core.schema_validator import validate_or_raise
-from core.surrogate_model import SurrogateModelManager
+from core.surrogate_model import SurrogateModelManager, record_to_training_sample
 from core.task_contract import (
     normalize_boundary_conditions,
     normalize_load_conditions,
-    normalize_task_payload,
     task_payload_from_request,
 )
 
@@ -61,8 +60,9 @@ class KnowledgeAgent(BaseAgent):
             "rule_check": dict(design.get("rule_check", {})),
             "surrogate_BLF": design.get("surrogate_BLF"),
             "rationale": design.get("rationale", ""),
-            "origin_summary": design.get("origin_summary", ""),
-            "llm_output_excerpt": design.get("llm_output_excerpt"),
+            "task_constraints": design.get("task_constraints"),
+            "screening_decision": design.get("screening_decision"),
+            "analysis": dict(design.get("analysis", {})),
         }
 
     def _sanitize_abaqus_results(self, abaqus_results: Dict) -> Dict:
@@ -72,6 +72,8 @@ class KnowledgeAgent(BaseAgent):
             "retry_count",
             "BLF_global",
             "BLF_local",
+            "second_positive_BLF",
+            "effective_mode_eigenvalues",
             "failure_mode",
             "max_displacement_mm",
             "weight_kg_per_m2",
@@ -86,6 +88,8 @@ class KnowledgeAgent(BaseAgent):
             "load_summary",
             "boundary_summary",
             "diagnosis_summary",
+            "analysis_contract",
+            "analysis_flags",
         ]
         return {key: abaqus_results.get(key) for key in keys}
 
@@ -131,21 +135,20 @@ class KnowledgeAgent(BaseAgent):
             self.case_memory.upsert_cases([record], scope="archive")
 
     def _maybe_retrain_surrogate(self) -> Dict | None:
-        records = self.model_manager.load_training_records()
-        record_count = len(records)
-        if record_count < self.min_case_records_for_retrain:
+        if not self.config["pipeline"].get("auto_retrain_surrogate", False):
             return None
-        if record_count % self.min_case_records_for_retrain != 0:
-            return None
-
-        summary = self.model_manager.train_from_records(records)
-        self.emit(
-            "代理模型已重训："
-            f"{summary['selected_model']} | "
-            f"RF MAPE={summary['rf']['mape']:.4f} | "
-            f"MLP MAPE={summary['mlp']['mape']:.4f}"
-        )
-        return summary
+        records = [record for record in self.model_manager.load_training_records()
+                   if record_to_training_sample(record) is not None]
+        summaries = {}
+        for kind in sorted({record["design"]["stiffener_type"] for record in records}):
+            typed = [record for record in records if record["design"]["stiffener_type"] == kind]
+            if len(typed) < self.min_case_records_for_retrain or len(typed) % self.min_case_records_for_retrain:
+                continue
+            summary = self.model_manager.for_type(kind).train_from_records(typed)
+            summaries[kind] = summary
+            self.emit(f"{kind} 代理训练样本 {len(typed)}；RF 留出 MAPE={summary['rf']['mape']:.4f}；"
+                      f"独立 FEM 验收状态={summary['validation_status']}")
+        return summaries or None
 
     def run(self, input_data: Dict) -> Dict:
         task = input_data["task"]

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import json
 from typing import Any, Dict
 
 from core.config_loader import load_llm_config
@@ -33,6 +34,10 @@ def auto_llm_enabled() -> bool:
     return os.getenv("CSDM_panel_DISABLE_LLM_AUTO", "0").strip() != "1"
 
 
+class LLMResponseError(ValueError):
+    """截断或空正文不是候选格式错误，不进入格式重试。"""
+
+
 class LLMBackend:
     """面向当前项目唯一 LLM 接口的最小封装。"""
 
@@ -46,9 +51,11 @@ class LLMBackend:
         self.temperature = float(backend.get("temperature", 0.2))
         self.max_tokens = int(backend.get("max_tokens", 1800))
         self.timeout_seconds = int(backend.get("timeout_seconds", 180))
-        self.extra_body = backend.get("extra_body", {})
+        extra_body_text = resolve_config_value(backend.get("extra_body_env"))
+        self.extra_body = json.loads(extra_body_text) if extra_body_text else backend.get("extra_body", {})
         if not isinstance(self.extra_body, dict):
             raise ValueError("LLM backend.extra_body 必须是对象")
+        self.last_response = None
         missing = []
         if not self.base_url:
             missing.append(str(backend.get("base_url_env") or "base_url"))
@@ -64,7 +71,7 @@ class LLMBackend:
         except Exception as exc:
             raise ValueError("当前环境未安装 openai 依赖") from exc
 
-        self.client = OpenAI(base_url=self.base_url, api_key=self.api_key, timeout=self.timeout_seconds)
+        self.client = OpenAI(base_url=self.base_url, api_key=self.api_key, timeout=self.timeout_seconds, max_retries=0)
 
     def chat(
         self,
@@ -83,11 +90,19 @@ class LLMBackend:
             ],
             "extra_body": self.extra_body,
         }
+        self.last_response = None
         response = self.client.chat.completions.create(**request_payload)
+        usage = getattr(response, "usage", None)
+        self.last_response = {"model": getattr(response, "model", self.model),
+                              "usage": usage.model_dump() if usage is not None else None,
+                              "finish_reason": None, "content": None}
+        if not response.choices:
+            raise LLMResponseError("LLM 返回空 choices，不能用于候选或报告")
         choice = response.choices[0]
-        if choice.finish_reason != "stop":
-            raise ValueError(f"LLM 回答未完整结束（finish_reason={choice.finish_reason}），不能用于候选或报告")
         content = choice.message.content or ""
+        self.last_response.update(finish_reason=choice.finish_reason, content=content)
+        if choice.finish_reason != "stop":
+            raise LLMResponseError(f"LLM 回答未完整结束（finish_reason={choice.finish_reason}），不能用于候选或报告")
         if not content.strip():
-            raise ValueError("LLM 返回空正文，不能用于候选或报告")
+            raise LLMResponseError("LLM 返回空正文，不能用于候选或报告")
         return content

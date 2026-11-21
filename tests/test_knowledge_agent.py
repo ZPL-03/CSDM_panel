@@ -1,26 +1,17 @@
 from agents.knowledge_agent import KnowledgeAgent
+from copy import deepcopy
+from tests.test_fem_agent import _real_fem_candidate
 
 
-def test_knowledge_agent_preserves_llm_candidate_trace_fields() -> None:
+def test_knowledge_agent_preserves_physical_design_without_mutating_input() -> None:
     agent = KnowledgeAgent.__new__(KnowledgeAgent)
 
-    design = {
-        "candidate_id": "C1",
-        "source": "LLM",
-        "stiffener_type": "HAT",
-        "geometry": {},
-        "layup": {},
-        "material_system": {},
-        "load_conditions": {"type": "axial_compression"},
-        "boundary_conditions": {"type": "SSSS"},
-        "design_targets": {},
-        "rule_check": {},
-        "rationale": "LLM 推荐",
-        "origin_summary": "| A1 | HAT |",
-        "llm_output_excerpt": "## 候选方案\n| A1 | HAT |",
-    }
+    design = _real_fem_candidate("C1", stiffener_type="HAT")
+    original = deepcopy(design)
 
     clean_design = agent._sanitize_design(design)
 
-    assert clean_design["origin_summary"] == "| A1 | HAT |"
-    assert "候选方案" in clean_design["llm_output_excerpt"]
+    for key in ("candidate_id", "source", "stiffener_type", "geometry", "layup", "material_system",
+                "load_conditions", "boundary_conditions", "design_targets", "analysis"):
+        assert clean_design[key] == design.get(key, {})
+    assert design == original

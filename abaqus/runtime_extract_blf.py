@@ -4,6 +4,7 @@
 from __future__ import absolute_import
 
 import codecs
+import imp
 import json
 import math
 import os
@@ -12,7 +13,8 @@ import sys
 import traceback
 
 
-DEFAULT_DENSITY_KG_PER_M3 = 1600.0
+_laminate = imp.load_source("csdm_laminate", os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "core", "laminate.py"))
 
 try:
     text_type = unicode
@@ -82,35 +84,8 @@ def load_candidate(input_json, candidate_id, result_json):
     return {"candidate_id": candidate_id, "geometry": {}, "design_targets": {}}
 
 
-def infer_stiffener_count(geometry):
-    panel_width = safe_float(geometry.get("panel_width_mm"), 600.0)
-    pitch = max(safe_float(geometry.get("pitch_mm"), 120.0), 1.0)
-    return max(1, int(round(panel_width / pitch)))
-
-
 def estimate_weight_kg_per_m2(candidate):
-    geometry = dict(candidate.get("geometry", {}))
-    material = dict(candidate.get("material_system", {}))
-
-    panel_length_mm = safe_float(geometry.get("panel_length_mm"), 700.0)
-    panel_width_mm = safe_float(geometry.get("panel_width_mm"), 600.0)
-    skin_t_mm = safe_float(geometry.get("skin_thickness_mm"), 2.5)
-    stiffener_height_mm = safe_float(geometry.get("stiffener_height_mm"), 28.0)
-    web_t_mm = safe_float(geometry.get("web_thickness_mm"), 2.0)
-    flange_w_mm = safe_float(geometry.get("flange_width_mm"), 16.0)
-    flange_t_mm = safe_float(geometry.get("flange_thickness_mm"), 2.0)
-
-    panel_area_m2 = max(panel_length_mm * panel_width_mm * 1e-6, 1e-9)
-    skin_volume_m3 = panel_length_mm * panel_width_mm * skin_t_mm * 1e-9
-    stiffener_volume_m3 = (
-        infer_stiffener_count(geometry)
-        * panel_length_mm
-        * (web_t_mm * stiffener_height_mm + flange_t_mm * flange_w_mm)
-        * 1e-9
-    )
-    density = safe_float(material.get("density_kg_per_m3"), DEFAULT_DENSITY_KG_PER_M3)
-    total_mass_kg = density * (skin_volume_m3 + stiffener_volume_m3)
-    return total_mass_kg / panel_area_m2
+    return _laminate.areal_density(candidate)
 
 
 def parse_eigenvalue(description):
@@ -125,6 +100,8 @@ def parse_eigenvalue(description):
 
 def resolve_effective_eigenvalues(eigenvalues, positive_tol=1.0e-8):
     raw_values = [float(value) for value in eigenvalues]
+    if any(math.isnan(value) or math.isinf(value) for value in raw_values):
+        raise ValueError("屈曲特征值包含非有限数值")
     positive_values = [value for value in raw_values if value > positive_tol]
     return raw_values, positive_values
 
@@ -142,6 +119,17 @@ def frame_max_displacement(frame):
         if max_value is None or magnitude > max_value:
             max_value = magnitude
     return max_value
+
+
+def warning_node_sets(odb):
+    """读取求解器写入的警告节点集，保留各实例节点数量。"""
+    warnings = {}
+    for name, node_set in odb.rootAssembly.nodeSets.items():
+        if name.lower().startswith(("warn", "err")):
+            count = sum(len(nodes) for nodes in node_set.nodes)
+            if count:
+                warnings[name] = count
+    return warnings
 
 
 def visualization_path_from_odb(odb_path):
@@ -242,6 +230,13 @@ def extract_blf(odb_path, result_json, input_json=None):
     try:
         odb = openOdb(path=str(odb_path))
         try:
+            node_warnings = warning_node_sets(odb)
+            incomplete_connections = {name: count for name, count in node_warnings.items()
+                                      if name.lower().startswith(("warnnodemiss", "warnnodeunconnected", "errnode"))}
+            if incomplete_connections:
+                write_failure_result(candidate_id, odb_path, result_json, "connection_error",
+                                     {"reason": "有限元连接存在未关联或错误节点", "node_sets": incomplete_connections})
+                return
             if not odb.steps:
                 write_failure_result(candidate_id, odb_path, result_json, "convergence_fail", "ODB 中未找到分析步")
                 return
@@ -251,8 +246,6 @@ def extract_blf(odb_path, result_json, input_json=None):
             else:
                 step = list(odb.steps.values())[-1]
             eigenvalues = []
-            first_mode_displacement = None
-            first_frame = step.frames[1] if len(step.frames) > 1 else None
             frame_count = len(step.frames)
             for frame_index in range(1, frame_count):
                 frame = step.frames[frame_index]
@@ -260,8 +253,6 @@ def extract_blf(odb_path, result_json, input_json=None):
                 if eigenvalue is None:
                     eigenvalue = safe_float(getattr(frame, "frameValue", 0.0), 0.0)
                 eigenvalues.append(eigenvalue)
-                if first_mode_displacement is None:
-                    first_mode_displacement = frame_max_displacement(frame)
 
             if not eigenvalues:
                 write_failure_result(candidate_id, odb_path, result_json, "convergence_fail", "屈曲步未输出特征值")
@@ -279,11 +270,13 @@ def extract_blf(odb_path, result_json, input_json=None):
                 return
 
             blf_global = positive_eigenvalues[0]
-            blf_local = positive_eigenvalues[1] if len(positive_eigenvalues) > 1 else blf_global * 1.15
-            failure_mode = "整体屈曲" if blf_global <= blf_local else "局部屈曲"
+            # 特征值顺序不提供局部/整体模态分类；没有额外正模态时不构造数值。
+            second_positive_blf = positive_eigenvalues[1] if len(positive_eigenvalues) > 1 else None
             verdict = "通过" if blf_global >= candidate.get("design_targets", {}).get("BLF_min", 1.2) else "不通过"
-            visualization_path = export_mode_visualization(odb, first_frame, odb_path) if first_frame is not None else None
             first_positive_mode_index = raw_eigenvalues.index(blf_global) + 1
+            first_frame = step.frames[first_positive_mode_index]
+            first_mode_displacement = frame_max_displacement(first_frame)
+            visualization_path = export_mode_visualization(odb, first_frame, odb_path)
             negative_modes_skipped = sum(1 for value in raw_eigenvalues if value < 0.0)
 
             write_json(
@@ -292,11 +285,12 @@ def extract_blf(odb_path, result_json, input_json=None):
                     "candidate_id": candidate_id,
                     "status": "success",
                     "retry_count": 0,
-                    "BLF_global": round(blf_global, 6),
-                    "BLF_local": round(blf_local, 6),
-                    "failure_mode": failure_mode,
+                    "BLF_global": blf_global,
+                    "BLF_local": None,
+                    "second_positive_BLF": second_positive_blf,
+                    "failure_mode": None,
                     "max_displacement_mm": round(first_mode_displacement, 6) if first_mode_displacement is not None else None,
-                    "weight_kg_per_m2": round(estimate_weight_kg_per_m2(candidate), 6),
+                    "weight_kg_per_m2": estimate_weight_kg_per_m2(candidate),
                     "verdict": verdict,
                     "abaqus_odb": odb_path,
                     "abaqus_inp": os.path.splitext(odb_path)[0] + ".inp",
@@ -304,11 +298,13 @@ def extract_blf(odb_path, result_json, input_json=None):
                     "artifact_dir": os.path.dirname(odb_path),
                     "error_type": None,
                     "error_log": None,
-                    "mode_eigenvalues": [round(value, 6) for value in raw_eigenvalues[:8]],
-                    "effective_mode_eigenvalues": [round(value, 6) for value in positive_eigenvalues[:5]],
+                    "mode_eigenvalues": raw_eigenvalues,
+                    "effective_mode_eigenvalues": positive_eigenvalues,
                     "analysis_flags": {
+                        "warning_node_sets": node_warnings,
                         "negative_modes_skipped": int(negative_modes_skipped),
                         "first_positive_mode_index": int(first_positive_mode_index),
+                        "mode_classification": "not_evaluated",
                     },
                 },
             )

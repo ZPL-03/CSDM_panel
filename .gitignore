@@ -22,13 +22,18 @@ Thumbs.db
 
 # Runtime outputs
 data/io/
+data/cases/
 data/tasks/
 data/abaqus_runs/
 data/results/latest_report.md
 data/results/latest_report.pdf
+data/results/latest_report_facts.json
+validation_runs/
 data/results/batch_summary_*.json
 data/results/contract_migration_summary.json
 knowledge/chroma_db/
+knowledge/case_library/
+models/
 knowledge/external/rag/
 knowledge/external/kg/
 knowledge/external/provenance/

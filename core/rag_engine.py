@@ -12,14 +12,14 @@ from core.paths import CHROMA_DIR
 
 
 @lru_cache(maxsize=1)
-def _load_embedder(model_name: str, local_files_only: bool):
+def _load_embedder(model_name: str, local_files_only: bool, device: str):
     from huggingface_hub import snapshot_download
     from sentence_transformers import SentenceTransformer
 
     model_path = Path(model_name)
     if not model_path.is_dir():
         model_path = Path(snapshot_download(model_name, local_files_only=local_files_only))
-    return SentenceTransformer(str(model_path))
+    return SentenceTransformer(str(model_path), device=device)
 
 
 class RAGEngine:
@@ -41,16 +41,19 @@ class RAGEngine:
         self.collection = self.client.get_or_create_collection(name=self.collection_name)
         self.embedding_model_name = embedding_model or str(rag_config.get("embedding_model", "BAAI/bge-m3"))
         self.local_files_only = bool(rag_config.get("local_files_only", True))
+        self.embedding_device = str(rag_config["embedding_device"])
+        if self.embedding_device != "cpu" and not self.embedding_device.startswith("cuda:"):
+            raise ValueError("embedding_device 必须显式为 cpu 或 cuda:设备编号")
         self._embedder = None
 
     @property
     def embedder(self):
         if self._embedder is None:
-            self._embedder = _load_embedder(self.embedding_model_name, self.local_files_only)
+            self._embedder = _load_embedder(self.embedding_model_name, self.local_files_only, self.embedding_device)
         return self._embedder
 
     def _embedding(self, text: str) -> List[float]:
-        vector = self.embedder.encode(text, normalize_embeddings=True)
+        vector = self.embedder.encode(text, normalize_embeddings=True, device=self.embedding_device)
         return [float(value) for value in vector]
 
     def _to_text(self, record: Dict) -> str:
@@ -74,7 +77,7 @@ class RAGEngine:
         metadata_list = list(metadatas) if metadatas is not None else None
         if metadata_list is not None and len(metadata_list) != len(docs):
             raise ValueError("metadatas 和 documents 数量不一致")
-        embeddings = self.embedder.encode(docs, normalize_embeddings=True).tolist()
+        embeddings = self.embedder.encode(docs, normalize_embeddings=True, device=self.embedding_device).tolist()
         self.collection.upsert(ids=doc_ids, documents=docs, embeddings=embeddings, metadatas=metadata_list)
 
     def upsert_records(self, records: Iterable[Dict], id_key: str) -> None:

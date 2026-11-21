@@ -4,7 +4,9 @@ from __future__ import annotations
 
 from copy import deepcopy
 from datetime import datetime, timezone
-from typing import Any, Dict, Iterable
+from typing import Any, Dict
+import math
+import re
 
 
 DEFAULT_ALLOWED_ANGLES = [0, 45, -45, 90]
@@ -24,7 +26,6 @@ DEFAULT_CANDIDATE_GENERATION_PREFERENCES = {
     "total_candidates": 10,
     "source_allocation_mode": "ratio",
     "source_ratio": {
-        "llm": 2.0,
         "case_transfer": 1.0,
         "doe": 1.0,
     },
@@ -69,17 +70,23 @@ BOUNDARY_CONDITION_LIBRARY = {
 }
 
 
-def _safe_float(value: Any, default: float = 0.0) -> float:
+def _finite_number(value: Any, field: str) -> float:
+    """数值字段只转换表示形式；无效输入保持为错误，不替换工程条件。"""
+    if isinstance(value, bool):
+        raise ValueError(f"{field} 必须为有限数值")
     try:
-        return float(value)
-    except (TypeError, ValueError):
-        return default
+        number = float(value)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{field} 必须为有限数值") from exc
+    if not math.isfinite(number):
+        raise ValueError(f"{field} 必须为有限数值")
+    return number
 
 
 def boundary_condition_payload(boundary_type: str) -> Dict[str, Any]:
-    boundary_key = str(boundary_type or DEFAULT_BOUNDARY_TYPE).upper()
+    boundary_key = str(boundary_type).strip().upper()
     if boundary_key not in BOUNDARY_CONDITION_LIBRARY:
-        boundary_key = DEFAULT_BOUNDARY_TYPE
+        raise ValueError(f"不支持的边界类型: {boundary_type}")
     return deepcopy(BOUNDARY_CONDITION_LIBRARY[boundary_key])
 
 
@@ -87,11 +94,20 @@ def normalize_boundary_conditions(boundary_conditions: Any) -> Dict[str, Any]:
     if isinstance(boundary_conditions, dict):
         boundary_type = str(boundary_conditions.get("type", DEFAULT_BOUNDARY_TYPE)).upper()
         normalized = boundary_condition_payload(boundary_type)
+        for key in ("simply_supported_edges", "clamped_edges"):
+            if key in boundary_conditions and (
+                not isinstance(boundary_conditions[key], (list, tuple))
+                or sorted(boundary_conditions[key]) != sorted(normalized[key])
+            ):
+                raise ValueError(f"边界类型与边集合不一致: {key}")
         normalized["label"] = str(boundary_conditions.get("label") or normalized["label"])
         normalized["description"] = str(boundary_conditions.get("description") or normalized["description"])
         return normalized
 
     text = str(boundary_conditions or "").strip().upper()
+    explicit = re.search(r"(?<![A-Z])[SCF]{4}(?![A-Z])|(?:边界(?:条件)?|BOUNDARY)\s*[:：=]?\s*([A-Z]{4})(?![A-Z])", text)
+    if explicit:
+        return boundary_condition_payload(explicit.group(1) or explicit.group(0))
     if "SSCC" in text or ("简支" in text and "固支" in text):
         return boundary_condition_payload("SSCC")
     if "CCCC" in text or "固支" in text:
@@ -105,22 +121,31 @@ def describe_boundary_conditions(boundary_conditions: Any) -> str:
 
 
 def load_condition_payload(load_type: str, nx_kN_per_m: float = 0.0, nxy_kN_per_m: float = 0.0) -> Dict[str, Any]:
-    normalized_type = str(load_type or DEFAULT_LOAD_TYPE)
+    """正 Nx 表示压缩，正 Nxy 表示当前模型的剪切方向；分量须与工况一致。"""
+    normalized_type = str(load_type).strip()
     if normalized_type not in LOAD_CASE_LABELS:
-        normalized_type = DEFAULT_LOAD_TYPE
+        raise ValueError(f"不支持的载荷类型: {load_type}")
+    nx = _finite_number(nx_kN_per_m, "Nx_kN_per_m")
+    nxy = _finite_number(nxy_kN_per_m, "Nxy_kN_per_m")
+    if nx < 0 or nxy < 0:
+        raise ValueError("Nx 与 Nxy 必须为非负数")
+    if (normalized_type == "axial_compression" and nxy != 0) or (
+        normalized_type == "in_plane_shear" and nx != 0
+    ) or (normalized_type == "compression_shear" and (nx == 0) != (nxy == 0)):
+        raise ValueError("载荷分量与工况类型不一致")
     return {
         "type": normalized_type,
         "label": LOAD_CASE_LABELS[normalized_type],
-        "Nx_kN_per_m": round(max(_safe_float(nx_kN_per_m, 0.0), 0.0), 3),
-        "Nxy_kN_per_m": round(max(_safe_float(nxy_kN_per_m, 0.0), 0.0), 3),
+        "Nx_kN_per_m": nx,
+        "Nxy_kN_per_m": nxy,
     }
 
 
 def normalize_load_conditions(load_conditions: Any) -> Dict[str, Any]:
     if isinstance(load_conditions, dict):
         raw_type = str(load_conditions.get("type", "")).strip()
-        nx_value = _safe_float(load_conditions.get("Nx_kN_per_m"), 0.0)
-        nxy_value = _safe_float(load_conditions.get("Nxy_kN_per_m"), 0.0)
+        nx_value = _finite_number(load_conditions.get("Nx_kN_per_m", 0.0), "Nx_kN_per_m")
+        nxy_value = _finite_number(load_conditions.get("Nxy_kN_per_m", 0.0), "Nxy_kN_per_m")
 
         type_mapping = {
             "单轴压缩": "axial_compression",
@@ -135,7 +160,7 @@ def normalize_load_conditions(load_conditions: Any) -> Dict[str, Any]:
         }
         normalized_type = type_mapping.get(raw_type, raw_type)
 
-        if normalized_type not in LOAD_CASE_LABELS:
+        if not normalized_type:
             if nx_value > 0.0 and nxy_value > 0.0:
                 normalized_type = "compression_shear"
             elif nxy_value > 0.0:
@@ -143,12 +168,7 @@ def normalize_load_conditions(load_conditions: Any) -> Dict[str, Any]:
             else:
                 normalized_type = "axial_compression"
 
-        payload = load_condition_payload(normalized_type, nx_value, nxy_value)
-        if normalized_type == "axial_compression":
-            payload["Nxy_kN_per_m"] = 0.0
-        elif normalized_type == "in_plane_shear":
-            payload["Nx_kN_per_m"] = 0.0
-        return payload
+        return load_condition_payload(normalized_type, nx_value, nxy_value)
 
     text = str(load_conditions or "").strip()
     lowered = text.lower()
@@ -173,28 +193,6 @@ def describe_load_conditions(load_conditions: Any, *, display: bool = False) -> 
     return f"{normalized['label']}：Nx={nx_value} kN/m"
 
 
-def equivalent_in_plane_load(load_conditions: Any) -> float:
-    normalized = normalize_load_conditions(load_conditions)
-    nx_value = float(normalized.get("Nx_kN_per_m", 0.0))
-    nxy_value = float(normalized.get("Nxy_kN_per_m", 0.0))
-    load_type = normalized["type"]
-    if load_type == "in_plane_shear":
-        return round(max(0.85 * nxy_value, 0.0), 3)
-    if load_type == "compression_shear":
-        return round(max(nx_value + 0.65 * nxy_value, 0.0), 3)
-    return round(max(nx_value, 0.0), 3)
-
-
-def boundary_stiffness_factor(boundary_conditions: Any) -> float:
-    normalized = normalize_boundary_conditions(boundary_conditions)
-    mapping = {
-        "SSSS": 1.00,
-        "SSCC": 1.10,
-        "CCCC": 1.22,
-    }
-    return mapping.get(normalized["type"], 1.00)
-
-
 def load_case_code(load_conditions: Any) -> float:
     normalized = normalize_load_conditions(load_conditions)
     mapping = {
@@ -202,7 +200,7 @@ def load_case_code(load_conditions: Any) -> float:
         "in_plane_shear": 1.0,
         "compression_shear": 2.0,
     }
-    return mapping.get(normalized["type"], 0.0)
+    return mapping[normalized["type"]]
 
 
 def boundary_condition_code(boundary_conditions: Any) -> float:
@@ -212,55 +210,69 @@ def boundary_condition_code(boundary_conditions: Any) -> float:
         "CCCC": 1.0,
         "SSCC": 2.0,
     }
-    return mapping.get(normalized["type"], 0.0)
+    return mapping[normalized["type"]]
 
 
 def normalize_geometry_envelope(envelope: Dict[str, Any] | None) -> Dict[str, Any]:
     data = deepcopy(DEFAULT_GEOMETRY_ENVELOPE)
-    if not isinstance(envelope, dict):
+    if envelope is None:
         return data
-
-    panel_length = envelope.get("panel_length_mm", data["panel_length_mm"])
-    panel_width = envelope.get("panel_width_mm", data["panel_width_mm"])
-    if isinstance(panel_length, Iterable) and not isinstance(panel_length, (str, bytes)):
-        panel_length_values = list(panel_length)
-        if len(panel_length_values) >= 2:
-            data["panel_length_mm"] = [_safe_float(panel_length_values[0], 600.0), _safe_float(panel_length_values[1], 800.0)]
-    if isinstance(panel_width, Iterable) and not isinstance(panel_width, (str, bytes)):
-        panel_width_values = list(panel_width)
-        if len(panel_width_values) >= 2:
-            data["panel_width_mm"] = [_safe_float(panel_width_values[0], 500.0), _safe_float(panel_width_values[1], 700.0)]
-    data["max_stiffener_height_mm"] = _safe_float(
-        envelope.get("max_stiffener_height_mm"),
-        data["max_stiffener_height_mm"],
-    )
+    if not isinstance(envelope, dict):
+        raise ValueError("geometry_envelope 必须为对象")
+    for key in ("panel_length_mm", "panel_width_mm"):
+        pair = envelope.get(key, data[key])
+        if not isinstance(pair, (list, tuple)) or len(pair) != 2:
+            raise ValueError(f"{key} 必须给出上下界")
+        lower, upper = (_finite_number(value, key) for value in pair)
+        if not 0 < lower <= upper:
+            raise ValueError(f"无效几何包络: {key}")
+        data[key] = [lower, upper]
+    key = "max_stiffener_height_mm"
+    data[key] = _finite_number(envelope.get(key, data[key]), key)
+    if data[key] <= 0:
+        raise ValueError(f"{key} 必须为正数")
     return data
+
+
+def _candidate_count(value: Any, field: str, maximum: int) -> int:
+    number = _finite_number(value, field)
+    if not 1 <= number <= maximum or not number.is_integer():
+        raise ValueError(f"{field} 必须为 1 到 {maximum} 的整数")
+    return int(number)
 
 
 def normalize_screening_preferences(preferences: Dict[str, Any] | None) -> Dict[str, Any]:
     normalized = deepcopy(DEFAULT_SCREENING_PREFERENCES)
-    if not isinstance(preferences, dict):
+    if preferences is None:
         return normalized
+    if not isinstance(preferences, dict):
+        raise ValueError("screening_preferences 必须为对象")
     top_k_value = preferences.get("top_k_candidates", normalized["top_k_candidates"])
-    normalized["top_k_candidates"] = int(max(1, min(_safe_float(top_k_value, normalized["top_k_candidates"]), 30.0)))
+    normalized["top_k_candidates"] = _candidate_count(top_k_value, "top_k_candidates", 30)
     return normalized
 
 
 def normalize_candidate_generation_preferences(preferences: Dict[str, Any] | None) -> Dict[str, Any]:
     normalized = deepcopy(DEFAULT_CANDIDATE_GENERATION_PREFERENCES)
-    if not isinstance(preferences, dict):
+    if preferences is None:
         return normalized
+    if not isinstance(preferences, dict):
+        raise ValueError("candidate_generation_preferences 必须为对象")
     total_value = preferences.get("total_candidates", normalized["total_candidates"])
-    normalized["total_candidates"] = int(max(1, min(_safe_float(total_value, normalized["total_candidates"]), 60.0)))
-    allocation_mode = str(preferences.get("source_allocation_mode") or normalized["source_allocation_mode"]).strip().lower()
-    normalized["source_allocation_mode"] = allocation_mode if allocation_mode == "ratio" else "ratio"
-    ratio = dict(preferences.get("source_ratio") or {})
+    normalized["total_candidates"] = _candidate_count(total_value, "total_candidates", 60)
+    allocation_mode = str(preferences.get("source_allocation_mode", normalized["source_allocation_mode"])).strip().lower()
+    if allocation_mode != "ratio":
+        raise ValueError("候选来源分配方式必须为 ratio")
+    normalized["source_allocation_mode"] = allocation_mode
+    ratio = preferences.get("source_ratio", {})
+    if not isinstance(ratio, dict) or set(ratio) - set(normalized["source_ratio"]):
+        raise ValueError("source_ratio 只接受 case_transfer、doe；LLM 不生成数值候选")
     normalized_ratio = {
-        key: max(_safe_float(ratio.get(key), value), 0.0)
+        key: _finite_number(ratio.get(key, value), key)
         for key, value in normalized["source_ratio"].items()
     }
-    if sum(normalized_ratio.values()) <= 0.0:
-        normalized_ratio = deepcopy(DEFAULT_CANDIDATE_GENERATION_PREFERENCES["source_ratio"])
+    if min(normalized_ratio.values()) < 0 or sum(normalized_ratio.values()) <= 0.0:
+        raise ValueError("候选来源比例必须非负且至少有一个正数")
     normalized["source_ratio"] = normalized_ratio
     from core.stiffener_profile import resolve_stiffener_type
     raw_stiffener_types = preferences.get("stiffener_types")
@@ -366,3 +378,52 @@ def requested_screen_top_k(task: Dict[str, Any] | None) -> int:
 
 def effective_screen_top_k(task: Dict[str, Any] | None, available_count: int) -> int:
     return max(0, min(requested_screen_top_k(task), max(int(available_count), 0)))
+
+
+def build_design_constraints(task: Dict, stiffener_type: str | None = None) -> Dict:
+    """生成候选与求解共用的任务约束；任务包络优先于全局采样范围。"""
+    from core.stiffener_profile import load_param_ranges_for_type, required_geometry_params
+
+    payload = task_payload_from_request(task)
+    stype = stiffener_type or payload["stiffener_type"]
+    allowed_types = payload["candidate_generation_preferences"].get("stiffener_types", [payload["stiffener_type"]])
+    if stype not in allowed_types:
+        raise ValueError(f"筋型 {stype} 不在任务允许集合中")
+    ranges = deepcopy(load_param_ranges_for_type(stype))
+    envelope = payload["geometry_envelope"]
+    facts = payload.get("user_input_facts", {}).get("geometry", {})
+    fixed = dict(payload.get("fixed_geometry", {}))
+    fixed.update({key: value for key, value in facts.items() if key in required_geometry_params(stype)})
+    for key in ("panel_length_mm", "panel_width_mm"):
+        lower, upper = envelope[key]
+        ranges[key] = {"min": float(lower), "max": float(upper)}
+    for key, value in fixed.items():
+        if key not in required_geometry_params(stype):
+            raise ValueError(f"固定几何字段不适用于 {stype}: {key}")
+        ranges[key] = {"min": float(value), "max": float(value)}
+    height_limit = float(facts.get("max_stiffener_height_mm", envelope["max_stiffener_height_mm"]))
+    ranges["stiffener_height_mm"]["max"] = min(ranges["stiffener_height_mm"]["max"], height_limit)
+    for key in required_geometry_params(stype):
+        lower, upper = ranges[key]["min"], ranges[key]["max"]
+        if not all(math.isfinite(v) and v > 0 for v in (lower, upper)) or lower > upper:
+            raise ValueError(f"无效任务几何范围: {key}")
+    return {"geometry_ranges": ranges, "stiffener_type": stype,
+            "layup_constraints": deepcopy(payload["layup_constraints"]),
+            "load_conditions": deepcopy(payload["load_conditions"]),
+            "boundary_conditions": deepcopy(payload["boundary_conditions"])}
+
+
+def validate_candidate_constraints(candidate: Dict, constraints: Dict) -> None:
+    """检查任务固定项和工况，拒绝跨阶段更换尺寸、筋型或载荷。"""
+    if candidate.get("stiffener_type") != constraints["stiffener_type"]:
+        raise ValueError("候选筋型与任务约束不一致")
+    for key, bounds in constraints["geometry_ranges"].items():
+        if key not in candidate.get("geometry", {}):
+            raise ValueError(f"候选缺少任务几何: {key}")
+        value = float(candidate["geometry"][key])
+        if not math.isfinite(value) or not bounds["min"] <= value <= bounds["max"]:
+            raise ValueError(f"候选 {key}={value} 不满足任务范围 {bounds}")
+    if normalize_load_conditions(candidate.get("load_conditions")) != constraints["load_conditions"]:
+        raise ValueError("候选载荷与任务不一致")
+    if normalize_boundary_conditions(candidate.get("boundary_conditions"))["type"] != constraints["boundary_conditions"]["type"]:
+        raise ValueError("候选边界与任务不一致")
