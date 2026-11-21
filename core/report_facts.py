@@ -1,4 +1,4 @@
-"""报告事实绑定与受限解释契约；模型不能向事实段注入自由文本。"""
+"""报告事实、载荷比例及目标比较量。"""
 
 from __future__ import annotations
 
@@ -9,13 +9,7 @@ from core.display import format_number
 from core.laminate import parse_angles
 
 
-FACT_REFERENCE_KEYS = {"candidate_id", "metric"}
-FOLLOW_UPS = {
-    "review_mesh": "核查首个正屈曲模态、网格收敛和边界实现。",
-    "review_manufacturing": "核查层厚、层序、筋条成形及连接工艺；制造可行性尚未验收。",
-    "inspect_failed_job": "求解未成功，先检查作业日志，不作承载判定。",
-    "check_reference_load": "BLF 小于 1，线性临界载荷低于完整参考载荷，不能据此认定可承受完整参考载荷。",
-}
+ANALYSIS_SCOPE = "理想逐层复合壳与理想 Tie 连接的线性屈曲；未计算损伤、初始缺陷敏感性或非线性极限承载，未提供制造验收。"
 METRIC_LABELS = {
     "evaluation_status": "求解状态", "BLF_global": "首个正特征值 BLF", "BLF_local": "已分类局部屈曲 BLF",
     "second_positive_BLF": "第二个正特征值 BLF", "weight_kg_per_m2": "面密度",
@@ -26,6 +20,13 @@ METRIC_LABELS = {
     "pitch_mm": "筋距", "stiffener_height_mm": "筋高", "web_thickness_mm": "腹板厚度",
     "flange_width_mm": "翼缘或帽形底部跨度", "flange_thickness_mm": "翼缘或连接板厚度",
     "cap_width_mm": "帽顶宽度", "cap_thickness_mm": "帽顶厚度",
+    "required_BLF": "推荐所需 BLF 下限", "BLF_margin_percent": "BLF 相对比较下限的余量",
+    "objective_value": "优化目标比较值",
+    "candidate_count": "候选总数", "result_count": "实际校核数", "comparable_count": "满足推荐条件的方案数",
+    "analysis_scope": "分析范围", "recommendation_status": "推荐状态", "material": "材料",
+    "reference_Nx": "参考压缩载荷", "reference_Nxy": "参考剪切载荷",
+    "critical_Nx": "线性临界比例下的压缩载荷", "critical_Nxy": "线性临界比例下的剪切载荷",
+    "stiffener_type": "筋型",
 }
 STATUS_LABELS = {"success": "求解成功", "failed": "求解失败", "not_evaluated": "未求解",
                  "task_input": "任务输入", "design_input": "设计输入", "predicted": "代理估计"}
@@ -94,85 +95,53 @@ def build_facts(candidates, results, target):
     return facts
 
 
-def render_fact(fact):
+def format_fact_value(fact):
     """正文与结果表采用一致的显示精度，事实原值不参与舍入。"""
     value = fact["value"]
+    if fact["metric"] == "analysis_scope":
+        return "逐层壳与理想 Tie 连接的线性屈曲分析"
     if value is None:
-        display = "未知"
+        return "未确认"
     elif isinstance(value, bool):
         display = "满足" if value else "不满足"
     elif isinstance(value, (float, int)):
-        digits = 3 if fact["unit"] == "mm" else 6 if fact["metric"].startswith("skin_f") else 4
+        digits = 2 if fact["unit"] == "%" else 3 if fact["unit"] == "mm" else 6 if fact["metric"].startswith("skin_f") else 4
         display = format_number(value, digits)
     else:
         display = json.dumps(value, ensure_ascii=False) if isinstance(value, list) else STATUS_LABELS.get(str(value), str(value))
-    unit = {"1": "（无量纲）", "boolean": "", "status": "", "count": " 层", "deg": " 度"}.get(fact["unit"], " " + fact["unit"])
-    return f"{fact['candidate_id']}：{METRIC_LABELS.get(fact['metric'], fact['metric'])}={display}{unit}。"
+    # 数量的量词由句子承担，物理量的单位由事实显示值承担。
+    unit = {"1": "（无量纲）", "boolean": "", "status": "", "count": "", "个": "", "deg": " 度", "": ""}.get(fact["unit"], " " + fact["unit"])
+    return display + unit
 
 
-def validate_report_selection(text, payload):
-    """引用只读事实，推荐必须与程序排序一致，拒绝重复字段和自由文本。"""
-    def unique_object(pairs):
-        value = {}
-        for key, item in pairs:
-            if key in value:
-                raise ValueError("报告 JSON 含重复字段")
-            value[key] = item
-        return value
-
-    try:
-        answer = json.loads(text, object_pairs_hook=unique_object)
-    except (TypeError, json.JSONDecodeError) as exc:
-        raise ValueError("解释必须是契约 JSON，不接收自由文本") from exc
-    if not isinstance(answer, dict) or set(answer) != {"fact_refs", "recommendation_candidate_id", "follow_up_codes"}:
-        raise ValueError("报告字段必须为 fact_refs、recommendation_candidate_id、follow_up_codes")
-    references = answer["fact_refs"]
-    if not isinstance(references, list) or not 0 < len(references) <= min(len(payload["facts"]), 12):
-        raise ValueError("报告需要 1 至 12 项关键事实引用")
-    known = {}
-    for fact in payload["facts"]:
-        key = (fact["candidate_id"], fact["metric"])
-        if key in known:
-            raise ValueError("事实索引包含重复候选/指标")
-        known[key] = fact
-    used = set()
-    resolved = []
-    for reference in references:
-        if (not isinstance(reference, dict) or set(reference) != FACT_REFERENCE_KEYS
-                or any(not isinstance(value, str) for value in reference.values())):
-            raise ValueError("事实引用只允许 candidate_id 和 metric 字符串")
-        key = (reference["candidate_id"], reference["metric"])
-        if key not in known or key in used:
-            raise ValueError("事实引用未知或重复")
-        used.add(key)
-        resolved.append(dict(known[key]))
-    expected_id = (payload["recommendation"]["selected"] or {}).get("candidate_id")
-    if answer["recommendation_candidate_id"] != expected_id:
-        raise ValueError("报告推荐与任务目标及求解证据不一致")
-    codes = answer["follow_up_codes"]
-    if not isinstance(codes, list) or any(not isinstance(code, str) or code not in payload["follow_up_codes"] for code in codes):
-        raise ValueError("验证建议代码不满足当前结果条件")
-    if len(set(codes)) != len(codes):
-        raise ValueError("验证建议重复")
-    return {**answer, "facts": resolved}
-
-
-def allowed_follow_ups(facts):
-    codes = {"review_manufacturing"}
-    for fact in facts:
-        if fact["metric"] == "evaluation_status":
-            if fact["value"] == "success":
-                codes.add("review_mesh")
-            elif fact["value"] != "not_evaluated":
-                codes.add("inspect_failed_job")
-        if fact["metric"] == "BLF_global" and fact["value"] is not None and fact["value"] < 1:
-            codes.add("check_reference_load")
-    return {code: FOLLOW_UPS[code] for code in FOLLOW_UPS if code in codes}
-
-
-def render_report_selection(answer):
-    lines = ["### 关键事实", *["- " + render_fact(fact) for fact in answer["facts"]], "", "### 验证建议"]
-    lines.extend("- " + FOLLOW_UPS[code] for code in answer["follow_up_codes"])
-    if not answer["follow_up_codes"]:
-        lines.append("- 未选择额外验证建议。")
-    return "\n".join(lines)
+def build_comparison_facts(summary, task_payload):
+    """比较当前模型的成功结果，组合工况按同一特征值等比例缩放。"""
+    facts = []
+    def add(cid, metric, value, unit, status="derived"):
+        facts.append(dict(candidate_id=cid, metric=metric, value=value, unit=unit, result_status=status))
+    recommendation = summary["recommendation"]
+    ranked, best = recommendation["ranked"], recommendation["selected"]
+    add(None, "required_BLF", recommendation["required_BLF"], "1", "task_input")
+    for metric in ("candidate_count", "result_count"):
+        add(None, metric, summary[metric], "个", "recorded")
+    add(None, "comparable_count", len(ranked), "个")
+    add(None, "analysis_scope", ANALYSIS_SCOPE, "", "scope")
+    add(None, "recommendation_status", "有满足条件的方案" if best else "没有满足完整校核及目标比较条件的方案", "")
+    for row in ranked:
+        cid = row["candidate_id"]
+        add(cid, "objective_value", row["objective_value"], row["unit"])
+        add(cid, "BLF_margin_percent", (row["BLF_global"] / recommendation["required_BLF"] - 1) * 100, "%")
+    for candidate in summary["all_candidates"]:
+        cid = candidate.get("persistent_candidate_id") or candidate["candidate_id"]
+        add(cid, "material", (candidate.get("material_system") or {}).get("name"), "", "design_input")
+        add(cid, "stiffener_type", candidate.get("stiffener_type"), "", "design_input")
+    load = task_payload["load_conditions"]
+    for component in ("Nx", "Nxy"):
+        value = load.get(f"{component}_kN_per_m")
+        if value is None:
+            continue
+        add(None, f"reference_{component}", value, "kN/m", "task_input")
+        for row in summary["results"]:
+            if row["status"] == "success":
+                add(row["candidate_id"], f"critical_{component}", value * row["BLF_global"], "kN/m")
+    return facts

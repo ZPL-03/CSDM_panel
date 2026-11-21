@@ -10,10 +10,10 @@
  -> OrchestratorAgent：选择审计、正式编号、输入与结果身份检查
  -> FEMAgent：实际逐层复合壳、Abaqus、输入与结果契约
  -> KnowledgeAgent：评估档案、正式案例、案例记忆
- -> ReportGenAgent：完整 RAG/KG、事实引用、受限建议、Markdown/PDF
+ -> ReportGenAgent：完整 RAG/KG、推荐评议、事实绑定与内容复核、Markdown/PDF
 ```
 
-LLM 负责需求理解与报告事实选择，不提供数值候选，不改写几何、铺层、求解值或结论。生产需求抽取失败时直接报错；自动化测试可通过 `CSDM_panel_DISABLE_LLM_AUTO=1` 显式使用规则解析和确定性报告。该开关不是线上失败降级。
+LLM 负责需求理解与推荐方案的工程评议，不提供数值候选，不改写几何、铺层、求解值或校核结论。推荐评议比较目标值与承载余量，说明影响选型的证据缺口。生产需求抽取失败时直接报错；自动化测试可通过 `CSDM_panel_DISABLE_LLM_AUTO=1` 显式使用规则解析和结构化结果报告。该开关不是线上失败降级。
 
 ## 模块边界
 

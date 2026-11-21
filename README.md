@@ -9,7 +9,7 @@
 - 每种筋型单独训练 RF、保存权重、训练来源、适用域及独立验收证据。不能用 T 型权重预测 L、BLADE 或 HAT。
 - 代理不可用时，按配置 `direct_fem` 或 `stop` 执行。`direct_fem` 只按生成顺序和任务名额选择，不产生代理 BLF 或性能排名。
 - FEM 使用实际部件的逐层复合壳截面。输入与结果绑定候选编号、材料、层序、几何、工况、边界和求解代码指纹。
-- 报告解释使用项目内完整 RAG/KG。模型只能选择已绑定的事实引用和适用建议代码，程序回填数值、单位、状态及结论。
+- 报告解释使用项目内 RAG/KG 及实际 FEM。在最终推荐中说明轻量化与屈曲余量的取舍、可比较方案和影响选型的验证；程序负责数值、单位和推荐排序。见 [工程设计报告](docs/工程设计报告.md)。
 
 ## 环境与启动
 
@@ -37,7 +37,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/start.ps1
 2. 程序按筋型分配候选数，先尝试案例迁移，再用 DOE 采样。`candidate_source_ratio` 为 `case_transfer: 1`、`doe: 1`，迁移不足由 DOE 补足。指定多筋型时，候选数不得少于筋型数。
 3. 确认初筛和求解。代理结果只有通过版本、来源、权重、独立验收和适用域检查才可用。
 4. 查看 Abaqus 返回值及模态。成功求解不等于满足目标，未求解或失败的承载结论为未知。
-5. 导出一份总体设计方案报告，包含全部候选、送检依据、实际结果、最终推荐和去重文献引用。Markdown、PDF 和事实 JSON 按任务保存在 `data/results/<TASK_ID>/`。启用 LLM 时，API 失败或事实选择未通过校验会中止导出，不使用替代文本宣称成功。
+5. 导出一份总体设计方案报告，包含全部候选、送检依据、实际结果、推荐取舍与验证事项和去重文献引用。Markdown、PDF 和事实 JSON 按任务保存在 `data/results/<TASK_ID>/`。启用 LLM 时，API 或工程评议校验失败会中止导出。
 
 ## 目录与数据
 
@@ -89,12 +89,13 @@ conda run -n AGENT --no-capture-output python -X utf8 -B -m pytest tests -q --ru
 conda run -n AGENT --no-capture-output python -X utf8 -B scripts/validate_physical_workflow.py --mode api --require-llm-explanation --output-dir <项目外未存在目录>
 ```
 
-完整回归显式运行真实 FEM。API 验收要求真实需求抽取、外部知识、成功 FEM 和非空报告；`--require-llm-explanation` 要求报告实际采用通过契约的模型引用。失败证据不覆盖，不把失败或跳过计为通过。力学与层序检查见 [物理模型与集成验收](docs/物理模型与集成验收.md)。
+完整回归显式运行真实 FEM。API 验收要求真实需求抽取、外部知识、成功 FEM 和非空报告；`--require-llm-explanation` 要求实际采用通过契约的工程评议。失败证据不覆盖，不把失败或跳过计为通过。力学与层序检查见 [物理模型与集成验收](docs/物理模型与集成验收.md)。
 
 ## 文档
 
 - [架构与开发](docs/CSDM_panel_项目全流程梳理与开发指南.md)
 - [接口约定](docs/接口约定.md)
+- [工程设计报告](docs/工程设计报告.md)
 - [项目状态](docs/项目状态.md)
 - [案例维护](docs/案例维护操作.md)
 - [案例迁移](docs/案例迁移机制详解.md)

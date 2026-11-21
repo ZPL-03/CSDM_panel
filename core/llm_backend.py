@@ -78,6 +78,7 @@ class LLMBackend:
         system_prompt: str,
         user_prompt: str,
         max_tokens_override: int | None = None,
+        json_mode: bool = False,
     ) -> str:
         """调用当前 LLM 生成普通文本。"""
         request_payload = {
@@ -91,6 +92,8 @@ class LLMBackend:
             "extra_body": self.extra_body,
         }
         self.last_response = None
+        if json_mode:
+            request_payload["response_format"] = {"type": "json_object"}
         response = self.client.chat.completions.create(**request_payload)
         usage = getattr(response, "usage", None)
         self.last_response = {"model": getattr(response, "model", self.model),

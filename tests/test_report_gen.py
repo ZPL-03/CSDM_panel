@@ -9,7 +9,7 @@ import pytest
 
 from agents.report_gen import ReportGenAgent
 from core.laminate import analysis_contract
-from core.report_facts import render_fact, validate_report_selection
+from core.report_facts import format_fact_value
 
 
 def _report_sample() -> tuple[dict, list[dict], list[dict]]:
@@ -39,10 +39,12 @@ def _report_sample() -> tuple[dict, list[dict], list[dict]]:
     return task, [result], [candidate]
 
 
-def _selection(payload, references=None, codes=None):
-    return json.dumps({"fact_refs": references if references is not None else [{"candidate_id": "C1", "metric": "BLF_global"}],
-                       "recommendation_candidate_id": (payload["recommendation"]["selected"] or {}).get("candidate_id"),
-                       "follow_up_codes": codes if codes is not None else list(payload["follow_up_codes"])})
+def _review(payload):
+    refs = "、".join("{{" + ref + "}}" for ref in payload["required_assessment_refs"])
+    scope = next(fact["ref"] for fact in payload["facts"] if fact["metric"] == "analysis_scope")
+    return json.dumps({"recommendation_candidate_id": (payload["recommendation"]["selected"] or {}).get("candidate_id"),
+                       "assessment": "当前推荐判断依据为" + refs + "，比较仅覆盖完成校核的候选。",
+                       "tradeoffs": [], "verification": ["模型边界为{{" + scope + "}}；需核查实物连接与该理想约束的对应关系。"]})
 
 
 def _backend():
@@ -52,7 +54,10 @@ def _backend():
 
         def chat(self, system_prompt, user_prompt, **kwargs):
             self.calls += 1
-            return _selection(json.loads(user_prompt))
+            payload = json.loads(user_prompt)
+            if set(payload) == {"report", "evidence"}:
+                return json.dumps({"accepted": True, "issues": []})
+            return _review(payload)
     return Backend()
 
 
@@ -61,51 +66,13 @@ def test_structured_facts_restore_original_values_and_compute_mass():
     agent = ReportGenAgent()
     summary = agent._build_structured_summary(task, results, candidates)
     payload = agent._build_llm_explanation_payload(summary)
-    resolved = validate_report_selection(_selection(payload), payload)
     fact = next(item for item in summary["facts"] if item["metric"] == "BLF_global")
-    assert resolved["facts"] == [fact]
+    assert next(item for item in payload["facts"] if item["metric"] == "BLF_global")["value"] == fact["value"]
     assert fact["value"] == 1.46 and fact["unit"] == "1" and fact["result_status"] == "success"
     assert next(item for item in summary["facts"] if item["metric"] == "skin_f0")["value"] == pytest.approx(4 / 14)
     assert summary["recommendation"]["selected"]["objective_value"] == pytest.approx(12.5 * 0.7 * 0.6)
 
 
-@pytest.mark.parametrize("field,value", [("candidate_id", "C2"), ("metric", "unknown_metric"), ("value", 1.4601),
-                                        ("unit", "kN/m"), ("result_status", "not_evaluated")])
-def test_unknown_references_and_value_fields_are_rejected(field, value):
-    task, results, candidates = _report_sample()
-    agent = ReportGenAgent()
-    payload = agent._build_llm_explanation_payload(agent._build_structured_summary(task, results, candidates))
-    reference = {"candidate_id": "C1", "metric": "BLF_global", field: value}
-    with pytest.raises(ValueError):
-        validate_report_selection(_selection(payload, [reference]), payload)
-
-
-@pytest.mark.parametrize("value", [1, 1.0, -0.273, None])
-def test_fact_references_preserve_type_unit_and_status(value):
-    fact = {"candidate_id": "C1", "metric": "metric", "value": value, "unit": "1", "result_status": "success"}
-    payload = {"facts": [fact], "recommendation": {"selected": None}, "follow_up_codes": {}}
-    reference = {"candidate_id": "C1", "metric": "metric"}
-    resolved = validate_report_selection(_selection(payload, [reference]), payload)
-    assert resolved["facts"] == [fact] and type(resolved["facts"][0]["value"]) is type(value)
-    for refs in ([reference, reference], [fact]):
-        with pytest.raises(ValueError):
-            validate_report_selection(_selection(payload, refs), payload)
-
-
-def test_model_cannot_override_recommendation_or_add_inapplicable_advice():
-    task, results, candidates = _report_sample()
-    agent = ReportGenAgent()
-    payload = agent._build_llm_explanation_payload(agent._build_structured_summary(task, results, candidates))
-    answer = json.loads(_selection(payload))
-    answer["recommendation_candidate_id"] = "C2"
-    with pytest.raises(ValueError):
-        validate_report_selection(json.dumps(answer), payload)
-    for codes in (["inspect_failed_job"], ["review_mesh", "review_mesh"], ["assert_manufacturing_safe"]):
-        with pytest.raises(ValueError):
-            validate_report_selection(_selection(payload, codes=codes), payload)
-    duplicate = _selection(payload).replace('"recommendation_candidate_id":', '"fact_refs": [], "recommendation_candidate_id":')
-    with pytest.raises(ValueError, match="重复字段"):
-        validate_report_selection(duplicate, payload)
 
 
 @pytest.mark.parametrize("response", ["C1 已通过，制造已认证。", '{"fact_refs":[],"text":"无依据结论"}'])
@@ -158,8 +125,7 @@ def test_exact_threshold_and_negative_predicted_score():
     summary = agent._build_structured_summary(task, results, candidates)
     assert summary["passed_count"] == 0 and summary["recommendation"]["selected"] is None
     payload = agent._build_llm_explanation_payload(summary)
-    resolved = validate_report_selection(_selection(payload, [{"candidate_id": "C1", "metric": "rank_score"}]), payload)
-    assert resolved["facts"][0]["value"] == -0.273
+    assert next(row for row in payload["facts"] if row["metric"] == "rank_score")["value"] == -0.273
     results[0]["verdict"] = "通过"
     with pytest.raises(ValueError, match="冲突"):
         agent._build_structured_summary(task, results, candidates)
@@ -172,7 +138,7 @@ def test_low_blf_does_not_qualify_as_full_reference_load_recommendation():
     agent = ReportGenAgent()
     summary = agent._build_structured_summary(task, results, candidates)
     assert summary["passed_count"] == 1 and summary["recommendation"]["selected"] is None
-    assert "check_reference_load" in agent._build_llm_explanation_payload(summary)["follow_up_codes"]
+    assert summary["recommendation"]["required_BLF"] == 1.0
 
 
 @pytest.mark.parametrize("mutation", ["duplicate_result", "unbound_result", "wrong_formal", "wrong_layup", "duplicate_selected"])
@@ -210,9 +176,9 @@ def test_report_includes_all_candidates_and_preserves_stage_snapshots(tmp_path):
     assert summary["candidate_count"] == 2 and summary["selected_count"] == 1 and summary["not_evaluated_count"] == 1
     assert summary["all_candidates"][0]["persistent_candidate_id"] == "C1"
     assert summary["all_candidates"][1]["report_selected"] is False
-    assert candidates == original and agent.llm_backend.calls == 1
+    assert candidates == original and agent.llm_backend.calls == 2
     assert audit["llm_explanation_audit"]["status"] == "accepted"
-    assert audit["llm_explanation_audit"]["selection"]["recommendation_candidate_id"] == "C1"
+    assert audit["llm_explanation_audit"]["review"]["recommendation_candidate_id"] == "C1"
     assert response["generated_output_keys"] == ["overall"]
     assert response["report_outputs"]["overall"]["pdf_generated"] is True
     assert "任务 BLF 下限：1.35" in response["content"]
@@ -301,18 +267,21 @@ def test_pdf_heading_levels_keep_with_following_content():
 
 
 @pytest.mark.parametrize("metric,value,unit,expected", [
-    ("BLF_global", 1.3682, "1", "1.3682"),
-    ("second_positive_BLF", 1.3841, "1", "1.3841"),
-    ("weight_kg_per_m2", 4.457706984276072, "kg/m^2", "4.4577"),
-    ("skin_thickness_mm", 1.6293750334818733, "mm", "1.629"),
-    ("stiffener_height_mm", 35.6138545429407, "mm", "35.614"),
-    ("skin_f0", 0.375, "1", "0.375"),
-    ("skin_f45", 0.3333333333333333, "1", "0.333333"),
-    ("rank_score", -0.273, "score", "-0.273"),
-    ("BLF_global", 0.00000001, "1", "1.0000e-08"),
+    ("BLF_global", 1.3682, "1", "1.3682（无量纲）"),
+    ("second_positive_BLF", 1.3841, "1", "1.3841（无量纲）"),
+    ("weight_kg_per_m2", 4.457706984276072, "kg/m^2", "4.4577 kg/m^2"),
+    ("skin_thickness_mm", 1.6293750334818733, "mm", "1.629 mm"),
+    ("stiffener_height_mm", 35.6138545429407, "mm", "35.614 mm"),
+    ("skin_f0", 0.375, "1", "0.375（无量纲）"),
+    ("skin_f45", 0.3333333333333333, "1", "0.333333（无量纲）"),
+    ("rank_score", -0.273, "score", "-0.273 score"),
+    ("BLF_global", 0.00000001, "1", "1.0000e-08（无量纲）"),
+    ("candidate_count", 12, "个", "12"),
+    ("comparable_count", 0, "个", "0"),
+    ("ply_count", 16, "count", "16"),
 ])
 def test_bound_fact_display_has_consistent_precision_without_changing_values(metric, value, unit, expected):
     fact = dict(candidate_id="C1", metric=metric, value=value, unit=unit, result_status="design_input")
     before = deepcopy(fact)
-    assert f"={expected}" in render_fact(fact)
+    assert format_fact_value(fact) == expected
     assert fact == before
