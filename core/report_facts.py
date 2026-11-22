@@ -22,7 +22,7 @@ METRIC_LABELS = {
     "flange_width_mm": "翼缘或帽形底部跨度", "flange_thickness_mm": "翼缘或连接板厚度",
     "cap_width_mm": "帽顶宽度", "cap_thickness_mm": "帽顶厚度",
     "required_BLF": "推荐所需 BLF 下限", "BLF_margin_percent": "BLF 相对比较下限的余量",
-    "objective_value": "优化目标比较值",
+    "objective_value": "优化目标比较值", "comparison_inputs": "推荐与次位的物理输入对照",
     "candidate_count": "候选总数", "result_count": "实际校核数", "comparable_count": "满足推荐条件的方案数",
     "selected_count": "送检方案数", "successful_count": "成功求解数", "passed_count": "达到任务阈值的方案数",
     "failed_count": "求解失败数", "not_evaluated_count": "尚无求解结果的候选数",
@@ -125,6 +125,25 @@ def format_fact_value(fact):
     return display + unit
 
 
+def _describe_comparison_inputs(left, right):
+    """从已校核输入区分筋型、几何、材料、角度层序和逐层厚度。"""
+    lg, rg = left["geometry"], right["geometry"]
+    dimensions = [METRIC_LABELS[key] for key in sorted(lg.keys() & rg.keys()) if lg[key] != rg[key]]
+    ls, rs = left["sections"], right["sections"]
+    common = ls.keys() & rs.keys()
+
+    def same_layers(field):
+        return all([layer[field] for layer in ls[key]] == [layer[field] for layer in rs[key]] for key in common)
+
+    return "；".join((
+        "筋型一致" if left["stiffener_type"] == right["stiffener_type"] else "筋型不同",
+        "共有几何参数中的差异：" + "、".join(dimensions) if dimensions else "共有几何参数一致",
+        "单层材料属性一致" if left["material"] == right["material"] else "单层材料属性不同",
+        "共有部件的角度层序一致" if same_layers("angle_deg") else "共有部件的角度层序不同",
+        "共有部件的逐层厚度一致" if same_layers("thickness_mm") else "共有部件的逐层厚度不同",
+    ))
+
+
 def build_comparison_facts(summary, task_payload):
     """比较当前模型的成功结果，组合工况按同一特征值等比例缩放。"""
     facts = []
@@ -135,14 +154,17 @@ def build_comparison_facts(summary, task_payload):
     add(None, "target_BLF", summary["target_BLF"], "1", "task_input")
     add(None, "required_BLF", recommendation["required_BLF"], "1", "task_input")
     for metric in ("candidate_count", "selected_count", "result_count", "successful_count", "passed_count",
-                   "failed_count", "not_evaluated_count"):
+                   "failed_count", "not_evaluated_count", "classified_local_count"):
         add(None, metric, summary[metric], "个", "recorded")
     add(None, "comparable_count", len(ranked), "个")
     add(None, "max_result_BLF", max((row["BLF_global"] for row in summary["results"] if row["status"] == "success"),
                                     default=None), "1")
-    add(None, "classified_local_count", sum(row["status"] == "success" and row.get("BLF_local") is not None
-                                           for row in summary["results"]), "个")
     add(None, "analysis_scope", ANALYSIS_SCOPE, "", "scope")
+    if len(ranked) > 1:
+        pair = {row["candidate_id"]: row["analysis_contract"] for row in summary["results"]
+                if row["candidate_id"] in {ranked[0]["candidate_id"], ranked[1]["candidate_id"]}}
+        add(None, "comparison_inputs", _describe_comparison_inputs(
+            pair[ranked[0]["candidate_id"]], pair[ranked[1]["candidate_id"]]), "")
     for row in ranked:
         cid = row["candidate_id"]
         add(cid, "objective_value", row["objective_value"], row["unit"])

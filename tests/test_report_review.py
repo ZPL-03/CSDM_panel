@@ -98,9 +98,10 @@ def test_no_recommendation_and_evidence_citation_remain_explicit():
     context["recommendation"]["selected"] = None
     response = answer()
     response["recommendation_candidate_id"] = None
-    response["verification"][0] += "文献中的验证思路见{{E1}}，其数值不是本模型的结果。"
+    response["verification"].append({"evidence_refs": ["E1"], "check_fields": ["configuration", "boundary"]})
     accepted = validate_engineering_review(json.dumps(response), context)
-    assert "[E1]" in render_engineering_review(accepted, context)
+    assert "使用检索证据 [E1] 作对照前，核查研究对象与构型、边界条件对本任务的适用性。" in render_engineering_review(accepted, context)
+    assert accepted["paragraph_refs"][-1] == ["E1"]
     assert accepted["recommendation_candidate_id"] is None
 
 
@@ -177,25 +178,28 @@ def test_contract_repair_is_bounded_and_keeps_original_error():
     assert parse_engineering_review(lambda *_: json.dumps(answer()), json.dumps(response), context, {})["assessment"] == answer()["assessment"]
 
 
-@pytest.mark.parametrize("unmarked", ["E1", "[E1]"])
-def test_evidence_reference_format_is_repaired_without_guessing_source(unmarked):
+@pytest.mark.parametrize("identifier", ["E1", "[E1]", "{{E1}}"])
+def test_literature_claims_require_structured_verification(identifier):
     context, audit = payload(), {}
     response = answer()
-    response["verification"][0] = f"按{unmarked}的试件条件核查{{{{TASK.scope}}}}。"
+    response["verification"][0] = f"{identifier} 的边界条件与{{{{TASK.scope}}}}下的方案不同。"
 
     def repair(stage, system, request):
         assert stage == "format_repair"
-        assert "{{E1}}" in system and "不得写 E1 或 [E1]" in system
+        assert "evidence_refs 与 check_fields" in system
         assert "verification[0]" in request["validation_error"]
-        assert "{{E1}}" in request["validation_error"]
-        assert "draft_response" not in request and request["response_schema"] == context["response_schema"]
+        assert "evidence_refs、check_fields" in request["validation_error"]
+        assert json.loads(request["draft_response"]) == response
+        assert request["response_schema"] == context["response_schema"]
         repaired = answer()
-        repaired["verification"][0] = "按{{E1}}的试件条件核查{{TASK.scope}}。"
+        repaired["verification"].append({"evidence_refs": ["E1"], "check_fields": ["boundary"]})
         return json.dumps(repaired)
 
     accepted = parse_engineering_review(repair, json.dumps(response), context, audit)
-    assert accepted["paragraph_refs"][-1] == ["E1", "TASK.scope"]
-    assert "[E1]的试件条件" in render_engineering_review(accepted, context)
+    assert accepted["paragraph_refs"][-2:] == [["TASK.scope"], ["E1"]]
+    rendered = render_engineering_review(accepted, context)
+    assert "使用检索证据 [E1] 作对照前，核查边界条件对本任务的适用性。" in rendered
+    assert "不同" not in rendered
     assert audit["contract_issue"]
 
 
@@ -208,31 +212,93 @@ def test_contract_repair_receives_all_invalid_paragraphs_in_one_request():
         error = request["validation_error"]
         assert "verification[0]" in error and "verification[1]" in error
         repaired = answer()
-        repaired["verification"].append("按{{E1}}的适用条件复核试验对比方案。")
+        repaired["verification"].append({"evidence_refs": ["E1"], "check_fields": ["method"]})
         return json.dumps(repaired)
 
     accepted = parse_engineering_review(repair, json.dumps(response), context, audit)
     assert accepted["paragraph_refs"][-2:] == [["TASK.scope"], ["E1"]]
 
 
+def test_contract_repair_binds_a_verification_item_without_adding_a_paragraph():
+    context = payload()
+    response = answer()
+    response["verification"].extend([
+        {"evidence_refs": ["E1"], "check_fields": ["boundary"]},
+        {"evidence_refs": ["E1"], "check_fields": ["method"]},
+        "补充同工况模型对照。",
+    ])
+
+    def repair(stage, system, request):
+        assert stage == "format_repair" and "合计 1 至 4 项" in system
+        assert "verification[3]" in request["validation_error"]
+        assert "不另起段落" in request["instruction"]
+        draft = json.loads(request["draft_response"])
+        draft["verification"][3] = "按{{TASK.scope}}补充同工况模型对照。"
+        return json.dumps(draft)
+
+    accepted = parse_engineering_review(repair, json.dumps(response), context, {})
+    assert accepted["verification"][:3] == response["verification"][:3]
+    assert len(accepted["verification"]) == 4
+    assert accepted["paragraph_refs"][-1] == ["TASK.scope"]
+
+
 def test_source_dimensions_are_not_renderable_current_facts():
     context, audit = payload(), {}
     context["evidence"][0]["text"] = "原试件厚度为 2.1 mm。"
     response = answer()
-    response["verification"][0] = "{{E1}}的试件厚度为 2.1 mm，应核对制造条件。"
+    response["verification"][0] += "试件厚度为 2.1 mm。"
 
     def repair(_, system, request):
-        assert "即使明确写了来源也不复述" in system
-        assert "文献条件使用 evidence.ref" in request["validation_error"]
+        assert "段落只讨论当前任务" in system
+        assert "未绑定的数值" in request["validation_error"]
         assert request["engineering_context"]["evidence"] == context["evidence"]
-        assert "draft_response" not in request
+        assert json.loads(request["draft_response"]) == response
         repaired = answer()
-        repaired["verification"][0] = "核对{{E1}}的试件厚度和当前制造条件是否相符。"
+        repaired["verification"].append({"evidence_refs": ["E1"], "check_fields": ["configuration"]})
         return json.dumps(repaired)
 
     accepted = parse_engineering_review(repair, json.dumps(response), context, audit)
-    assert "[E1]的试件厚度" in render_engineering_review(accepted, context)
+    assert "核查研究对象与构型对本任务的适用性" in render_engineering_review(accepted, context)
     assert "2.1 mm" not in render_engineering_review(accepted, context)
+
+
+@pytest.mark.parametrize("item", [
+    {"evidence_refs": [], "check_fields": ["material"]},
+    {"evidence_refs": ["E9"], "check_fields": ["material"]},
+    {"evidence_refs": ["E1", "E1"], "check_fields": ["material"]},
+    {"evidence_refs": ["E1"], "check_fields": []},
+    {"evidence_refs": ["E1"], "check_fields": ["boundary", "boundary"]},
+    {"evidence_refs": ["E1"], "check_fields": ["文献工况与当前不同"]},
+    {"evidence_refs": ["E1"], "check_fields": ["load"], "claim": "文献未报告载荷"},
+])
+def test_source_verification_accepts_only_known_unique_refs_and_check_fields(item):
+    response = answer()
+    response["verification"].append(item)
+    with pytest.raises(ValueError, match=r"verification\[1\]"):
+        validate_engineering_review(json.dumps(response), payload())
+
+
+def test_source_verification_cannot_repeat_the_same_check_in_a_different_order():
+    response = answer()
+    response["verification"].extend([
+        {"evidence_refs": ["E1"], "check_fields": ["load", "boundary"]},
+        {"evidence_refs": ["E1"], "check_fields": ["boundary", "load"]},
+    ])
+    with pytest.raises(ValueError, match="重复"):
+        validate_engineering_review(json.dumps(response), payload())
+
+
+def test_source_verification_combines_identical_conditions_and_keeps_all_evidence():
+    context, response = payload(), answer()
+    context["evidence"].append({"ref": "E2", "text": "同一来源的另一段原文。"})
+    response["verification"].extend([
+        {"evidence_refs": ["E1"], "check_fields": ["load", "boundary"]},
+        {"evidence_refs": ["E2"], "check_fields": ["boundary", "load"]},
+    ])
+    review = validate_engineering_review(json.dumps(response), context)
+    text = render_engineering_review(review, context)
+    assert text.count("作对照前") == 1 and "[E1]、[E2]" in text
+    assert review["paragraph_refs"][-2:] == [["E1"], ["E2"]]
 
 
 @pytest.mark.parametrize("suffix", ["{{TASK.scope}}", "{{TASK.scope}}。", "（{{TASK.scope}}）"])
@@ -254,7 +320,7 @@ def test_single_comparable_result_cannot_produce_a_comparative_tradeoff():
 def test_review_rejects_paragraph_counts_outside_report_scope(section, count):
     response = answer()
     response[section] = [response[section][0]] * count
-    with pytest.raises(ValueError, match=rf"{section} 必须为 .*段"):
+    with pytest.raises(ValueError, match=rf"{section} 必须为 .*列表"):
         validate_engineering_review(json.dumps(response), payload())
 
 

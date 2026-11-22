@@ -82,6 +82,23 @@ def test_threshold_fact_names_the_limit_in_generated_prose(value, display):
     assert format_fact_value({"metric": "target_met", "unit": "boolean", "value": value}) == display
 
 
+@pytest.mark.parametrize(("local_blf", "count"), [(None, 0), (1.62, 1)])
+def test_modal_coverage_is_rendered_from_result_state_not_model_prose(tmp_path, local_blf, count):
+    task, results, candidates = _report_sample()
+    results[0]["BLF_local"] = local_blf
+    agent = ReportGenAgent()
+    agent.llm_backend = _backend()
+    response = agent.run({"task": task, "results": results, "candidates": candidates, "output_dir": tmp_path})
+    audit = json.loads(Path(response["facts_path"]).read_text(encoding="utf-8"))
+    facts = {fact["metric"]: fact["value"] for fact in audit["summary"]["facts"]}
+    assert facts["classified_local_count"] == count and facts["BLF_local"] == local_blf
+    payload = audit["llm_explanation_audit"]["input"]
+    assert not {"classified_local_count", "BLF_local"} & {
+        fact["metric"] for key in ("facts", "unavailable_facts") for fact in payload[key]
+    }
+    assert f"有已分类局部屈曲特征值的结果：{count} / 1 个成功求解结果。" in response["content"]
+
+
 @pytest.mark.parametrize("response", ["C1 已通过，制造已认证。", '{"fact_refs":[],"text":"无依据结论"}'])
 def test_rejected_model_response_fails_export_without_publishing(tmp_path, response):
     task, results, candidates = _report_sample()
@@ -346,12 +363,29 @@ def test_many_fem_results_use_true_objective_order_without_duplicating_rows():
         ("TASK.target_BLF", 1.35),
     }
     for fact in payload["facts"] + payload["unavailable_facts"]:
-        assert fact["candidate_id"] is None or fact["metric"] in agent.REVIEW_RESULT_METRICS
+        allowed = agent.REVIEW_TASK_METRICS if fact["candidate_id"] is None else agent.REVIEW_RESULT_METRICS
+        assert fact["metric"] in allowed
     assert "odb_diagnostics" not in json.dumps(payload) and summary["results"][0]["odb_diagnostics"]
+    inputs = next(fact["display"] for fact in payload["facts"] if fact["ref"] == "TASK.comparison_inputs")
+    assert "筋高" in inputs and "共有部件的角度层序一致" in inputs and "共有部件的逐层厚度一致" in inputs
     pair = agent._build_structured_summary(task, results[-2:], candidates[-2:])
     pair_payload = agent._build_llm_explanation_payload(pair)
     assert len(payload["facts"]) == len(pair_payload["facts"])
     assert len(payload["unavailable_facts"]) == len(pair_payload["unavailable_facts"])
+
+
+def test_comparison_distinguishes_layup_sequence_from_ply_thickness():
+    task, results, candidates = _report_sample()
+    second = deepcopy(candidates[0])
+    second.update(candidate_id="TMP_2", persistent_candidate_id="C2")
+    second["geometry"]["web_thickness_mm"] *= 2
+    result = {**results[0], "candidate_id": "C2", "session_candidate_id": "TMP_2",
+              "analysis_contract": analysis_contract(second)}
+    agent = ReportGenAgent()
+    summary = agent._build_structured_summary(task, results + [result], candidates + [second])
+    fact = next(item for item in summary["facts"] if item["metric"] == "comparison_inputs")
+    assert "腹板厚度" in fact["value"] and "共有部件的角度层序一致" in fact["value"]
+    assert "共有部件的逐层厚度不同" in fact["value"]
 
 
 def test_mass_and_areal_density_objectives_do_not_use_same_ranking():

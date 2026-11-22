@@ -34,8 +34,13 @@ class ReportGenAgent(BaseAgent):
     agent_name = "REPORT_GEN"
     REPORT_ARTIFACTS = {"overall": ("overall_design_report", "CSDM_panel 总体设计方案报告")}
     OBJECTIVE_LABELS = {"最小重量": "模型质量（面密度乘投影面积）", "最小面密度": "面密度"}
+    REVIEW_TASK_METRICS = frozenset({
+        "analysis_scope", "boundary_conditions", "candidate_count", "comparable_count", "comparison_inputs",
+        "load_type", "max_result_BLF", "not_evaluated_count", "reference_Nx", "reference_Nxy",
+        "required_BLF", "result_count", "successful_count", "target_BLF",
+    })
     REVIEW_RESULT_METRICS = frozenset({
-        "BLF_global", "BLF_local", "BLF_margin_percent", "objective_value", "weight_kg_per_m2",
+        "BLF_global", "BLF_margin_percent", "objective_value", "weight_kg_per_m2",
         "critical_Nx", "critical_Nxy", "stiffener_type", "material",
     })
 
@@ -114,6 +119,7 @@ class ReportGenAgent(BaseAgent):
             "candidate_count": len(candidates), "result_count": len(results),
             "selected_count": sum(item["report_selected"] for item in candidates),
             "successful_count": len(successful), "passed_count": sum(item["verdict"] == "通过" for item in successful),
+            "classified_local_count": sum(item.get("BLF_local") is not None for item in successful),
             "failed_count": len(results) - len(successful),
             "not_evaluated_count": len(candidates) - len(results) if candidates else 0,
             "physical_section_count": sum((item.get("analysis_contract") or {}).get("version") == ANALYSIS_VERSION for item in successful),
@@ -178,12 +184,12 @@ class ReportGenAgent(BaseAgent):
                 required.extend(((None, "max_result_BLF"), (None, "required_BLF")))
         objective = recommendation["objective"]
         objective_label = self.OBJECTIVE_LABELS.get(objective, "目标比较值")
-        # 评议解释同一目标排序中的取舍，全量候选、校核记录和排序由正式报告承载。
+        # 评议只读取相关任务事实及前两位的比较量，分类覆盖和全量结果由正文呈现。
         compared_ids = {row["candidate_id"] for row in (best, alternative) if row is not None}
         facts = [{**fact, "label": objective_label if fact["metric"] == "objective_value"
                   else METRIC_LABELS.get(fact["metric"], fact["metric"])} for fact in summary["facts"]
-                 if fact["candidate_id"] is None or (fact["candidate_id"] in compared_ids
-                                                    and fact["metric"] in self.REVIEW_RESULT_METRICS)]
+                 if (fact["candidate_id"] is None and fact["metric"] in self.REVIEW_TASK_METRICS)
+                 or (fact["candidate_id"] in compared_ids and fact["metric"] in self.REVIEW_RESULT_METRICS)]
         decision = {
             "objective": objective,
             "selected": {"candidate_id": best["candidate_id"]} if best else None,
@@ -331,8 +337,10 @@ class ReportGenAgent(BaseAgent):
                 lines.append(f"  代理 BLF 估计 {format_number(candidate.get('surrogate_BLF'), 4)}，评分 {format_number(candidate.get('rank_score'), 4)}。")
         lines.extend(["", "## 有限元校核结果", "",
                       f"- 成功求解 {summary['successful_count']} 个，求解失败 {summary['failed_count']} 个；成功结果中满足任务阈值 {summary['passed_count']} 个。",
-                      "- BLF 为首个正特征值；第二个正特征值不等同于局部屈曲。模态未分类时不作局部或整体失效分类。",
-                      "", "| 会话 / 正式编号 | 筋型 | BLF | 面密度 kg/m^2 | 任务阈值判定 |",
+                      "- BLF 为首个正特征值；第二个正特征值不等同于局部屈曲。模态未分类时不作局部或整体失效分类。"])
+        if summary["successful_count"]:
+            lines.append(f"- 有已分类局部屈曲特征值的结果：{summary['classified_local_count']} / {summary['successful_count']} 个成功求解结果。")
+        lines.extend(["", "| 会话 / 正式编号 | 筋型 | BLF | 面密度 kg/m^2 | 任务阈值判定 |",
                       "| --- | --- | --- | --- | --- |"])
         for result in results:
             candidate = by_id.get(result["candidate_id"], {})

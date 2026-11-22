@@ -34,7 +34,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/start.ps1
 ```
 
 1. 输入需求并核对结构化任务。几何使用 mm、载荷使用 kN/m，数值和枚举保留原文证据；明确尺寸的单位不受支持、字段遗漏或数值冲突时拒绝继续。未明确的信息采用项目任务默认值，不伪装为用户事实。
-2. 程序按筋型和来源分配候选。默认 `candidate_source_ratio` 为 `llm: 3`、`case_transfer: 1`、`doe: 1`。存在 LLM 配额时，由同筋型的 LLM 提案填补可迁移案例缺额；DOE 仅生成其配额内的候选。每种筋型的首次请求数不超过 `candidate_generation.max_candidates_per_request`。程序逐项校验提案，在配额内接收物理唯一的设计；不足时继续请求剩余数量。候选数不得少于指定的筋型数。
+2. 程序按筋型和来源分配候选。默认 `candidate_source_ratio` 为 `llm: 3`、`case_transfer: 1`、`doe: 1`。存在 LLM 配额时，由同筋型的 LLM 提案填补可迁移案例缺额；DOE 仅生成其配额内的候选。每种筋型在配置上限内优先一次请求所需提案，`candidate_generation.max_candidates_per_request` 默认为 20。程序逐项校验提案，在配额内接收物理唯一的设计；不足时请求剩余数量，响应截断时缩小批次。候选数不得少于指定的筋型数。
 3. 确认初筛和求解。代理结果只有通过版本、来源、权重、独立验收和适用域检查才可用。
 4. 查看 Abaqus 返回值及模态。成功求解不等于满足目标，未求解或失败的承载结论为未知。
 5. 导出一份总体设计方案报告，包含全部候选、送检依据、实际结果、推荐取舍与验证事项和去重文献引用。Markdown、PDF 和事实 JSON 按任务保存在 `data/results/<TASK_ID>/`。启用 LLM 时，API 或工程评议校验失败会中止导出。
