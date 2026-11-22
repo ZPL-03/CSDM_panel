@@ -103,6 +103,7 @@
         "source_ratio": {
           "type": "object",
           "properties": {
+            "llm": {"type": "number", "minimum": 0},
             "case_transfer": {"type": "number", "minimum": 0},
             "doe": {"type": "number", "minimum": 0}
           },

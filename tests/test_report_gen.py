@@ -56,7 +56,7 @@ def _backend():
             self.calls += 1
             payload = json.loads(user_prompt)
             if set(payload) == {"report", "evidence"}:
-                return json.dumps({"accepted": True, "issues": []})
+                return json.dumps({"issues": []})
             return _review(payload)
     return Backend()
 
@@ -72,6 +72,8 @@ def test_structured_facts_restore_original_values_and_compute_mass():
     assert next(item for item in summary["facts"] if item["metric"] == "BLF_local")["result_status"] == "unavailable"
     assert next(item for item in payload["facts"] if item["metric"] == "objective_value")["label"] == "总重量比较值（面密度乘投影面积）"
     assert next(item for item in summary["facts"] if item["metric"] == "skin_f0")["value"] == pytest.approx(4 / 14)
+    assert all(not any(ch.isdigit() for ch in item["label"])
+               for item in payload["facts"] if item["metric"].startswith("skin_f"))
     assert summary["recommendation"]["selected"]["objective_value"] == pytest.approx(12.5 * 0.7 * 0.6)
 
 
@@ -165,9 +167,11 @@ def test_report_includes_all_candidates_and_preserves_stage_snapshots(tmp_path):
     task, results, candidates = _report_sample()
     selected = deepcopy(candidates)
     candidates[0].pop("persistent_candidate_id")
-    other = deepcopy(candidates[0])
-    other["candidate_id"] = "TMP_2"
-    candidates.append(other)
+    for index in range(2, 51):
+        other = deepcopy(candidates[0])
+        other["candidate_id"] = f"TMP_{index}"
+        other["geometry"]["skin_thickness_mm"] += index / 100
+        candidates.append(other)
     original = deepcopy(candidates)
     agent = ReportGenAgent()
     agent.llm_backend = _backend()
@@ -175,19 +179,33 @@ def test_report_includes_all_candidates_and_preserves_stage_snapshots(tmp_path):
                           "screened_candidates": selected, "output_dir": tmp_path})
     audit = json.loads(Path(response["facts_path"]).read_text(encoding="utf-8"))
     summary = audit["summary"]
-    assert summary["candidate_count"] == 2 and summary["selected_count"] == 1 and summary["not_evaluated_count"] == 1
+    assert summary["candidate_count"] == 50 and summary["selected_count"] == 1 and summary["not_evaluated_count"] == 49
     assert summary["all_candidates"][0]["persistent_candidate_id"] == "C1"
     assert summary["all_candidates"][1]["report_selected"] is False
     assert candidates == original and agent.llm_backend.calls == 2
     assert audit["llm_explanation_audit"]["status"] == "accepted"
     assert audit["llm_explanation_audit"]["review"]["recommendation_candidate_id"] == "C1"
+    assert {fact["candidate_id"] for fact in summary["facts"] if fact["result_status"] == "not_evaluated"} == {
+        f"TMP_{index}" for index in range(2, 51)}
+    review_input = audit["llm_explanation_audit"]["input"]
+    assert set(review_input["candidate_ids"]) == {"TMP_1", "C1"}
+    assert all(fact["candidate_id"] in (None, "C1")
+               for field in ("facts", "unavailable_facts") for fact in review_input[field])
+    assert not {"all_candidates", "results", "task"} & review_input.keys()
+    assert {"TASK.load_type", "TASK.boundary_conditions"} <= {item["ref"] for item in review_input["facts"]}
+    context = audit["knowledge_context"]
+    assert review_input["relations"] == context["relations"]
+    assert {item["ref"]: item["text"] for item in review_input["evidence"]} == {
+        item["ref"]: item["text"] for item in context["evidence"]}
+    assert all("source_label" not in item and "table_evidence" not in item for item in review_input["evidence"])
     assert response["generated_output_keys"] == ["overall"]
     assert response["report_outputs"]["overall"]["pdf_generated"] is True
     assert "任务 BLF 下限：1.35" in response["content"]
     assert "BLF 不低于 1.35" in response["content"]
+    assert "两块连接板位于腹板外侧" not in response["content"]
     with fitz.open(response["pdf_path"]) as pdf:
         text = "".join(page.get_text() for page in pdf)
-        assert "TMP_1" in text and "TMP_2" in text and "1.46" in text
+        assert all(f"候选 TMP_{index}：" in text for index in range(1, 51)) and "1.46" in text
         assert "证据契约" not in text and "`" not in text
 
 

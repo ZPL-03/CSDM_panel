@@ -18,7 +18,7 @@ from core.laminate import ANALYSIS_VERSION, analysis_contract, section_layers
 from core.llm_backend import LLMBackend, auto_llm_enabled
 from core.paths import RESULTS_DIR
 from core.report_facts import (
-    ANALYSIS_SCOPE, METRIC_LABELS, build_comparison_facts, build_facts, format_fact_value, normalize_results,
+    METRIC_LABELS, build_comparison_facts, build_facts, format_fact_value, normalize_results,
 )
 from core.report_review import (
     REVIEW_PROMPT, parse_engineering_review, prepare_review_payload, render_engineering_review, review_engineering_content,
@@ -156,14 +156,18 @@ class ReportGenAgent(BaseAgent):
         objective = summary["recommendation"].get("objective")
         objective_label = ("总重量比较值（面密度乘投影面积）" if objective == "最小重量"
                            else "面密度比较值" if objective == "最小面密度" else "优化目标比较值")
+        # 完整候选池保存在正式报告；模型读取任务事实和实际校核结果关联的指标。
+        result_ids = {result["candidate_id"] for result in summary["results"]}
         facts = [{**fact, "label": objective_label if fact["metric"] == "objective_value"
-                  else METRIC_LABELS.get(fact["metric"], fact["metric"])} for fact in summary["facts"]]
+                  else METRIC_LABELS.get(fact["metric"], fact["metric"])} for fact in summary["facts"]
+                 if fact["candidate_id"] is None or fact["candidate_id"] in result_ids]
+        knowledge = self._knowledge_context or {}
+        # 文献身份和定位用于报告审计，评议以同一证据编号读取正文与适用条件。
+        evidence_fields = ("ref", "evidence_kind", "evidence_usage", "applicability_context", "text")
+        evidence = [{key: item[key] for key in evidence_fields} for item in knowledge.get("evidence", [])]
         return prepare_review_payload(
-            facts, summary["recommendation"], format_fact_value,
-            context={"analysis_scope": ANALYSIS_SCOPE, "task": summary["task"],
-                     "all_candidates": summary["all_candidates"], "results": summary["results"],
-                     "external_knowledge": self._knowledge_context},
-            evidence=(self._knowledge_context or {}).get("evidence", []), required_metrics=required,
+            facts, summary["recommendation"], format_fact_value, results=summary["results"],
+            evidence=evidence, relations=knowledge.get("relations", []), required_metrics=required,
         )
 
     def _render_engineering_explanation(self, summary: Dict) -> str:
@@ -173,13 +177,13 @@ class ReportGenAgent(BaseAgent):
             return ""
         payload = self._build_llm_explanation_payload(summary)
         self._last_llm_explanation_audit["input"] = payload
+
+        def chat_review(system, user):
+            return self.llm_backend.chat(system, user, max_tokens_override=4096, json_mode=True)
+
         try:
-            answer = self.llm_backend.chat(
-                REVIEW_PROMPT, json.dumps(payload, ensure_ascii=False, allow_nan=False), max_tokens_override=4096, json_mode=True,
-            )
+            answer = chat_review(REVIEW_PROMPT, json.dumps(payload, ensure_ascii=False, allow_nan=False, separators=(",", ":")))
             self._last_llm_explanation_audit["raw_response"] = answer
-            def chat_review(system, user):
-                return self.llm_backend.chat(system, user, max_tokens_override=4096, json_mode=True)
             review = parse_engineering_review(chat_review, answer, payload, self._last_llm_explanation_audit)
             review = review_engineering_content(
                 chat_review, review, payload, self._last_llm_explanation_audit,
@@ -209,12 +213,14 @@ class ReportGenAgent(BaseAgent):
                  f"- 参考工况：{describe_load_conditions(payload['load_conditions'], display=True)}",
                  f"- 边界条件：{describe_boundary_conditions(payload['boundary_conditions'])}",
                  f"- 任务 BLF 下限：{format_number(summary['target_BLF'], 4)}（无量纲）；优化目标：{summary['primary_objective']}",
-                 "- 计算模型：逐层复合壳、理想 Tie 连接及线性特征值屈曲；帽形底部连接板位于腹板外侧。",
-                 "- 分析边界：未计算材料损伤、初始缺陷敏感性、非线性极限承载和制造验收。",
+                 "- 计算模型：逐层复合壳、理想 Tie 连接及线性特征值屈曲。"]
+        if "HAT" in types:
+            lines.append("- 帽形筋底部的两块连接板位于腹板外侧。")
+        lines.extend(["- 分析边界：未计算材料损伤、初始缺陷敏感性、非线性极限承载和制造验收。",
                  "- 显示精度：几何尺寸最多保留 3 位小数，层厚和铺层比例最多 6 位，BLF、面密度及目标比较值最多 4 位；完整原值在事实 JSON 中，判定和推荐不使用显示舍入值。",
                  "", "## 全部候选方案与生成依据", "",
                  f"- 生成 {summary['candidate_count']} 个候选，送检 {summary['selected_count']} 个，实际返回 {summary['result_count']} 条结果，未求解 {summary['not_evaluated_count']} 个。",
-                 "- 会话编号保持生成顺序；正式编号关联有限元作业与案例，不因筛选顺序重编。"]
+                 "- 会话编号保持生成顺序；正式编号关联有限元作业与案例，不因筛选顺序重编。"])
         for candidate in candidates:
             cid = candidate["candidate_id"]
             layup = candidate.get("layup") or {}
@@ -291,9 +297,9 @@ class ReportGenAgent(BaseAgent):
         lines.extend(["", self._render_engineering_explanation(summary),
                       "", "## 外部知识依据", "",
                       "文献及图谱用于提出待验证问题，不替代本任务的数值校核；引用按文献身份合并。完整证据和适用条件保存在报告事实 JSON。"])
-        for index, evidence in enumerate(self._knowledge_context.get("evidence", []), 1):
+        for evidence in self._knowledge_context["evidence"]:
             locator = "；".join(str(evidence[key]) for key in ("section", "pages") if evidence.get(key)) or "未提供章节或页码"
-            lines.append(f"- 证据 E{index}：[{evidence['source_label']}] {locator}。")
+            lines.append(f"- 证据 {evidence['ref']}：[{evidence['source_label']}] {locator}。")
         lines.extend(["", "### 参考文献", "", *["- " + source["citation"] for source in self._knowledge_context.get("sources", [])]])
         if not self._knowledge_context.get("sources"):
             lines.append("- 未采用外部文献证据。")

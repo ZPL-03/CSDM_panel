@@ -38,6 +38,7 @@ def test_task_parser_supports_compression_shear_and_sscc() -> None:
     assert task_payload["boundary_conditions"]["type"] == "SSCC"
     assert task_payload["candidate_generation_preferences"]["total_candidates"] == 18
     assert task_payload["candidate_generation_preferences"]["source_ratio"] == {
+        "llm": 3.0,
         "case_transfer": 1.0,
         "doe": 1.0,
     }

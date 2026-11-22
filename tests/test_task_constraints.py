@@ -99,6 +99,16 @@ def test_unavailable_surrogate_is_audited_and_pipeline_keeps_fixed_geometry(monk
 
     agent = OrchestratorAgent()
     agent.screener.model_manager = SurrogateModelManager(models_dir=paths.DATA_DIR / "empty-models")
+    original_parse = agent.parse_instruction
+
+    def parse_program_only(text):
+        task = original_parse(text)
+        task["task"]["candidate_generation_preferences"]["source_ratio"] = {
+            "llm": 0.0, "case_transfer": 0.0, "doe": 1.0,
+        }
+        return task
+
+    monkeypatch.setattr(agent, "parse_instruction", parse_program_only)
     monkeypatch.setattr("agents.fem_agent.is_abaqus_available", lambda *_: True)
     def solve(candidate, _):
         return {"candidate_id": candidate["candidate_id"], "status": "success", "retry_count": 0,
@@ -130,6 +140,9 @@ def test_unavailable_surrogate_stop_policy_records_terminal_decision(monkeypatch
     agent.screener.config["pipeline"]["unavailable_surrogate_policy"] = "stop"
     agent.screener.model_manager = SurrogateModelManager(models_dir=paths.DATA_DIR / "absent")
     task = agent.parse_instruction("压缩120kN/m，生成1个候选，初筛1个")
+    task["task"]["candidate_generation_preferences"]["source_ratio"] = {
+        "llm": 0.0, "case_transfer": 0.0, "doe": 1.0,
+    }
     with pytest.raises(RuntimeError, match="预筛终止"):
         agent.screen_candidates(task, agent.generate_candidates(task))
     assert read_json(paths.TASKS_DIR / "screening" / f"{task['task_id']}.json")["action"] == "stop"

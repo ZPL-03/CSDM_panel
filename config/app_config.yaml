@@ -23,6 +23,7 @@ pipeline:
   auto_retrain_surrogate: false
   top_k: 5
   candidate_source_ratio:
+    llm: 3
     case_transfer: 1
     doe: 1
   min_case_records_for_retrain: 50

@@ -16,8 +16,8 @@ def payload():
         [{"candidate_id": "C1", "metric": "capacity", "value": 12.34567, "unit": "MPa"},
          {"candidate_id": None, "metric": "scope", "value": "未验证制造与试验", "unit": ""}],
         {"selected": {"candidate_id": "C1"}}, lambda fact: str(fact["value"]) + " " + fact["unit"],
-        context={"results": [{"candidate_id": "C1", "session_candidate_id": "TMP_7"}]},
-        evidence=[{"source_label": "S1"}], required_metrics=[("C1", "capacity")],
+        results=[{"candidate_id": "C1", "session_candidate_id": "TMP_7", "analysis_contract": {"private": "不进入评议"}}],
+        evidence=[{"ref": "E1", "text": "原文的数值仅适用于给定试件。"}], required_metrics=[("C1", "capacity")],
     )
 
 
@@ -39,6 +39,8 @@ def test_natural_review_preserves_original_facts_and_resolves_inline_values():
     assert accepted["assessment"] == original["assessment"]
     original["verification"].extend(["针对{{C1.capacity}}补充网格对照。", "按{{TASK.scope}}核对连接假设。"])
     assert len(validate_engineering_review(json.dumps(original), context)["verification"]) == 3
+    original["assessment"] += "会话编号为 TMP_7。"
+    assert validate_engineering_review(json.dumps(original), context)["assessment"] == original["assessment"]
 
 
 @pytest.mark.parametrize("mutation", [
@@ -88,7 +90,7 @@ def test_duplicate_json_fields_and_duplicate_input_facts_are_rejected():
         validate_engineering_review(response, payload())
     fact = {"candidate_id": "C1", "metric": "capacity", "value": 1}
     with pytest.raises(ValueError, match="重复"):
-        prepare_review_payload([fact, dict(fact)], {"selected": None}, str, context={})
+        prepare_review_payload([fact, dict(fact)], {"selected": None}, str)
 
 
 def test_no_recommendation_and_evidence_citation_remain_explicit():
@@ -106,8 +108,7 @@ def test_content_review_keeps_issues_and_only_accepts_rechecked_revision():
     context, audit = payload(), {}
     draft = validate_engineering_review(json.dumps(answer()), context)
     issue = {"quote": "C1 的容量为12.34567 MPa", "issue": "候选对应关系需要更正", "fact_refs": ["C1.capacity"]}
-    responses = [json.dumps({"accepted": False, "issues": [issue]}),
-                 json.dumps(answer()), json.dumps({"accepted": True, "issues": []})]
+    responses = [json.dumps({"issues": [issue]}), json.dumps(answer()), json.dumps({"issues": []})]
     seen = []
     def chat(system, user):
         seen.append(json.loads(user))
@@ -119,6 +120,7 @@ def test_content_review_keeps_issues_and_only_accepts_rechecked_revision():
     assert set(seen[1]["draft"]) == set(answer())
     assert "response_schema" not in seen[0]["evidence"]
     assert seen[0]["evidence"]["facts"] == context["facts"]
+    assert seen[0]["evidence"]["evidence"] == context["evidence"]
     assert seen[0]["evidence"]["candidate_bindings"] == [{"candidate_id": "C1", "session_candidate_id": "TMP_7"}]
     assert not responses
 
@@ -127,22 +129,23 @@ def test_content_review_stops_after_a_failed_directed_revision():
     context, audit = payload(), {}
     draft = validate_engineering_review(json.dumps(answer()), context)
     issue = {"quote": "C1 的容量为12.34567 MPa", "issue": "把余量当成特征值", "fact_refs": ["C1.capacity"]}
-    responses = [json.dumps({"accepted": False, "issues": [issue]}),
-                 json.dumps(answer()), json.dumps({"accepted": False, "issues": [{**issue, "issue": "缺少方案对照"}]})]
-    with pytest.raises(ValueError, match="缺少方案对照"):
+    unresolved = {**issue, "issue": "数值一致，但将容量作为极限承载指标"}
+    responses = [json.dumps({"issues": [issue]}), json.dumps(answer()), json.dumps({"issues": [unresolved]})]
+    with pytest.raises(ValueError):
         review_engineering_content(lambda *_: responses.pop(0), draft, context, audit)
     assert len(audit["content_checks"]) == 2 and not responses
+    assert audit["content_checks"][-1]["issues"] == [unresolved]
 
 
-@pytest.mark.parametrize("response", ["{}", '{"accepted":1,"issues":[]}',
-    '{"accepted":true,"issues":["仍有错误"]}', '{"accepted":false,"issues":[]}', "无法核查"])
+@pytest.mark.parametrize("response", ["{}", '{"issues":null}', '{"issues":[] ,"accepted":false}',
+    '{"issues":["仍有错误"]}', '{"issues":[],"issues":[]}', "无法核查"])
 def test_invalid_content_check_does_not_count_as_semantic_acceptance(response):
     with pytest.raises(ValueError):
         validate_review_check(response, payload(), "报告原文")
 
 
 def test_content_check_rejects_a_fabricated_report_quote():
-    result = {"accepted": False, "issues": [{"quote": "报告没有写过的话", "issue": "错误", "fact_refs": ["C1.capacity"]}]}
+    result = {"issues": [{"quote": "报告没有写过的话", "issue": "错误", "fact_refs": ["C1.capacity"]}]}
     with pytest.raises(ValueError, match="原句"):
         validate_review_check(json.dumps(result), payload(), "实际报告")
 
@@ -182,7 +185,7 @@ def test_single_comparable_result_cannot_produce_a_comparative_tradeoff():
 def test_unconfirmed_metric_is_retained_as_missing_evidence_not_a_renderable_value():
     missing = {"candidate_id": "C1", "metric": "local_mode", "value": None, "unit": "1"}
     context = prepare_review_payload([*payload()["facts"], missing], payload()["recommendation"],
-                                     lambda fact: str(fact["value"]), context={})
+                                     lambda fact: str(fact["value"]))
     assert context["unavailable_facts"] == [missing]
     assert all(fact["ref"] != "C1.local_mode" for fact in context["facts"])
     response = answer()
@@ -190,9 +193,8 @@ def test_unconfirmed_metric_is_retained_as_missing_evidence_not_a_renderable_val
     with pytest.raises(ValueError, match="未知引用") as error:
         validate_engineering_review(json.dumps(response), context)
     assert "C1.local_mode" in str(error.value)
-    check = {"accepted": False, "issues": [{"quote": "已确认局部失效", "issue": "局部模态没有计算证据",
-                                            "fact_refs": ["C1.local_mode"]}]}
-    assert validate_review_check(json.dumps(check), context, "已确认局部失效") == check
+    check = {"issues": [{"quote": "已确认局部失效", "issue": "局部模态没有计算证据", "fact_refs": ["C1.local_mode"]}]}
+    assert validate_review_check(json.dumps(check), context, "已确认局部失效") == {**check, "accepted": False}
 
 
 @pytest.mark.parametrize("section", ["tradeoffs", "verification"])

@@ -641,86 +641,47 @@ class DomainKnowledgeBase:
         return labels_by_item, source_items
 
     @staticmethod
-    def _format_evidence(payload: dict[str, Any]) -> list[str]:
-        formatted: list[str] = []
-        if payload["chunks"]:
-            formatted.append("证据按 evidence_usage 与 applicability_context 使用；source_conditions_only 中的数值仅适用于原文条件，不能直接作为候选性能。未给出的适用条件保持未知。")
-        labels_by_item, source_items = DomainKnowledgeBase._source_references(payload)
-
-        for index, item in enumerate(payload.get("chunks", []), start=1):
-            title = item.get("title") or item.get("record_id") or f"资料片段{index}"
-            source_label = labels_by_item[id(item)]
-            meta_lines = [f"[外部知识库 {index}{f' | 来源 {source_label}' if source_label else ''}] {title}"]
-            meta_lines.append(f"证据块：{item['chunk_id']}；类型：{item.get('retrieval_unit', 'text')}")
-            meta_lines.append("证据契约：" + json.dumps(_evidence_contract(item), ensure_ascii=False, allow_nan=False))
-            if item.get("section_path"):
-                meta_lines.append("章节：" + " > ".join(item["section_path"]))
-            if item.get("page_start") not in (None, ""):
-                page_end = item.get("page_end")
-                page_text = str(item.get("page_start")) if page_end in (None, "", item.get("page_start")) else f"{item.get('page_start')}-{page_end}"
-                meta_lines.append(f"页码：{page_text}")
-            formatted.append("\n".join([*meta_lines, str(item.get("text") or "")]))
-
-        relations = payload.get("relations", [])
-        if relations:
-            relation_lines = []
-            for relation in relations:
-                evidence_label = labels_by_item[id(relation)]
-                evidence_text = f"（依据 {evidence_label}）" if evidence_label else ""
-                if relation.get("evidence_chunk_id"):
-                    evidence_text += f"；证据块：{relation['evidence_chunk_id']}"
-                evidence_text += "；证据契约：" + json.dumps(relation["evidence_contract"], ensure_ascii=False, allow_nan=False)
-                relation_lines.append(
-                    "图谱 {idx}: {source}({source_type}) -[{rel}]-> {target}({target_type}){evidence}".format(
-                        idx=len(relation_lines) + 1,
-                        source=relation.get("source"),
-                        source_type=relation.get("source_type"),
-                        rel=relation.get("relation"),
-                        target=relation.get("target"),
-                        target_type=relation.get("target_type"),
-                        evidence=evidence_text,
-                    )
-                )
-            formatted.append("知识图谱关系：\n" + "\n".join(relation_lines))
-        if source_items:
-            formatted.append("来源清单：\n" + "\n".join(_source_line(label, source_items[label]) for label in sorted(source_items, key=lambda item: int(item[1:]))))
-        return formatted
+    def _context_records(chunks: list[dict[str, Any]], relations: list[dict[str, Any]]) -> dict[str, Any]:
+        """每个块保存一份证据契约；图谱关系通过引用编号关联原文。"""
+        labels, sources = DomainKnowledgeBase._source_references({"chunks": chunks, "relations": relations})
+        evidence = []
+        for index, item in enumerate(chunks, start=1):
+            start, end = item.get("page_start"), item.get("page_end")
+            # 上游以 0 表示未知页码，只展示可确认的正整数页码。
+            pages = ""
+            if type(start) is int and start > 0:
+                pages = f"第 {start}" + (f"-{end}" if type(end) is int and end > start else "") + " 页"
+            evidence.append({**_evidence_contract(item), "ref": f"E{index}", "source_label": labels[id(item)],
+                             "title": item.get("title") or item.get("document_title") or item["chunk_id"],
+                             "section": " > ".join(item.get("section_path") or []), "pages": pages,
+                             "text": item["text"]})
+        refs = {item["chunk_id"]: item["ref"] for item in evidence}
+        relation_fields = ("source", "source_type", "relation", "target", "target_type")
+        return {"evidence": evidence,
+                "relations": [{**{key: item[key] for key in relation_fields},
+                               "evidence_ref": refs[item["evidence_chunk_id"]]} for item in relations],
+                "sources": [{"label": label, **source, "citation": _source_line(label, source)}
+                            for label, source in sources.items()]}
 
     def prepare_context(self, task: Dict[str, Any], top_k: int | None = None) -> dict[str, Any]:
         """以正文、条件、绑定关系和来源清单为整体执行字符预算，不截断证据。"""
         payload = self.retrieve(task, top_k=self.top_k if top_k is None else top_k)
-        selected, omitted, formatted = [], [], []
+        selected, omitted = [], []
+        context = {"evidence": [], "relations": [], "sources": []}
+        character_count = 0
         for chunk in payload["chunks"]:
             trial = [*selected, chunk]
             ids = {item["chunk_id"] for item in trial}
             relations = [relation for relation in payload["relations"] if relation["evidence_chunk_id"] in ids]
-            snippets = self._format_evidence({"chunks": trial, "relations": relations})
-            required = len("\n\n".join(snippets))
+            records = self._context_records(trial, relations)
+            required = len(json.dumps(records, ensure_ascii=False, allow_nan=False, separators=(",", ":")))
             if required > self.max_context_chars:
                 omitted.append({"chunk_id": chunk["chunk_id"], "reason": "context_budget", "required_chars": required})
                 continue
-            selected, formatted = trial, snippets
-        ids = {item["chunk_id"] for item in selected}
-        relations = [relation for relation in payload["relations"] if relation["evidence_chunk_id"] in ids]
-        labels, sources = self._source_references({"chunks": selected, "relations": relations})
-        evidence = []
-        for item in selected:
-            start, end = item.get("page_start"), item.get("page_end")
-            # 上游以 0 表示未知页码；只展示可确认的正整数页码。
-            pages = ""
-            if type(start) is int and start > 0:
-                pages = f"第 {start}" + (f"-{end}" if type(end) is int and end > start else "") + " 页"
-            evidence.append({"chunk_id": item["chunk_id"], "source_label": labels[id(item)],
-                             "title": item.get("title") or item.get("document_title") or item["chunk_id"],
-                             "section": " > ".join(item.get("section_path") or []), "pages": pages})
-        return {"snippets": formatted, "included_chunk_ids": [item["chunk_id"] for item in selected],
-                "sources": [{"label": label, **source, "citation": _source_line(label, source)} for label, source in sources.items()],
-                "evidence": evidence,
-                "omitted": omitted, "character_count": len("\n\n".join(formatted)),
+            selected, context, character_count = trial, records, required
+        return {**context, "included_chunk_ids": [item["chunk_id"] for item in selected],
+                "omitted": omitted, "character_count": character_count,
                 "max_context_chars": self.max_context_chars}
-
-    def format_snippets(self, task: Dict[str, Any], top_k: int | None = None) -> list[str]:
-        return self.prepare_context(task, top_k=top_k)["snippets"]
 
     def status(self) -> dict[str, Any]:
         manifest = _load_json(self.manifest_path)

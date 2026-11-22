@@ -2,7 +2,6 @@ import pytest
 
 from core.layup import normalize_layup
 from agents.candidate_gen import CandidateGenAgent
-from core.schema_validator import SchemaValidationError
 from core.task_parser import TaskParser
 from tests.test_fem_agent import _real_fem_candidate
 
@@ -19,12 +18,13 @@ def test_layup_rejects_unsupported_or_malformed_angles(value) -> None:
         normalize_layup(value)
 
 
-def test_candidate_source_must_be_program_controlled() -> None:
+def test_llm_candidate_source_is_program_controlled() -> None:
     agent = CandidateGenAgent()
     raw = _real_fem_candidate("C1")
     task = TaskParser().parse_instruction("T型壁板，生成1个候选，初筛1个")
-    with pytest.raises(SchemaValidationError, match="source"):
-        agent._normalize_candidate(task, raw, 1, "LLM")
+    raw["material_key"] = "T300_5208"
+    result = agent._normalize_candidate(task, raw, 1, "LLM")
+    assert result["source"] == "LLM"
 
 
 def test_transferred_candidate_derives_ratios_without_rewriting_source() -> None:

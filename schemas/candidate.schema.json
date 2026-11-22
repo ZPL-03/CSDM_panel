@@ -18,7 +18,7 @@
     },
     "source": {
       "type": "string",
-      "enum": ["DOE", "CASE_TRANSFER"]
+      "enum": ["LLM", "DOE", "CASE_TRANSFER"]
     },
     "stiffener_type": {
       "type": "string",

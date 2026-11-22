@@ -157,18 +157,20 @@ def test_domain_knowledge_retrieves_knowledge_base_and_graph(tmp_path: Path) -> 
     )
 
     result = knowledge.retrieve(_task(), top_k=2, kg_top_k=2)
-    snippets = knowledge.format_snippets(_task(), top_k=2)
+    context = knowledge.prepare_context(_task(), top_k=2)
     status = knowledge.status()
-    snippet_text = "\n".join(snippets)
 
     assert {chunk["chunk_id"] for chunk in result["chunks"]} == {"CHUNK_1", "CHUNK_2"}
     assert all(chunk["source_url"] == "https://example.com/panel" for chunk in result["chunks"])
     assert result["relations"][0]["relation"] == "EXPERIENCES"
-    assert "T stiffener panel buckling guidance" in snippet_text
-    assert "来源 S1" in snippet_text
-    assert snippet_text.count("DOI: 10.1000/panel.1") == 1
-    assert snippet_text.count("https://example.com/panel") == 1
-    assert snippet_text.count("Stiffened Panel(Structure) -[EXPERIENCES]-> Buckling(FailureMode)") == 1
+    assert {row["text"] for row in context["evidence"]} == {
+        "T stiffener panel buckling guidance.", "Second panel buckling guidance from same source."}
+    source, = context["sources"]
+    assert source["doi"] == "10.1000/panel.1" and source["source_url"] == result["chunks"][0]["source_url"]
+    assert {item["source_label"] for item in context["evidence"]} == {source["label"]}
+    relation, = context["relations"]
+    bound = next(item for item in context["evidence"] if item["ref"] == relation["evidence_ref"])
+    assert relation["relation"] == "EXPERIENCES" and bound["chunk_id"] == result["relations"][0]["evidence_chunk_id"]
     assert status["rag_chunk_count"] == 1
 
 
@@ -319,19 +321,21 @@ def test_prompt_budget_keeps_complete_evidence_and_bound_relations(tmp_path: Pat
         "kg_dir": str(tmp_path / "kg"), "source_metadata_path": str(tmp_path / "sources.jsonl.gz"),
         "manifest_path": str(tmp_path / "manifest.json"), "max_context_chars": 3000}})
     context = knowledge.prepare_context(_task())
-    text = "\n\n".join(context["snippets"])
     assert context["included_chunk_ids"] == ["SMALL"]
     assert context["omitted"][0]["chunk_id"] == "LARGE"
     assert context["omitted"][0]["reason"] == "context_budget"
-    assert "LARGE" not in text and "原文末尾条件" not in text
-    assert small["content_plain"] in text and small["chunk_fingerprint"] in text
-    assert context["character_count"] == len(text) <= 3000
+    kept, = context["evidence"]
+    relation, = context["relations"]
+    assert relation["evidence_ref"] == kept["ref"]
+    assert kept["text"] == small["content_plain"] and kept["chunk_fingerprint"] == small["chunk_fingerprint"]
+    serialized = json.dumps({key: context[key] for key in ("evidence", "relations", "sources")},
+                            ensure_ascii=False, separators=(",", ":"))
+    assert context["character_count"] == len(serialized) <= 3000
     knowledge.max_context_chars = 20000
-    assert len(knowledge.retrieve(_task())["relations"]) == 2
-    full = "\n\n".join(knowledge.prepare_context(_task())["snippets"])
-    assert large["content_plain"] in full
-    assert json.dumps(large["applicability_context"], ensure_ascii=False) in full
-    assert json.dumps(large["table_evidence"], ensure_ascii=False) in full
+    full = knowledge.prepare_context(_task())
+    large_evidence = next(item for item in full["evidence"] if item["chunk_id"] == "LARGE")
+    assert len(full["relations"]) == 2 and large_evidence["text"] == large["content_plain"]
+    assert all(large_evidence[key] == large[key] for key in ("applicability_context", "table_evidence"))
 
 
 def _table_rows(text: str) -> list[list[str]]:
@@ -395,17 +399,13 @@ def test_v3_source_table_headers_units_and_projection_reach_prompt(tmp_path, mon
     monkeypatch.setattr(knowledge, "task_query_text", lambda task: "材料 模量")
     context = knowledge.prepare_context(_task())
     assert context["included_chunk_ids"] == [chunk["chunk_id"]]
-    text = "\n\n".join(context["snippets"])
-    assert chunk["content_markdown"] in text
-    contracts = [json.loads(line.split("证据契约：", 1)[1]) for line in text.splitlines() if "证据契约：" in line]
-    assert len(contracts) == 2
-    assert all(contract == _evidence_contract(chunk) for contract in contracts)
-    assert all(contract["table_evidence"] == chunk["table_evidence"] for contract in contracts)
-    assert all(contract["content_quality_version"] == "3" for contract in contracts)
-    assert V3["ambiguous"]["chunk_id"] not in text
+    evidence, = context["evidence"]
+    relation, = context["relations"]
+    assert evidence["text"] == chunk["content_markdown"] and relation["evidence_ref"] == evidence["ref"]
+    assert all(evidence[key] == value for key, value in _evidence_contract(chunk).items())
     knowledge.max_context_chars = context["character_count"] - 1
     excluded = knowledge.prepare_context(_task())
-    assert not excluded["snippets"] and excluded["omitted"][0]["reason"] == "context_budget"
+    assert not excluded["evidence"] and not excluded["relations"] and excluded["omitted"][0]["reason"] == "context_budget"
 
 
 @pytest.mark.parametrize("version", ["2", None, 3])

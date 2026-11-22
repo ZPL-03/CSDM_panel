@@ -35,7 +35,7 @@ def auto_llm_enabled() -> bool:
 
 
 class LLMResponseError(ValueError):
-    """截断或空正文不是候选格式错误，不进入格式重试。"""
+    """模型未返回完整、非空的正文。"""
 
 
 class LLMBackend:
@@ -80,7 +80,7 @@ class LLMBackend:
         max_tokens_override: int | None = None,
         json_mode: bool = False,
     ) -> str:
-        """调用当前 LLM 生成普通文本。"""
+        """调用当前模型并返回完整响应正文。"""
         request_payload = {
             "model": self.model,
             "temperature": self.temperature,
@@ -100,12 +100,12 @@ class LLMBackend:
                               "usage": usage.model_dump() if usage is not None else None,
                               "finish_reason": None, "content": None}
         if not response.choices:
-            raise LLMResponseError("LLM 返回空 choices，不能用于候选或报告")
+            raise LLMResponseError("LLM 未返回任何应答")
         choice = response.choices[0]
         content = choice.message.content or ""
         self.last_response.update(finish_reason=choice.finish_reason, content=content)
         if choice.finish_reason != "stop":
-            raise LLMResponseError(f"LLM 回答未完整结束（finish_reason={choice.finish_reason}），不能用于候选或报告")
+            raise LLMResponseError(f"LLM 回答未完整结束（finish_reason={choice.finish_reason}）")
         if not content.strip():
-            raise LLMResponseError("LLM 返回空正文，不能用于候选或报告")
+            raise LLMResponseError("LLM 返回空正文")
         return content

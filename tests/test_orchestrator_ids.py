@@ -15,6 +15,9 @@ def test_temporary_candidates_do_not_consume_persistent_ids(monkeypatch):
     agent = OrchestratorAgent()
     monkeypatch.setattr(agent.candidate_gen.case_retriever, "retrieve_transferable_cases", lambda *_a, **_k: [])
     task = agent.parse_instruction("长度360mm，宽度300mm，压缩120kN/m，生成4个候选，初筛2个")
+    task["task"]["candidate_generation_preferences"]["source_ratio"] = {
+        "llm": 0.0, "case_transfer": 0.0, "doe": 1.0,
+    }
     next_before = next_candidate_index()
     candidates = agent.generate_candidates(task)
     assert next_candidate_index() == next_before

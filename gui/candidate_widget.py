@@ -23,6 +23,7 @@ from core.task_contract import describe_boundary_conditions, describe_load_condi
 
 
 SOURCE_LABELS = {
+    "LLM": "LLM 方案生成",
     "CASE_TRANSFER": "历史案例迁移",
     "DOE": "DOE 参数采样",
 }
@@ -111,7 +112,7 @@ class CandidateWidget(QWidget):
             display_label = candidate.get("display_name") or candidate.get("candidate_id") or "-"
             values = [
                 display_label,
-                {"CASE_TRANSFER": "案例迁移", "DOE": "DOE"}.get(source, source),
+                SOURCE_LABELS.get(source, source),
                 _format_number(candidate.get("surrogate_BLF")),
                 _format_number(candidate.get("surrogate_weight")),
                 _format_number(candidate.get("rank_score")),

@@ -26,6 +26,7 @@ DEFAULT_CANDIDATE_GENERATION_PREFERENCES = {
     "total_candidates": 10,
     "source_allocation_mode": "ratio",
     "source_ratio": {
+        "llm": 3.0,
         "case_transfer": 1.0,
         "doe": 1.0,
     },
@@ -264,12 +265,14 @@ def normalize_candidate_generation_preferences(preferences: Dict[str, Any] | Non
     if allocation_mode != "ratio":
         raise ValueError("候选来源分配方式必须为 ratio")
     normalized["source_allocation_mode"] = allocation_mode
-    ratio = preferences.get("source_ratio", {})
+    ratio = preferences.get("source_ratio")
+    if ratio is None:
+        ratio = normalized["source_ratio"]
     if not isinstance(ratio, dict) or set(ratio) - set(normalized["source_ratio"]):
-        raise ValueError("source_ratio 只接受 case_transfer、doe；LLM 不生成数值候选")
+        raise ValueError("source_ratio 只接受 llm、case_transfer、doe")
     normalized_ratio = {
-        key: _finite_number(ratio.get(key, value), key)
-        for key, value in normalized["source_ratio"].items()
+        key: _finite_number(ratio.get(key, 0.0), key)
+        for key in normalized["source_ratio"]
     }
     if min(normalized_ratio.values()) < 0 or sum(normalized_ratio.values()) <= 0.0:
         raise ValueError("候选来源比例必须非负且至少有一个正数")

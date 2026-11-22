@@ -7,6 +7,7 @@ import math
 
 from core.display import format_number
 from core.laminate import parse_angles
+from core.task_contract import describe_boundary_conditions
 
 
 ANALYSIS_SCOPE = "理想逐层复合壳与理想 Tie 连接的线性屈曲；未计算损伤、初始缺陷敏感性或非线性极限承载，未提供制造验收。"
@@ -14,8 +15,8 @@ METRIC_LABELS = {
     "evaluation_status": "求解状态", "BLF_global": "首个正特征值 BLF", "BLF_local": "已分类局部屈曲 BLF",
     "second_positive_BLF": "第二个正特征值 BLF", "weight_kg_per_m2": "面密度",
     "target_BLF": "任务 BLF 下限", "target_met": "任务阈值判定", "skin_layup": "蒙皮逐层角度",
-    "ply_count": "蒙皮层数", "skin_f0": "0 度层比例", "skin_f45": "正负 45 度层比例",
-    "skin_f90": "90 度层比例", "surrogate_BLF": "代理 BLF 估计", "rank_score": "代理评分",
+    "ply_count": "蒙皮层数", "skin_f0": "沿壁板长度方向的层比例", "skin_f45": "沿正负斜向的层比例",
+    "skin_f90": "沿壁板宽度方向的层比例", "surrogate_BLF": "代理 BLF 估计", "rank_score": "代理评分",
     "panel_length_mm": "壁板长度", "panel_width_mm": "壁板宽度", "skin_thickness_mm": "蒙皮厚度",
     "pitch_mm": "筋距", "stiffener_height_mm": "筋高", "web_thickness_mm": "腹板厚度",
     "flange_width_mm": "翼缘或帽形底部跨度", "flange_thickness_mm": "翼缘或连接板厚度",
@@ -26,7 +27,7 @@ METRIC_LABELS = {
     "analysis_scope": "分析范围", "recommendation_status": "推荐状态", "material": "材料",
     "reference_Nx": "参考压缩载荷", "reference_Nxy": "参考剪切载荷",
     "critical_Nx": "线性临界比例下的压缩载荷", "critical_Nxy": "线性临界比例下的剪切载荷",
-    "stiffener_type": "筋型",
+    "stiffener_type": "筋型", "load_type": "载荷类型", "boundary_conditions": "边界条件",
 }
 STATUS_LABELS = {"success": "求解成功", "failed": "求解失败", "not_evaluated": "未求解",
                  "task_input": "任务输入", "design_input": "设计输入", "predicted": "代理估计"}
@@ -138,6 +139,8 @@ def build_comparison_facts(summary, task_payload):
         add(cid, "material", (candidate.get("material_system") or {}).get("name"), "", "design_input")
         add(cid, "stiffener_type", candidate.get("stiffener_type"), "", "design_input")
     load = task_payload["load_conditions"]
+    add(None, "load_type", load["label"], "", "task_input")
+    add(None, "boundary_conditions", describe_boundary_conditions(task_payload["boundary_conditions"]), "", "task_input")
     for component in ("Nx", "Nxy"):
         value = load.get(f"{component}_kN_per_m")
         if value is None:
