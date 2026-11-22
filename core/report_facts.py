@@ -106,7 +106,7 @@ def format_fact_value(fact):
     if value is None:
         return "未确认"
     elif isinstance(value, bool):
-        display = "满足" if value else "不满足"
+        display = "达到任务 BLF 下限" if value else "未达到任务 BLF 下限"
     elif isinstance(value, (float, int)):
         digits = 2 if fact["unit"] == "%" else 3 if fact["unit"] == "mm" else 6 if fact["metric"].startswith("skin_f") else 4
         display = format_number(value, digits)

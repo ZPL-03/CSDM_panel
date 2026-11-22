@@ -137,8 +137,7 @@ def test_content_review_stops_after_a_failed_directed_revision():
     assert audit["content_checks"][-1]["issues"] == [unresolved]
 
 
-@pytest.mark.parametrize("response", ["{}", '{"issues":null}', '{"issues":[] ,"accepted":false}',
-    '{"issues":["仍有错误"]}', '{"issues":[],"issues":[]}', "无法核查"])
+@pytest.mark.parametrize("response", ["{}", '{"issues":null}', '{"issues":["仍有错误"]}', '{"accepted":true,"issues":[]}', "无法核查"])
 def test_invalid_content_check_does_not_count_as_semantic_acceptance(response):
     with pytest.raises(ValueError):
         validate_review_check(response, payload(), "报告原文")
@@ -175,11 +174,86 @@ def test_contract_repair_is_bounded_and_keeps_original_error():
     assert parse_engineering_review(lambda *_: json.dumps(answer()), json.dumps(response), context, {})["assessment"] == answer()["assessment"]
 
 
+@pytest.mark.parametrize("unmarked", ["E1", "[E1]"])
+def test_evidence_reference_format_is_repaired_without_guessing_source(unmarked):
+    context, audit = payload(), {}
+    response = answer()
+    response["verification"][0] = f"按{unmarked}的试件条件核查{{{{TASK.scope}}}}。"
+
+    def repair(system, user):
+        assert "{{E1}}" in system and "不得写 E1 或 [E1]" in system
+        request = json.loads(user)
+        assert "verification[0]" in request["validation_error"]
+        assert "{{E1}}" in request["validation_error"]
+        assert "draft_response" not in request and request["response_schema"] == context["response_schema"]
+        repaired = answer()
+        repaired["verification"][0] = "按{{E1}}的试件条件核查{{TASK.scope}}。"
+        return json.dumps(repaired)
+
+    accepted = parse_engineering_review(repair, json.dumps(response), context, audit)
+    assert accepted["paragraph_refs"][-1] == ["E1", "TASK.scope"]
+    assert "[E1]的试件条件" in render_engineering_review(accepted, context)
+    assert audit["contract_issue"]
+
+
+def test_contract_repair_receives_all_invalid_paragraphs_in_one_request():
+    context, audit = payload(), {}
+    response = answer()
+    response["verification"] = ["补充其他候选的同工况求解。", "核对模型约束与实际连接的差异。"]
+
+    def repair(_, user):
+        error = json.loads(user)["validation_error"]
+        assert "verification[0]" in error and "verification[1]" in error
+        repaired = answer()
+        repaired["verification"].append("按{{E1}}的适用条件复核试验对比方案。")
+        return json.dumps(repaired)
+
+    accepted = parse_engineering_review(repair, json.dumps(response), context, audit)
+    assert accepted["paragraph_refs"][-2:] == [["TASK.scope"], ["E1"]]
+
+
+def test_source_dimensions_are_not_renderable_current_facts():
+    context, audit = payload(), {}
+    context["evidence"][0]["text"] = "原试件厚度为 2.1 mm。"
+    response = answer()
+    response["verification"][0] = "{{E1}}的试件厚度为 2.1 mm，应核对制造条件。"
+
+    def repair(system, user):
+        assert "即使明确写了来源也不复述" in system
+        request = json.loads(user)
+        assert "文献条件使用 evidence.ref" in request["validation_error"]
+        assert request["evidence"] == context["evidence"]
+        assert "draft_response" not in request
+        repaired = answer()
+        repaired["verification"][0] = "核对{{E1}}的试件厚度和当前制造条件是否相符。"
+        return json.dumps(repaired)
+
+    accepted = parse_engineering_review(repair, json.dumps(response), context, audit)
+    assert "[E1]的试件厚度" in render_engineering_review(accepted, context)
+    assert "2.1 mm" not in render_engineering_review(accepted, context)
+
+
+@pytest.mark.parametrize("suffix", ["{{TASK.scope}}", "{{TASK.scope}}。", "（{{TASK.scope}}）"])
+def test_fact_references_belong_to_a_sentence(suffix):
+    response = answer()
+    response["verification"][0] = "建议核对连接模型和实际装配。" + suffix
+    with pytest.raises(ValueError, match="引用缺少句内说明"):
+        validate_engineering_review(json.dumps(response), payload())
+
+
 def test_single_comparable_result_cannot_produce_a_comparative_tradeoff():
     context = payload()
     context["comparison_count"] = 1
     with pytest.raises(ValueError, match="方案不足"):
         validate_engineering_review(json.dumps(answer()), context)
+
+
+@pytest.mark.parametrize(("section", "count"), [("tradeoffs", 2), ("verification", 5)])
+def test_review_rejects_paragraph_counts_outside_report_scope(section, count):
+    response = answer()
+    response[section] = [response[section][0]] * count
+    with pytest.raises(ValueError, match=rf"{section} 必须为 .*段"):
+        validate_engineering_review(json.dumps(response), payload())
 
 
 def test_unconfirmed_metric_is_retained_as_missing_evidence_not_a_renderable_value():

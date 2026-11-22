@@ -6,6 +6,7 @@ import json
 import pytest
 
 from agents.candidate_gen import CandidateGenAgent
+from core.llm_backend import LLMResponseError
 from core.task_parser import TaskParser
 from core.task_contract import validate_candidate_constraints
 from tests.test_fem_agent import _real_fem_candidate
@@ -57,7 +58,7 @@ class _BatchLLM:
         self.calls = []
 
     def chat(self, system_prompt, user_prompt, **kwargs):
-        payload = json.loads(user_prompt.split("\n\n", 1)[0])
+        payload = json.loads(user_prompt)
         self.calls.append({"count": payload["requested_candidate_count"], **kwargs})
         if self.responses:
             response = self.responses.pop(0)
@@ -141,11 +142,16 @@ def test_llm_generates_exact_twenty_candidates_in_strict_batches():
     }
 
 
-def test_llm_batch_count_mismatch_is_retried_without_partial_acceptance():
+@pytest.mark.parametrize("fault", ["short", "extra", "truncated"])
+def test_llm_batch_count_mismatch_is_retried_without_partial_acceptance(fault):
     valid = json.dumps({"candidates": [_llm_raw_candidate(1)]}, ensure_ascii=False)
-    extra = json.dumps({"candidates": [_llm_raw_candidate(1), _llm_raw_candidate(2)]}, ensure_ascii=False)
+    rejected = {
+        "short": '{"candidates":[]}',
+        "extra": json.dumps({"candidates": [_llm_raw_candidate(1), _llm_raw_candidate(2)]}),
+        "truncated": LLMResponseError("finish_reason=length"),
+    }[fault]
     agent = CandidateGenAgent()
-    backend = _BatchLLM([extra, valid])
+    backend = _BatchLLM([rejected, valid])
     agent.llm_backend = backend
 
     pool = agent.run(_llm_task(1))
@@ -157,10 +163,55 @@ def test_llm_batch_count_mismatch_is_retried_without_partial_acceptance():
 
 def test_llm_failure_does_not_fall_back_to_doe():
     agent = CandidateGenAgent()
-    agent.llm_backend = _BatchLLM([RuntimeError("provider unavailable") for _ in range(3)])
+    backend = _BatchLLM([RuntimeError("provider unavailable")])
+    agent.llm_backend = backend
 
-    with pytest.raises(RuntimeError, match="LLM 候选生成无法满足数量"):
+    with pytest.raises(RuntimeError, match="API 请求失败"):
         agent.run(_llm_task(1))
+    assert len(backend.calls) == 1
+
+
+def test_case_shortfall_preserves_doe_quota_and_increases_llm_share(monkeypatch):
+    task = TaskParser().parse_instruction("T型加筋壁板，长度360mm，宽度300mm，压缩120kN/m，生成5个候选，初筛1个")
+    agent = CandidateGenAgent()
+    agent.llm_backend = _BatchLLM()
+    monkeypatch.setattr(agent.case_retriever, "retrieve_transferable_cases", lambda *_a, **_k: [])
+    pool = agent.run(task)
+    assert [candidate["source"] for candidate in pool] == ["LLM"] * 4 + ["DOE"]
+    assert agent.last_generation_audit["per_stiffener_type"]["T"]["case_transfer_shortfall"] == 1
+
+
+def test_case_only_shortfall_is_explicit(monkeypatch):
+    task = _llm_task(1)
+    task["task"]["candidate_generation_preferences"]["source_ratio"] = {"case_transfer": 1}
+    agent = CandidateGenAgent()
+    monkeypatch.setattr(agent.case_retriever, "retrieve_transferable_cases", lambda *_a, **_k: [])
+    with pytest.raises(RuntimeError, match="可迁移唯一案例不足"):
+        agent.run(task)
+
+
+def test_llm_rejects_repeated_physical_inputs_across_batches():
+    def response(items):
+        return json.dumps({"candidates": items}, ensure_ascii=False)
+    duplicate = _llm_raw_candidate(1)
+    duplicate["rationale"] = "不同理由"
+    agent = CandidateGenAgent()
+    agent.llm_backend = _BatchLLM([
+        response([_llm_raw_candidate(index) for index in range(1, 6)]),
+        response([duplicate]), response([_llm_raw_candidate(6)]),
+    ])
+    pool = agent.run(_llm_task(6))
+    assert len({agent._candidate_signature(candidate) for candidate in pool}) == 6
+    assert [item["count"] for item in agent.llm_backend.calls] == [5, 1, 1]
+    assert any("物理重复" in item["message"] for item in agent.last_generation_audit["llm_diagnostics"])
+
+
+@pytest.mark.parametrize("field,value", [("panel_width_mm", "300"), ("web_thickness_mm", True), ("cap_width_mm", 12)])
+def test_llm_does_not_coerce_geometry_or_drop_other_type_fields(field, value):
+    raw = _llm_raw_candidate(1)
+    raw["geometry"][field] = value
+    with pytest.raises(ValueError, match="几何"):
+        CandidateGenAgent()._normalize_candidate(_llm_task(1), raw, 1, "LLM")
 
 
 def test_llm_cannot_silently_rewrite_fixed_geometry_or_material():

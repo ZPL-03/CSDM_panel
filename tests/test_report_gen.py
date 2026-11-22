@@ -70,13 +70,16 @@ def test_structured_facts_restore_original_values_and_compute_mass():
     assert next(item for item in payload["facts"] if item["metric"] == "BLF_global")["value"] == fact["value"]
     assert fact["value"] == 1.46 and fact["unit"] == "1" and fact["result_status"] == "success"
     assert next(item for item in summary["facts"] if item["metric"] == "BLF_local")["result_status"] == "unavailable"
-    assert next(item for item in payload["facts"] if item["metric"] == "objective_value")["label"] == "总重量比较值（面密度乘投影面积）"
+    assert next(item for item in payload["facts"] if item["metric"] == "objective_value")["label"] == "模型质量（面密度乘投影面积）"
     assert next(item for item in summary["facts"] if item["metric"] == "skin_f0")["value"] == pytest.approx(4 / 14)
     assert all(not any(ch.isdigit() for ch in item["label"])
                for item in payload["facts"] if item["metric"].startswith("skin_f"))
     assert summary["recommendation"]["selected"]["objective_value"] == pytest.approx(12.5 * 0.7 * 0.6)
 
 
+@pytest.mark.parametrize(("value", "display"), [(True, "达到任务 BLF 下限"), (False, "未达到任务 BLF 下限")])
+def test_threshold_fact_names_the_limit_in_generated_prose(value, display):
+    assert format_fact_value({"metric": "target_met", "unit": "boolean", "value": value}) == display
 
 
 @pytest.mark.parametrize("response", ["C1 已通过，制造已认证。", '{"fact_refs":[],"text":"无依据结论"}'])
