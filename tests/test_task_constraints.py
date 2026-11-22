@@ -146,3 +146,21 @@ def test_unavailable_surrogate_stop_policy_records_terminal_decision(monkeypatch
     with pytest.raises(RuntimeError, match="预筛终止"):
         agent.screen_candidates(task, agent.generate_candidates(task))
     assert read_json(paths.TASKS_DIR / "screening" / f"{task['task_id']}.json")["action"] == "stop"
+
+
+@pytest.mark.parametrize("top_k", [1, 3, 5, 7])
+def test_direct_fem_samples_each_type_in_generation_order(top_k):
+    from core.surrogate_model import SurrogateModelManager
+
+    agent = OrchestratorAgent()
+    agent.screener.model_manager = SurrogateModelManager(models_dir=paths.DATA_DIR / "empty-models")
+    task = agent.parse_instruction(f"板式筋、T型筋、L型筋，压缩120kN/m，生成7个候选，初筛{top_k}个")
+    task["task"]["candidate_generation_preferences"]["source_ratio"] = {"llm": 0, "case_transfer": 0, "doe": 1}
+    candidates = agent.generate_candidates(task)
+    selected = agent.screen_candidates(task, candidates)
+    order = [1, 4, 6, 2, 5, 7, 3][:top_k]
+    assert [row["candidate_id"] for row in selected] == [f"TMP_{number}" for number in order]
+    assert all(row["surrogate_BLF"] is None for row in selected)
+    decision = read_json(paths.TASKS_DIR / "screening" / f"{task['task_id']}.json")
+    assert decision["selection_basis"] == "stiffener_type_round_robin"
+    assert decision["selected_ids"] == [row["candidate_id"] for row in selected]

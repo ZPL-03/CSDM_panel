@@ -134,7 +134,7 @@ def test_llm_generates_exact_twenty_candidates_in_strict_batches():
     assert all(candidate["source"] == "LLM" for candidate in pool)
     assert len({agent._candidate_signature(candidate) for candidate in pool}) == 20
     assert [item["count"] for item in backend.calls] == [5, 5, 5, 5]
-    assert all(item["json_mode"] is True and item["max_tokens_override"] >= 4750 for item in backend.calls)
+    assert all(item["json_mode"] is True and item["max_tokens_override"] == 8192 for item in backend.calls)
     assert agent.last_generation_audit["accepted_counts"] == {
         "LLM": 20,
         "CASE_TRANSFER": 0,
@@ -142,13 +142,53 @@ def test_llm_generates_exact_twenty_candidates_in_strict_batches():
     }
 
 
-@pytest.mark.parametrize("fault", ["short", "extra", "truncated"])
-def test_llm_batch_count_mismatch_is_retried_without_partial_acceptance(fault):
+def test_candidate_limit_can_allow_twenty_in_one_request():
+    agent = CandidateGenAgent()
+    agent.llm_config = {**agent.llm_config, "candidate_generation": {
+        "max_candidates_per_request": 20, "max_attempts": 1, "max_tokens": 4096,
+    }}
+    agent.llm_backend = _BatchLLM()
+    assert len(agent.run(_llm_task(20))) == 20
+    assert agent.llm_backend.calls == [{"count": 20, "max_tokens_override": 4096, "json_mode": True}]
+
+
+def test_truncation_reduces_batch_count_without_increasing_budget():
+    agent = CandidateGenAgent()
+    agent.llm_config = {**agent.llm_config, "candidate_generation": {
+        "max_candidates_per_request": 6, "max_attempts": 1, "max_tokens": 1024,
+    }}
+    agent.llm_backend = _BatchLLM([LLMResponseError("输出截断", finish_reason="length")])
+    pool = agent.run(_llm_task(6))
+    assert len(pool) == 6 and all(candidate["source"] == "LLM" for candidate in pool)
+    assert [row["count"] for row in agent.llm_backend.calls] == [6, 3, 3]
+    assert {row["max_tokens_override"] for row in agent.llm_backend.calls} == {1024}
+    assert agent.last_generation_audit["llm_diagnostics"][0]["finish_reason"] == "length"
+
+
+def test_single_truncated_candidate_fails_without_repeating_same_request():
+    agent = CandidateGenAgent()
+    agent.llm_backend = _BatchLLM([LLMResponseError("输出截断", finish_reason="length")])
+    with pytest.raises(RuntimeError, match="输出截断"):
+        agent.run(_llm_task(1))
+    assert len(agent.llm_backend.calls) == 1
+
+
+@pytest.mark.parametrize("invalid", [0, True, "8192"])
+def test_candidate_output_budget_must_be_a_positive_integer(invalid, monkeypatch):
+    agent = CandidateGenAgent()
+    monkeypatch.setitem(agent.llm_config["candidate_generation"], "max_tokens", invalid)
+    agent.llm_backend = _BatchLLM()
+    with pytest.raises(ValueError, match=r"candidate_generation\.max_tokens"):
+        agent.run(_llm_task(1))
+    assert agent.llm_backend.calls == []
+
+
+@pytest.mark.parametrize("fault", ["short", "empty"])
+def test_llm_batch_with_no_candidates_is_retried(fault):
     valid = json.dumps({"candidates": [_llm_raw_candidate(1)]}, ensure_ascii=False)
     rejected = {
         "short": '{"candidates":[]}',
-        "extra": json.dumps({"candidates": [_llm_raw_candidate(1), _llm_raw_candidate(2)]}),
-        "truncated": LLMResponseError("finish_reason=length"),
+        "empty": LLMResponseError("LLM 返回空正文"),
     }[fault]
     agent = CandidateGenAgent()
     backend = _BatchLLM([rejected, valid])
@@ -158,7 +198,28 @@ def test_llm_batch_count_mismatch_is_retried_without_partial_acceptance(fault):
 
     assert len(pool) == 1 and pool[0]["source"] == "LLM"
     assert len(backend.calls) == 2
-    assert any(item["stage"] == "request_or_parse" for item in agent.last_generation_audit["llm_diagnostics"])
+    assert any(item["stage"] in {"request_or_parse", "rejected"} for item in agent.last_generation_audit["llm_diagnostics"])
+
+
+def test_llm_overflow_is_audited_after_accepting_exact_quota():
+    agent = CandidateGenAgent()
+    agent.llm_backend = _BatchLLM([json.dumps({"candidates": [_llm_raw_candidate(1), _llm_raw_candidate(2)]})])
+    assert [candidate["candidate_id"] for candidate in agent.run(_llm_task(1))] == ["TMP_1"]
+    assert len(agent.llm_backend.calls) == 1
+    assert agent.last_generation_audit["llm_diagnostics"][0]["surplus"] == 1
+
+
+def test_llm_partial_valid_batch_only_requests_remaining_quota():
+    agent = CandidateGenAgent()
+    duplicate = _llm_raw_candidate(1)
+    agent.llm_backend = _BatchLLM([
+        json.dumps({"candidates": [duplicate, duplicate]}),
+        json.dumps({"candidates": [_llm_raw_candidate(2)]}),
+    ])
+    assert [candidate["candidate_id"] for candidate in agent.run(_llm_task(2))] == ["TMP_1", "TMP_2"]
+    assert [row["count"] for row in agent.llm_backend.calls] == [2, 1]
+    details = agent.last_generation_audit["llm_diagnostics"][0]
+    assert (details["requested"], details["accepted"], details["rejected"], details["surplus"]) == (2, 1, 1, 0)
 
 
 def test_llm_failure_does_not_fall_back_to_doe():

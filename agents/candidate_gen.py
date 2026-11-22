@@ -44,8 +44,6 @@ class CandidateGenAgent(BaseAgent):
     """按任务比例生成候选，并由程序统一控制数量、来源和物理合法性。"""
 
     agent_name = "CANDIDATE_GEN"
-    DEFAULT_LLM_BATCH_SIZE = 5
-    DEFAULT_LLM_ATTEMPTS = 3
 
     def __init__(self, progress_callback=None) -> None:
         super().__init__(progress_callback=progress_callback)
@@ -424,16 +422,6 @@ class CandidateGenAgent(BaseAgent):
             candidates.append(item)
         return candidates
 
-    def _llm_max_tokens(self, count: int) -> int:
-        configured = int(self.llm_config.get("candidate_generation", {}).get("max_tokens", 0) or 0)
-        estimate = 1500 + 650 * count
-        return max(3000, estimate, configured)
-
-    def _llm_batch_size(self) -> int:
-        settings = self.llm_config.get("candidate_generation", {})
-        configured = int(settings.get("max_candidates_per_request", 0) or 0)
-        return max(1, min(configured or self.DEFAULT_LLM_BATCH_SIZE, self.DEFAULT_LLM_BATCH_SIZE))
-
     def _record_llm_diagnostic(self, stage: str, message: str, **extra: Any) -> None:
         record = {"stage": stage, "message": str(message)}
         record.update(extra)
@@ -443,14 +431,19 @@ class CandidateGenAgent(BaseAgent):
                         excluded: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         if desired_count <= 0:
             return []
+        settings = self.llm_config.get("candidate_generation")
+        for key in ("max_candidates_per_request", "max_attempts", "max_tokens"):
+            value = settings.get(key) if isinstance(settings, dict) else None
+            if type(value) is not int or value <= 0:
+                raise ValueError(f"candidate_generation.{key} 必须为正整数")
+        batch_size = settings["max_candidates_per_request"]
+        attempts = settings["max_attempts"]
+        max_tokens = settings["max_tokens"]
         backend = self._ensure_llm_backend()
         knowledge_context = self._knowledge_guidance(task)
         accepted: List[Dict[str, Any]] = []
         signatures = {self._candidate_signature(candidate) for candidate in excluded}
         next_index = start_index
-        settings = self.llm_config.get("candidate_generation", {})
-        attempts = int(settings.get("max_attempts", self.DEFAULT_LLM_ATTEMPTS) or self.DEFAULT_LLM_ATTEMPTS)
-        batch_size = self._llm_batch_size()
         while len(accepted) < desired_count:
             batch_count = min(batch_size, desired_count - len(accepted))
             accepted_before = len(accepted)
@@ -459,7 +452,6 @@ class CandidateGenAgent(BaseAgent):
                 system_prompt, user_prompt = self._build_llm_prompts(
                     task, batch_count, knowledge_context, excluded + accepted, last_error
                 )
-                max_tokens = self._llm_max_tokens(batch_count)
                 self._last_llm_generation_requests.append({
                     "batch_count": batch_count,
                     "attempt": attempt,
@@ -470,22 +462,23 @@ class CandidateGenAgent(BaseAgent):
                     answer = backend.chat(system_prompt, user_prompt, max_tokens_override=max_tokens, json_mode=True)
                 except LLMResponseError as exc:
                     last_error = str(exc)
-                    self._record_llm_diagnostic("request_or_parse", last_error)
+                    self._record_llm_diagnostic("request_or_parse", last_error, finish_reason=exc.finish_reason)
+                    if exc.finish_reason == "length":
+                        # 截断批次不入池；输出预算不变，下一次只请求更少的同类候选。
+                        batch_size = max(1, batch_count // 2)
+                        break
                     continue
                 except Exception as exc:
                     raise RuntimeError(f"LLM 候选生成无法满足数量 {desired_count}：API 请求失败（{type(exc).__name__}）") from exc
                 try:
                     raw_candidates = self._parse_llm_response(answer)
-                    if len(raw_candidates) != batch_count:
-                        raise ValueError(
-                            f"LLM 本批次应返回 {batch_count} 个候选，实际返回 {len(raw_candidates)} 个"
-                        )
                     normalized: List[Dict[str, Any]] = []
                     errors: List[str] = []
                     batch_signatures: set[tuple] = set()
-                    for offset, raw in enumerate(raw_candidates):
+                    # 模型提案数量可能偏离请求；程序逐项校验并决定配额内的正式候选。
+                    for position, raw in enumerate(raw_candidates, 1):
                         try:
-                            candidate = self._normalize_candidate(task, raw, next_index + offset, "LLM")
+                            candidate = self._normalize_candidate(task, raw, next_index + len(normalized), "LLM")
                             if not candidate["rule_check"]["is_valid"]:
                                 errors.append("；".join(candidate["rule_check"].get("errors", [])[:3]))
                                 continue
@@ -495,14 +488,18 @@ class CandidateGenAgent(BaseAgent):
                                 continue
                             batch_signatures.add(signature)
                             normalized.append(candidate)
+                            if len(normalized) == batch_count:
+                                break
                         except (ValueError, TypeError, KeyError, OverflowError) as exc:
-                            errors.append(f"候选 {offset + 1}：{exc}")
-                    if not errors and len(normalized) == batch_count:
+                            errors.append(f"候选 {position}：{exc}")
+                    if normalized:
                         accepted.extend(normalized)
                         signatures.update(batch_signatures)
-                        next_index += batch_count
+                        next_index += len(normalized)
                         self._record_llm_diagnostic(
-                            "accepted", "LLM 候选通过程序校验", returned=len(raw_candidates), accepted=len(normalized)
+                            "accepted", "LLM 候选按配额通过程序校验", requested=batch_count,
+                            returned=len(raw_candidates), accepted=len(normalized), rejected=len(errors),
+                            surplus=len(raw_candidates) - len(normalized) - len(errors),
                         )
                         break
                     last_error = "；".join(error for error in errors if error) or "本批次没有候选通过程序校验"
@@ -510,7 +507,7 @@ class CandidateGenAgent(BaseAgent):
                 except (ValueError, TypeError) as exc:
                     last_error = str(exc)
                     self._record_llm_diagnostic("request_or_parse", last_error)
-            if len(accepted) == accepted_before:
+            if len(accepted) == accepted_before and batch_size >= batch_count:
                 raise RuntimeError(f"LLM 候选生成无法满足数量 {desired_count}，已接受 {len(accepted)}：{last_error}")
         self.emit_event(
             "llm_candidate_generation",

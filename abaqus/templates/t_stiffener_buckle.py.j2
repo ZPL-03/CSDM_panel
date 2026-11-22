@@ -6,6 +6,9 @@ import json
 import os
 import sys
 
+# 求解进程不在项目源码目录写入字节码缓存。
+sys.dont_write_bytecode = True
+
 # CAE 的显示精度不能参与物理契约的 JSON 往返及指纹计算。
 if sys.version_info[0] == 2:
     json.encoder.FLOAT_REPR = float.__repr__

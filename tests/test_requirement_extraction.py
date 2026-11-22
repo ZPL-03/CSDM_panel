@@ -32,6 +32,24 @@ def test_grounded_requirements_keep_actual_counts_loads_and_target(monkeypatch):
     assert task["requirement_extraction"]["method"] == "llm_grounded"
 
 
+@pytest.mark.parametrize(("label", "types"), [("板式筋", ["BLADE"]), ("帽形筋、L型筋", ["HAT", "L"])])
+def test_explicit_stiffener_types_are_given_to_model_and_bound_to_user_quote(monkeypatch, label, types):
+    text = TEXT.replace("T型", label, 1)
+    facts = [dict(field="stiffener_types", value=types, quote=label), *FACTS[1:]]
+
+    class Backend:
+        def chat(self, system, user, **options):
+            assert json.loads(user) == {"instruction": text, "explicit_stiffener_types": types}
+            assert options["json_mode"] is True
+            return json.dumps({"facts": facts})
+
+    monkeypatch.setattr("core.task_parser.LLMBackend", Backend)
+    assert TaskParser()._interpret_requirements(text)["candidate_generation_preferences"]["stiffener_types"] == types
+    facts.pop(0)
+    with pytest.raises(ValueError, match="遗漏或改变了明确筋型"):
+        TaskParser()._interpret_requirements(text)
+
+
 @pytest.mark.parametrize("action", ["invent_number", "invent_quote", "omit_load", "duplicate", "wrong_type", "wrong_unit"])
 def test_invalid_or_missing_requirement_evidence_is_rejected(monkeypatch, action):
     facts = deepcopy(FACTS)

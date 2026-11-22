@@ -110,11 +110,14 @@ def test_content_review_keeps_issues_and_only_accepts_rechecked_revision():
     issue = {"quote": "C1 的容量为12.34567 MPa", "issue": "候选对应关系需要更正", "fact_refs": ["C1.capacity"]}
     responses = [json.dumps({"issues": [issue]}), json.dumps(answer()), json.dumps({"issues": []})]
     seen = []
-    def chat(system, user):
-        seen.append(json.loads(user))
+    stages = []
+    def chat(stage, system, user):
+        stages.append(stage)
+        seen.append(user)
         return responses.pop(0)
     accepted = review_engineering_content(chat, draft, context, audit)
     assert accepted["recommendation_candidate_id"] == "C1"
+    assert stages == ["content_check", "revision", "content_check"]
     assert [item["accepted"] for item in audit["content_checks"]] == [False, True]
     assert seen[1]["review_issues"] == [issue]
     assert set(seen[1]["draft"]) == set(answer())
@@ -180,9 +183,9 @@ def test_evidence_reference_format_is_repaired_without_guessing_source(unmarked)
     response = answer()
     response["verification"][0] = f"按{unmarked}的试件条件核查{{{{TASK.scope}}}}。"
 
-    def repair(system, user):
+    def repair(stage, system, request):
+        assert stage == "format_repair"
         assert "{{E1}}" in system and "不得写 E1 或 [E1]" in system
-        request = json.loads(user)
         assert "verification[0]" in request["validation_error"]
         assert "{{E1}}" in request["validation_error"]
         assert "draft_response" not in request and request["response_schema"] == context["response_schema"]
@@ -201,8 +204,8 @@ def test_contract_repair_receives_all_invalid_paragraphs_in_one_request():
     response = answer()
     response["verification"] = ["补充其他候选的同工况求解。", "核对模型约束与实际连接的差异。"]
 
-    def repair(_, user):
-        error = json.loads(user)["validation_error"]
+    def repair(_, __, request):
+        error = request["validation_error"]
         assert "verification[0]" in error and "verification[1]" in error
         repaired = answer()
         repaired["verification"].append("按{{E1}}的适用条件复核试验对比方案。")
@@ -218,11 +221,10 @@ def test_source_dimensions_are_not_renderable_current_facts():
     response = answer()
     response["verification"][0] = "{{E1}}的试件厚度为 2.1 mm，应核对制造条件。"
 
-    def repair(system, user):
+    def repair(_, system, request):
         assert "即使明确写了来源也不复述" in system
-        request = json.loads(user)
         assert "文献条件使用 evidence.ref" in request["validation_error"]
-        assert request["evidence"] == context["evidence"]
+        assert request["engineering_context"]["evidence"] == context["evidence"]
         assert "draft_response" not in request
         repaired = answer()
         repaired["verification"][0] = "核对{{E1}}的试件厚度和当前制造条件是否相符。"

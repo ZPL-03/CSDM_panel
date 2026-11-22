@@ -9,6 +9,7 @@ import pytest
 
 from agents.report_gen import ReportGenAgent
 from core.laminate import analysis_contract
+from core.llm_backend import LLMResponseError
 from core.report_facts import format_fact_value
 
 
@@ -57,7 +58,7 @@ def _backend():
             payload = json.loads(user_prompt)
             if set(payload) == {"report", "evidence"}:
                 return json.dumps({"issues": []})
-            return _review(payload)
+            return _review(payload["engineering_context"])
     return Backend()
 
 
@@ -72,8 +73,7 @@ def test_structured_facts_restore_original_values_and_compute_mass():
     assert next(item for item in summary["facts"] if item["metric"] == "BLF_local")["result_status"] == "unavailable"
     assert next(item for item in payload["facts"] if item["metric"] == "objective_value")["label"] == "模型质量（面密度乘投影面积）"
     assert next(item for item in summary["facts"] if item["metric"] == "skin_f0")["value"] == pytest.approx(4 / 14)
-    assert all(not any(ch.isdigit() for ch in item["label"])
-               for item in payload["facts"] if item["metric"].startswith("skin_f"))
+    assert not {"skin_f0", "skin_layup", "surrogate_BLF"} & {item["metric"] for item in payload["facts"]}
     assert summary["recommendation"]["selected"]["objective_value"] == pytest.approx(12.5 * 0.7 * 0.6)
 
 
@@ -111,6 +111,106 @@ def test_api_failure_is_not_replaced_by_deterministic_llm_success(tmp_path):
     assert not list(tmp_path.rglob("overall_design_report*"))
 
 
+@pytest.mark.parametrize("settings", [None, {}, {"max_output_tokens": 0}, {"max_output_tokens": -1},
+                                     {"max_output_tokens": True}, {"max_output_tokens": 1.5},
+                                     {"max_output_tokens": "2048"}])
+def test_report_rejects_invalid_explanation_budget(monkeypatch, settings):
+    monkeypatch.setattr("agents.report_gen.load_llm_config", lambda: {"report_explanation": settings})
+    with pytest.raises(ValueError, match=r"report_explanation\.max_output_tokens"):
+        ReportGenAgent()
+
+
+def test_report_audits_each_call_with_the_configured_budget(monkeypatch):
+    monkeypatch.setattr("agents.report_gen.load_llm_config", lambda: {"report_explanation": {"max_output_tokens": 400}})
+    task, results, candidates = _report_sample()
+    agent = ReportGenAgent()
+    budgets = []
+
+    class Backend:
+        def chat(self, system, user, *, max_tokens_override, json_mode):
+            assert json_mode
+            budgets.append(max_tokens_override)
+            position = len(budgets)
+            self.last_response = {"model": "test-model", "finish_reason": "stop", "content": "response body",
+                                  "usage": {"prompt_tokens": 100, "completion_tokens": position,
+                                            "total_tokens": 100 + position, "provider_diagnostics": {"details": True}}}
+            request = json.loads(user)
+            if "report" in request:
+                issues = [{"quote": "比较仅覆盖完成校核的候选", "issue": "说明证据范围", "fact_refs": ["C1.BLF_global"]}]
+                return json.dumps({"issues": issues if position == 3 else []})
+            assert set(request["response_schema"]) == {"recommendation_candidate_id", "assessment", "tradeoffs", "verification"}
+            assert "comparison_count" not in request
+            assert "unavailable_facts" not in request["engineering_context"]
+            reply = json.loads(_review(request["engineering_context"]))
+            if position == 1:
+                reply["comparison_count"] = request["engineering_context"]["comparison_count"]
+            elif position == 2:
+                assert "不得输出 comparison_count" in request["validation_error"]
+            return json.dumps(reply)
+
+    agent.llm_backend = Backend()
+    summary = agent._build_structured_summary(task, results, candidates)
+    assert agent._render_engineering_explanation(summary)
+    audit = agent._last_llm_explanation_audit
+    assert audit["status"] == "accepted" and "api_response" not in audit
+    assert budgets == [400] * 5
+    stages = ["draft", "format_repair", "content_check", "revision", "content_check"]
+    assert audit["call_traces"] == [
+        {"stage": stage, "max_output_tokens": 400, "status": "completed", "model": "test-model",
+         "finish_reason": "stop", "usage": {"prompt_tokens": 100, "completion_tokens": i, "total_tokens": 100 + i}}
+        for i, stage in enumerate(stages, 1)
+    ]
+
+
+def test_truncated_content_check_stops_export_and_records_failure(tmp_path):
+    task, results, candidates = _report_sample()
+    events = []
+    agent = ReportGenAgent(lambda _, __, event: events.append(event))
+
+    class Backend:
+        def chat(self, system, user, **kwargs):
+            request = json.loads(user)
+            if "report" in request:
+                self.last_response = {"model": "test-model", "finish_reason": "length", "content": '{"issues":'}
+                raise LLMResponseError("LLM 回答未完整结束（finish_reason=length）")
+            self.last_response = {"model": "test-model", "finish_reason": "stop"}
+            return _review(request["engineering_context"])
+
+    agent.llm_backend = Backend()
+    with pytest.raises(LLMResponseError, match="finish_reason=length"):
+        agent.run({"task": task, "results": results, "candidates": candidates, "output_dir": tmp_path})
+    audit = agent._last_llm_explanation_audit
+    assert audit["status"] == "failed" and not agent._last_llm_explanation_used
+    assert [(row["stage"], row["finish_reason"], row["status"]) for row in audit["call_traces"]] == [
+        ("draft", "stop", "completed"), ("content_check", "length", "failed"),
+    ]
+    assert "content" not in audit["call_traces"][-1] and not list(tmp_path.rglob("overall_design_report*"))
+    assert events[-1]["event_type"] == "report_explanation_failed"
+    assert events[-1]["payload"]["call_traces"] == audit["call_traces"]
+
+
+def test_context_rejection_preserves_http_status_without_retry_or_export(tmp_path):
+    task, results, candidates = _report_sample()
+    agent = ReportGenAgent()
+
+    class RequestRejected(Exception):
+        status_code = 400
+
+    class Backend:
+        def chat(self, *args, **kwargs):
+            raise RequestRejected("input and output exceed context length")
+
+    agent.llm_backend = Backend()
+    with pytest.raises(RequestRejected, match="context length"):
+        agent.run({"task": task, "results": results, "candidates": candidates, "output_dir": tmp_path})
+    audit = agent._last_llm_explanation_audit
+    assert [(row["stage"], row["http_status"], row["finish_reason"]) for row in audit["call_traces"]] == [
+        ("draft", 400, None),
+    ]
+    assert audit["status"] == "failed" and not agent._last_llm_explanation_used
+    assert "context length" not in audit["error"] and not list(tmp_path.rglob("overall_design_report*"))
+
+
 def test_failed_and_uncomputed_results_remain_unknown():
     task, results, candidates = _report_sample()
     results[0].update(status="failed", verdict="通过", BLF_global=99)
@@ -132,7 +232,12 @@ def test_exact_threshold_and_negative_predicted_score():
     summary = agent._build_structured_summary(task, results, candidates)
     assert summary["passed_count"] == 0 and summary["recommendation"]["selected"] is None
     payload = agent._build_llm_explanation_payload(summary)
-    assert next(row for row in payload["facts"] if row["metric"] == "rank_score")["value"] == -0.273
+    assert next(row for row in summary["facts"] if row["metric"] == "rank_score")["value"] == -0.273
+    assert [row["candidate_id"] for row in payload["facts"] if row["candidate_id"]] == []
+    assert payload["recommendation"]["exclusion_counts"] == {"首个正特征值低于推荐 BLF 下限": 1}
+    assert {"TASK.max_result_BLF", "TASK.required_BLF"} <= set(payload["required_assessment_refs"])
+    highest = next(fact for fact in payload["facts"] if fact["ref"] == "TASK.max_result_BLF")
+    assert highest["value"] == 1.4999999 and highest["display"] == "1.4999999（无量纲）"
     results[0]["verdict"] = "通过"
     with pytest.raises(ValueError, match="冲突"):
         agent._build_structured_summary(task, results, candidates)
@@ -168,6 +273,7 @@ def test_candidate_and_result_binding_rejects_identity_or_physical_conflict(muta
 
 def test_report_includes_all_candidates_and_preserves_stage_snapshots(tmp_path):
     task, results, candidates = _report_sample()
+    results[0]["odb_diagnostics"] = {"trace": ["solver detail" * 512]}
     selected = deepcopy(candidates)
     candidates[0].pop("persistent_candidate_id")
     for index in range(2, 51):
@@ -195,6 +301,8 @@ def test_report_includes_all_candidates_and_preserves_stage_snapshots(tmp_path):
     assert all(fact["candidate_id"] in (None, "C1")
                for field in ("facts", "unavailable_facts") for fact in review_input[field])
     assert not {"all_candidates", "results", "task"} & review_input.keys()
+    assert "odb_diagnostics" not in json.dumps(review_input)
+    assert summary["results"][0]["odb_diagnostics"] == results[0]["odb_diagnostics"]
     assert {"TASK.load_type", "TASK.boundary_conditions"} <= {item["ref"] for item in review_input["facts"]}
     context = audit["knowledge_context"]
     assert review_input["relations"] == context["relations"]
@@ -212,6 +320,40 @@ def test_report_includes_all_candidates_and_preserves_stage_snapshots(tmp_path):
         assert "证据契约" not in text and "`" not in text
 
 
+def test_many_fem_results_use_true_objective_order_without_duplicating_rows():
+    task, results, candidates = _report_sample()
+    agent = ReportGenAgent()
+    for number in range(2, 51):
+        candidate = deepcopy(candidates[0])
+        candidate.update(candidate_id=f"TMP_{number}", persistent_candidate_id=f"C{number}")
+        candidate["geometry"]["stiffener_height_mm"] += number / 100
+        candidates.append(candidate)
+        result = {**results[0], "candidate_id": f"C{number}", "weight_kg_per_m2": 17 - number / 10,
+                  "analysis_contract": analysis_contract(candidate), "odb_diagnostics": {"frame": "detail" * 500}}
+        result.pop("session_candidate_id")
+        if number == 2:
+            result["status"] = "failed"
+        results.append(result)
+    summary = agent._build_structured_summary(task, list(reversed(results)), candidates)
+    payload = agent._build_llm_explanation_payload(summary)
+    assert payload["comparison_count"] == 49 and len(summary["results"]) == 50
+    assert len(summary["recommendation"]["ranked"]) == 49
+    assert payload["recommendation"]["selected"] == {"candidate_id": "C50"}
+    assert payload["recommendation"]["alternative"] == {"candidate_id": "C49"}
+    assert payload["recommendation"]["exclusion_counts"] == {"求解未成功": 1}
+    assert set(payload["candidate_ids"]) == {"C50", "C49", "TMP_50", "TMP_49"}
+    assert {(fact["ref"], fact["value"]) for fact in payload["facts"] if fact["metric"] == "target_BLF"} == {
+        ("TASK.target_BLF", 1.35),
+    }
+    for fact in payload["facts"] + payload["unavailable_facts"]:
+        assert fact["candidate_id"] is None or fact["metric"] in agent.REVIEW_RESULT_METRICS
+    assert "odb_diagnostics" not in json.dumps(payload) and summary["results"][0]["odb_diagnostics"]
+    pair = agent._build_structured_summary(task, results[-2:], candidates[-2:])
+    pair_payload = agent._build_llm_explanation_payload(pair)
+    assert len(payload["facts"]) == len(pair_payload["facts"])
+    assert len(payload["unavailable_facts"]) == len(pair_payload["unavailable_facts"])
+
+
 def test_mass_and_areal_density_objectives_do_not_use_same_ranking():
     task, results, candidates = _report_sample()
     second = deepcopy(candidates[0])
@@ -224,6 +366,7 @@ def test_mass_and_areal_density_objectives_do_not_use_same_ranking():
     assert agent._build_structured_summary(task, results + [second_result], candidates + [second])["recommendation"]["selected"]["candidate_id"] == "C1"
     task["task"]["design_targets"]["primary_objective"] = "最小面密度"
     assert agent._build_structured_summary(task, results + [second_result], candidates + [second])["recommendation"]["selected"]["candidate_id"] == "C2"
+    assert agent._build_structured_summary(task, results, [])["recommendation"]["selected"] is None
     task["task"]["design_targets"]["primary_objective"] = "刚度优先"
     assert agent._build_structured_summary(task, results, candidates)["recommendation"]["selected"] is None
 
@@ -298,7 +441,7 @@ def test_pdf_heading_levels_keep_with_following_content():
     ("skin_f0", 0.375, "1", "0.375（无量纲）"),
     ("skin_f45", 0.3333333333333333, "1", "0.333333（无量纲）"),
     ("rank_score", -0.273, "score", "-0.273 score"),
-    ("BLF_global", 0.00000001, "1", "1.0000e-08（无量纲）"),
+    ("BLF_global", 0.00000001, "1", "1e-08（无量纲）"),
     ("candidate_count", 12, "个", "12"),
     ("comparable_count", 0, "个", "0"),
     ("ply_count", 16, "count", "16"),

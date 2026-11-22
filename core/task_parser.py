@@ -427,14 +427,17 @@ class TaskParser:
                     raise ValueError(f"明确几何 {field} 包含冲突数值")
                 explicit_geometry[field] = value
         allowed = set(numeric_labels) | geometry_fields | {"stiffener_types", "boundary_type", "material_key", "primary_objective"}
+        explicit_types = self._extract_stiffener_types(text)
         answer = LLMBackend().chat(
             "你负责抽取复合材料加筋壁板的用户需求，不生成设计方案。只返回 JSON 对象，唯一字段 facts 为数组。"
             "每项恰含 field、value、quote；quote 必须逐字引用用户原文中包含该值及其含义和单位的连续文字。"
             "只提取明确给出的值，禁止推算、补默认值或转换单位。数值使用原文数字；几何单位必须为 mm，载荷为 kN/m。"
             "stiffener_types 为 BLADE/T/L/HAT 数组，boundary_type 为 SSSS/SSCC/CCCC，material_key 为材料库键。"
+            "explicit_stiffener_types 非空时必须返回同序的 stiffener_types 和覆盖全部指定筋型的原文引句，单一筋型也要返回。"
             "primary_objective 为 最小重量/最小面密度/刚度优先。不存在或含糊的信息不要输出。"
             "字段白名单：" + ", ".join(sorted(allowed)) + "；材料库：" + ", ".join(self.material_db),
-            json.dumps({"instruction": text}, ensure_ascii=False), max_tokens_override=2600)
+            json.dumps({"instruction": text, "explicit_stiffener_types": explicit_types}, ensure_ascii=False),
+            max_tokens_override=2600, json_mode=True)
         response = json.loads(answer)
         if not isinstance(response, dict) or set(response) != {"facts"} or not isinstance(response["facts"], list):
             raise ValueError("需求抽取必须返回 facts 数组")
@@ -486,8 +489,7 @@ class TaskParser:
         boundary = self._user_boundary_conditions(text)
         if boundary and extracted.get("boundary_type") != boundary["type"]:
             raise ValueError("需求抽取遗漏或改变了明确边界")
-        types = self._extract_stiffener_types(text)
-        if types and extracted.get("stiffener_types") != types:
+        if explicit_types and extracted.get("stiffener_types") != explicit_types:
             raise ValueError("需求抽取遗漏或改变了明确筋型")
         material, specified = self._extract_material(text)
         if specified and extracted.get("material_key") != material["material_key"]:

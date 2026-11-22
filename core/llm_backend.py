@@ -37,6 +37,10 @@ def auto_llm_enabled() -> bool:
 class LLMResponseError(ValueError):
     """模型未返回完整、非空的正文。"""
 
+    def __init__(self, message: str, *, finish_reason: str | None = None) -> None:
+        super().__init__(message)
+        self.finish_reason = finish_reason
+
 
 class LLMBackend:
     """面向当前项目唯一 LLM 接口的最小封装。"""
@@ -105,7 +109,8 @@ class LLMBackend:
         content = choice.message.content or ""
         self.last_response.update(finish_reason=choice.finish_reason, content=content)
         if choice.finish_reason != "stop":
-            raise LLMResponseError(f"LLM 回答未完整结束（finish_reason={choice.finish_reason}）")
+            raise LLMResponseError(f"LLM 回答未完整结束（finish_reason={choice.finish_reason}）",
+                                   finish_reason=choice.finish_reason)
         if not content.strip():
             raise LLMResponseError("LLM 返回空正文")
         return content

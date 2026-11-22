@@ -6,11 +6,13 @@ import json
 import math
 import re
 import tempfile
+from collections import Counter
 from pathlib import Path
 from typing import Dict, List
 from xml.sax.saxutils import escape
 
 from agents.base import BaseAgent
+from core.config_loader import load_llm_config
 from core.display import format_number
 from core.domain_knowledge import DomainKnowledgeBase
 from core.io_utils import write_json, write_text
@@ -21,7 +23,8 @@ from core.report_facts import (
     METRIC_LABELS, build_comparison_facts, build_facts, format_fact_value, normalize_results,
 )
 from core.report_review import (
-    REVIEW_PROMPT, parse_engineering_review, prepare_review_payload, render_engineering_review, review_engineering_content,
+    parse_engineering_review, prepare_review_payload, render_engineering_review, request_engineering_review,
+    review_engineering_content,
 )
 from core.stiffener_profile import TYPE_DISPLAY_NAMES
 from core.task_contract import describe_boundary_conditions, describe_load_conditions, task_payload_from_request
@@ -31,10 +34,20 @@ class ReportGenAgent(BaseAgent):
     agent_name = "REPORT_GEN"
     REPORT_ARTIFACTS = {"overall": ("overall_design_report", "CSDM_panel 总体设计方案报告")}
     OBJECTIVE_LABELS = {"最小重量": "模型质量（面密度乘投影面积）", "最小面密度": "面密度"}
+    REVIEW_RESULT_METRICS = frozenset({
+        "BLF_global", "BLF_local", "BLF_margin_percent", "objective_value", "weight_kg_per_m2",
+        "critical_Nx", "critical_Nxy", "stiffener_type", "material",
+    })
 
     def __init__(self, progress_callback=None) -> None:
         super().__init__(progress_callback=progress_callback)
-        self.llm_backend = LLMBackend() if auto_llm_enabled() else None
+        llm_config = load_llm_config()
+        settings = llm_config.get("report_explanation", {})
+        budget = settings.get("max_output_tokens") if isinstance(settings, dict) else None
+        if type(budget) is not int or budget <= 0:
+            raise ValueError("report_explanation.max_output_tokens 必须为正整数")
+        self._explanation_max_output_tokens = budget
+        self.llm_backend = LLMBackend(llm_config) if auto_llm_enabled() else None
         self.knowledge_base = DomainKnowledgeBase()
         self._knowledge_context = None
         self._last_llm_explanation_used = False
@@ -75,6 +88,7 @@ class ReportGenAgent(BaseAgent):
                 if candidate.get("persistent_candidate_id") not in (None, formal_id):
                     raise ValueError("结果正式编号与候选记录冲突")
                 candidate["persistent_candidate_id"] = formal_id
+                result["session_candidate_id"] = cid
                 contract = result.get("analysis_contract") or {}
                 if contract.get("version") == ANALYSIS_VERSION:
                     if contract != analysis_contract(candidate):
@@ -118,15 +132,17 @@ class ReportGenAgent(BaseAgent):
         ranked, excluded = [], []
         for result in results:
             cid = result["candidate_id"]
+            identity = {"candidate_id": cid, "session_candidate_id": result.get("session_candidate_id")}
+            if result["status"] != "success":
+                excluded.append({**identity, "reasons": ["求解未成功"]})
+                continue
             candidate = by_id.get(cid, {})
             geometry = candidate.get("geometry") or {}
             contract = result.get("analysis_contract") or {}
             reasons = []
-            if result["status"] != "success":
-                reasons.append("求解未成功")
-            elif result["BLF_global"] < required_blf:
-                reasons.append("BLF 未同时达到任务下限和完整参考载荷")
-            if contract.get("version") != ANALYSIS_VERSION or not contract.get("fingerprint"):
+            if result["BLF_global"] < required_blf:
+                reasons.append("首个正特征值低于推荐 BLF 下限")
+            if not candidate or contract.get("version") != ANALYSIS_VERSION or not contract.get("fingerprint"):
                 reasons.append("没有当前逐层模型的求解证据")
             density = result.get("weight_kg_per_m2")
             value = None
@@ -140,7 +156,6 @@ class ReportGenAgent(BaseAgent):
                     reasons.append("缺少有效质量或面密度比较数据")
             else:
                 reasons.append("没有该目标的直接比较量，BLF 不作为刚度测量值")
-            identity = {"candidate_id": cid, "session_candidate_id": result.get("session_candidate_id")}
             if reasons:
                 excluded.append({**identity, "reasons": reasons})
             else:
@@ -151,50 +166,101 @@ class ReportGenAgent(BaseAgent):
                 "ranked": ranked, "excluded": excluded}
 
     def _build_llm_explanation_payload(self, summary: Dict) -> Dict:
-        best = summary["recommendation"]["selected"]
-        required = ([(best["candidate_id"], "BLF_global"), (best["candidate_id"], "objective_value"),
-                     (None, "required_BLF")] if best else [(None, "recommendation_status")])
-        objective = summary["recommendation"].get("objective")
+        recommendation = summary["recommendation"]
+        best, ranked = recommendation["selected"], recommendation["ranked"]
+        alternative = ranked[1] if len(ranked) > 1 else None
+        if best:
+            required = [(best["candidate_id"], "BLF_global"), (best["candidate_id"], "objective_value"),
+                        (None, "required_BLF")]
+        else:
+            required = [(None, "result_count"), (None, "comparable_count")]
+            if summary["successful_count"]:
+                required.extend(((None, "max_result_BLF"), (None, "required_BLF")))
+        objective = recommendation["objective"]
         objective_label = self.OBJECTIVE_LABELS.get(objective, "目标比较值")
-        # 完整候选池保存在正式报告；模型读取任务事实和实际校核结果关联的指标。
-        result_ids = {result["candidate_id"] for result in summary["results"]}
+        # 评议解释同一目标排序中的取舍，全量候选、校核记录和排序由正式报告承载。
+        compared_ids = {row["candidate_id"] for row in (best, alternative) if row is not None}
         facts = [{**fact, "label": objective_label if fact["metric"] == "objective_value"
                   else METRIC_LABELS.get(fact["metric"], fact["metric"])} for fact in summary["facts"]
-                 if fact["candidate_id"] is None or fact["candidate_id"] in result_ids]
+                 if fact["candidate_id"] is None or (fact["candidate_id"] in compared_ids
+                                                    and fact["metric"] in self.REVIEW_RESULT_METRICS)]
+        decision = {
+            "objective": objective,
+            "selected": {"candidate_id": best["candidate_id"]} if best else None,
+            "alternative": {"candidate_id": alternative["candidate_id"]} if alternative else None,
+            "exclusion_counts": dict(Counter(reason for row in recommendation["excluded"] for reason in row["reasons"])),
+        }
         knowledge = self._knowledge_context or {}
         # 文献身份和定位用于报告审计，评议以同一证据编号读取正文与适用条件。
         evidence_fields = ("ref", "evidence_kind", "evidence_usage", "applicability_context", "text")
         evidence = [{key: item[key] for key in evidence_fields} for item in knowledge.get("evidence", [])]
         return prepare_review_payload(
-            facts, summary["recommendation"], format_fact_value, results=summary["results"],
-            evidence=evidence, relations=knowledge.get("relations", []), required_metrics=required,
+            facts, decision, format_fact_value,
+            results=(row for row in summary["results"] if row["candidate_id"] in compared_ids),
+            comparison_count=len(ranked), evidence=evidence, relations=knowledge.get("relations", []),
+            required_metrics=required,
         )
 
     def _render_engineering_explanation(self, summary: Dict) -> str:
         self._last_llm_explanation_used = False
-        self._last_llm_explanation_audit = {"status": "disabled" if self.llm_backend is None else "pending"}
+        call_traces = []
+        audit = {"status": "disabled" if self.llm_backend is None else "pending", "call_traces": call_traces}
+        self._last_llm_explanation_audit = audit
         if self.llm_backend is None:
             return ""
-        payload = self._build_llm_explanation_payload(summary)
-        self._last_llm_explanation_audit["input"] = payload
 
-        def chat_review(system, user):
-            return self.llm_backend.chat(system, user, max_tokens_override=4096, json_mode=True)
+        def chat_review(stage, system, inputs):
+            user = json.dumps(inputs, ensure_ascii=False, allow_nan=False, separators=(",", ":"))
+            trace = {"stage": stage, "max_output_tokens": self._explanation_max_output_tokens}
+            call_traces.append(trace)
+            try:
+                answer = self.llm_backend.chat(
+                    system, user, max_tokens_override=self._explanation_max_output_tokens, json_mode=True,
+                )
+            except Exception as exc:
+                trace.update(status="failed", error_type=type(exc).__name__)
+                if type(getattr(exc, "status_code", None)) is int:
+                    trace["http_status"] = exc.status_code
+                raise
+            else:
+                trace["status"] = "completed"
+                return answer
+            finally:
+                # 逐次读取当前响应的元数据，调用链路不复制正文或外部错误详情。
+                response = getattr(self.llm_backend, "last_response", None) or {}
+                usage = response.get("usage") or {}
+                trace.update(
+                    model=response.get("model") or getattr(self.llm_backend, "model", None),
+                    finish_reason=response.get("finish_reason"),
+                    usage={key: usage[key] for key in ("prompt_tokens", "completion_tokens", "total_tokens")
+                           if key in usage} or None,
+                )
 
         try:
-            answer = chat_review(REVIEW_PROMPT, json.dumps(payload, ensure_ascii=False, allow_nan=False, separators=(",", ":")))
-            self._last_llm_explanation_audit["raw_response"] = answer
-            review = parse_engineering_review(chat_review, answer, payload, self._last_llm_explanation_audit)
-            review = review_engineering_content(
-                chat_review, review, payload, self._last_llm_explanation_audit,
-            )
+            payload = self._build_llm_explanation_payload(summary)
+            audit["input"] = payload
+            answer = request_engineering_review(chat_review, "draft", payload)
+            audit["raw_response"] = answer
+            review = parse_engineering_review(chat_review, answer, payload, audit)
+            review = review_engineering_content(chat_review, review, payload, audit)
         except Exception as exc:
-            self._last_llm_explanation_audit.update(status="rejected" if isinstance(exc, ValueError) else "failed", error=str(exc))
-            self.emit_event("report_explanation_rejected", f"报告解释生成失败：{exc}", {"reason": str(exc)})
+            if call_traces and call_traces[-1]["status"] == "failed":
+                failed = call_traces[-1]
+                reason = f"{failed['stage']} 请求失败：{failed['error_type']}"
+                if "http_status" in failed:
+                    reason += f"（HTTP {failed['http_status']}）"
+                if failed["finish_reason"]:
+                    reason += f"（finish_reason={failed['finish_reason']}）"
+                status = "failed"
+            else:
+                reason = str(exc)
+                status = "rejected" if isinstance(exc, ValueError) else "failed"
+            audit.update(status=status, error=reason)
+            self.emit_event(f"report_explanation_{status}", f"报告解释生成失败：{reason}",
+                            {"reason": reason, "call_traces": call_traces})
             raise
         self._last_llm_explanation_used = True
-        self._last_llm_explanation_audit.update(status="accepted", review=review,
-                                               api_response=getattr(self.llm_backend, "last_response", None))
+        audit.update(status="accepted", review=review)
         return render_engineering_review(review, payload)
 
     def _geometry_summary(self, geometry: Dict) -> str:
@@ -212,15 +278,15 @@ class ReportGenAgent(BaseAgent):
                  f"- 设计对象：{payload['application']}；筋型：{' / '.join(TYPE_DISPLAY_NAMES.get(kind, kind) for kind in types)}",
                  f"- 参考工况：{describe_load_conditions(payload['load_conditions'], display=True)}",
                  f"- 边界条件：{describe_boundary_conditions(payload['boundary_conditions'])}",
-                 f"- 任务 BLF 下限：{format_number(summary['target_BLF'], 4)}（无量纲）；优化目标：{summary['primary_objective']}",
+                 f"- 任务 BLF 下限：{format_number(summary['target_BLF'], None)}（无量纲）；优化目标：{summary['primary_objective']}",
                  "- 计算模型：逐层复合壳、理想 Tie 连接及线性特征值屈曲。"]
         if "HAT" in types:
             lines.append("- 帽形筋底部的两块连接板位于腹板外侧。")
         lines.extend(["- 分析边界：未计算材料损伤、初始缺陷敏感性、非线性极限承载和制造验收。",
-                 "- 显示精度：几何尺寸最多保留 3 位小数，层厚和铺层比例最多 6 位，BLF、面密度及目标比较值最多 4 位；完整原值在事实 JSON 中，判定和推荐不使用显示舍入值。",
+                 "- 显示精度：实算 BLF 和判据保留原值；几何尺寸最多保留 3 位小数，单层厚度最多 6 位，面密度和目标比较值最多 4 位。判定和排序使用事实 JSON 中的原值。",
                  "", "## 全部候选方案与生成依据", "",
                  f"- 生成 {summary['candidate_count']} 个候选，送检 {summary['selected_count']} 个，实际返回 {summary['result_count']} 条结果，未求解 {summary['not_evaluated_count']} 个。",
-                 "- 会话编号保持生成顺序；正式编号关联有限元作业与案例，不因筛选顺序重编。"])
+                 "- 会话编号对应生成顺序，正式编号关联有限元作业与案例。提案理由描述设计意图，性能结论见校核结果。"])
         for candidate in candidates:
             cid = candidate["candidate_id"]
             layup = candidate.get("layup") or {}
@@ -228,7 +294,7 @@ class ReportGenAgent(BaseAgent):
             lines.extend(["", f"### 候选 {cid}：{TYPE_DISPLAY_NAMES.get(candidate.get('stiffener_type'), candidate.get('stiffener_type', '未记录'))}",
                           f"- 正式编号：{candidate.get('persistent_candidate_id') or '未分配'}；来源：{candidate.get('source') or '未记录'}；材料：{material.get('name') or '未记录'}",
                           f"- 几何：{self._geometry_summary(candidate.get('geometry') or {})}",
-                          "- 生成依据：" + str(candidate.get("rationale") or "未记录"),
+                          "- 提案理由：" + str(candidate.get("rationale") or "未记录"),
                           f"- 送检：{'是' if candidate['report_selected'] else '否'}。"])
             if candidate.get("geometry") and layup.get("skin_layup"):
                 names = {"skin": "蒙皮", "web": "腹板", "flange": "翼缘或连接板", "cap": "帽顶"}
@@ -246,15 +312,20 @@ class ReportGenAgent(BaseAgent):
                     lines.append(f"- {names[component]}：{len(layers)} 层，{description}。")
         lines.extend(["", "## 预筛与送检依据", ""])
         selected = [item for item in candidates if item["report_selected"]]
-        decisions = [item.get("screening_decision") or {} for item in selected]
-        direct = any(item.get("action") == "direct_fem" for item in decisions)
-        if direct:
-            lines.append("- 当前代理不可用，按生成顺序及任务名额送入真实 FEM，不作代理性能排名。")
-        elif any(item.get("surrogate_status") == "available" for item in selected):
+        if len(types) > 1:
+            pool_by_type = Counter(item.get("stiffener_type") for item in candidates)
+            selected_by_type = Counter(item.get("stiffener_type") for item in selected)
+            coverage = "；".join(f"{TYPE_DISPLAY_NAMES[kind]} {selected_by_type[kind]}/{pool_by_type[kind]}" for kind in types)
+            lines.append(f"- 筋型分布（送检数/候选数）：{coverage}。")
+        direct_ids = {item["candidate_id"] for item in selected
+                      if (item.get("screening_decision") or {}).get("selection_basis") == "stiffener_type_round_robin"}
+        if direct_ids:
+            lines.append("- 直接 FEM 按筋型轮流选样，筋型内保持生成顺序。")
+        if any(item.get("surrogate_status") == "available" for item in selected):
             lines.append("- 代理按筋型独立预测并筛选；代理估计与实际有限元结果分别记录。")
-        else:
-            lines.append("- 未提供有效代理预筛记录；送检选择不代表性能排名。")
         for candidate in selected:
+            if candidate["candidate_id"] in direct_ids:
+                continue
             lines.append(f"- {candidate['candidate_id']}：{candidate.get('selection_reason') or '按实际送检记录列出，未记录额外筛选理由。'}")
             if candidate.get("surrogate_status") == "available":
                 lines.append(f"  代理 BLF 估计 {format_number(candidate.get('surrogate_BLF'), 4)}，评分 {format_number(candidate.get('rank_score'), 4)}。")
@@ -266,7 +337,7 @@ class ReportGenAgent(BaseAgent):
         for result in results:
             candidate = by_id.get(result["candidate_id"], {})
             lines.append(f"| {result.get('session_candidate_id') or candidate.get('candidate_id') or '-'} / {result['candidate_id']} | "
-                         f"{TYPE_DISPLAY_NAMES.get(candidate.get('stiffener_type'), '-')} | {format_number(result.get('BLF_global'), 4)} | "
+                         f"{TYPE_DISPLAY_NAMES.get(candidate.get('stiffener_type'), '-')} | {format_number(result.get('BLF_global'), None)} | "
                          f"{format_number(result.get('weight_kg_per_m2'), 4)} | {result.get('verdict') or '未判定'} |")
         if not results:
             lines.append("\n没有有限元结果，不能给出承载判定或最终推荐。")
@@ -278,8 +349,8 @@ class ReportGenAgent(BaseAgent):
         objective_label = self.OBJECTIVE_LABELS.get(recommendation["objective"], "目标比较值")
         if best:
             lines.extend([f"- 推荐：{best.get('session_candidate_id') or '-'} / {best['candidate_id']}。",
-                          f"- 依据：仅在当前逐层模型成功求解且 BLF 不低于 {format_number(recommendation['required_BLF'], 4)} 的方案中，按“{recommendation['objective']}”比较。",
-                          f"- {objective_label}：{format_number(best['objective_value'], 4)} {best['unit']}；BLF={format_number(best['BLF_global'], 4)}。"])
+                          f"- 依据：仅在当前逐层模型成功求解且 BLF 不低于 {format_number(recommendation['required_BLF'], None)} 的方案中，按“{recommendation['objective']}”比较。",
+                          f"- {objective_label}：{format_number(best['objective_value'], 4)} {best['unit']}；BLF={format_number(best['BLF_global'], None)}。"])
         else:
             lines.append("- 没有同时具备完整通过证据和目标比较数据的方案，不给出最终推荐。")
         for item in recommendation["excluded"]:
@@ -291,7 +362,7 @@ class ReportGenAgent(BaseAgent):
             for item in recommendation["ranked"]:
                 margin = (item["BLF_global"] / recommendation["required_BLF"] - 1) * 100
                 lines.append(f"| {item.get('session_candidate_id') or '-'} / {item['candidate_id']} | "
-                             f"{format_number(item['objective_value'], 4)} | {format_number(item['BLF_global'], 4)} | {format_number(margin, 2)} |")
+                             f"{format_number(item['objective_value'], 4)} | {format_number(item['BLF_global'], None)} | {format_number(margin, 2)} |")
             lines.extend(["", "余量按“BLF / 比较下限 - 1”计算；比较下限同时覆盖任务要求和完整参考载荷。此值不是强度余量或规范安全系数。"])
         lines.extend(["", self._render_engineering_explanation(summary),
                       "", "## 外部知识依据", "",

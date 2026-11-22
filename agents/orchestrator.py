@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from typing import Callable, Dict, List
 import re
+from itertools import islice, zip_longest
+from typing import Callable, Dict, List
 
 from agents.base import BaseAgent
 from agents.candidate_gen import CandidateGenAgent
@@ -178,15 +179,23 @@ class OrchestratorAgent(BaseAgent):
             decision = {"status": "available", "action": "surrogate_ranking"}
         except SurrogateUnavailable as exc:
             policy = self.screener.config["pipeline"]["unavailable_surrogate_policy"]
-            decision = {**exc.to_dict(), "action": policy, "selection_basis": "generation_order_not_performance"}
-            if policy not in ("direct_fem", "stop"):
+            decision = {**exc.to_dict(), "action": policy}
+            screened = []
+            if policy == "direct_fem":
+                # 候选按筋型分组生成。轮流取样保留各组覆盖，组内不改变生成顺序。
+                groups = {}
+                for candidate in candidates:
+                    groups.setdefault(candidate["stiffener_type"], []).append(candidate)
+                ordered = (candidate for row in zip_longest(*groups.values()) for candidate in row if candidate is not None)
+                screened = [dict(candidate) for candidate in islice(ordered, effective_top_k)]
+                decision["selection_basis"] = "stiffener_type_round_robin"
+            elif policy != "stop":
                 raise ValueError(f"无效代理不可用策略: {policy}") from exc
-            screened = [] if policy == "stop" else [dict(candidate) for candidate in candidates[:effective_top_k]]
             for candidate in screened:
                 candidate.update({"surrogate_BLF": None, "rank_score": None, "surrogate_weight": None,
                                   "surrogate_status": exc.status,
                                   "screening_summary": exc.reason,
-                                  "selection_reason": "代理不可用，按生成顺序和任务求解名额选择直接 FEM；不是性能排序。"})
+                                  "selection_reason": "按筋型轮流选样，筋型内保持生成顺序，直接执行 FEM。"})
             self.emit_event("surrogate_unavailable", exc.reason, decision)
         self._validate_pool(screened, expected_count=0 if decision["action"] == "stop" else effective_top_k)
         source_contracts = {candidate["candidate_id"]: analysis_contract(candidate) for candidate in candidates}

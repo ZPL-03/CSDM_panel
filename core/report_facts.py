@@ -24,7 +24,11 @@ METRIC_LABELS = {
     "required_BLF": "推荐所需 BLF 下限", "BLF_margin_percent": "BLF 相对比较下限的余量",
     "objective_value": "优化目标比较值",
     "candidate_count": "候选总数", "result_count": "实际校核数", "comparable_count": "满足推荐条件的方案数",
-    "analysis_scope": "分析范围", "recommendation_status": "推荐状态", "material": "材料",
+    "selected_count": "送检方案数", "successful_count": "成功求解数", "passed_count": "达到任务阈值的方案数",
+    "failed_count": "求解失败数", "not_evaluated_count": "尚无求解结果的候选数",
+    "max_result_BLF": "成功校核中的最大首个正特征值 BLF",
+    "classified_local_count": "有已分类局部屈曲特征值的结果数",
+    "analysis_scope": "分析范围", "material": "材料",
     "reference_Nx": "参考压缩载荷", "reference_Nxy": "参考剪切载荷",
     "critical_Nx": "线性临界比例下的压缩载荷", "critical_Nxy": "线性临界比例下的剪切载荷",
     "stiffener_type": "筋型", "load_type": "载荷类型", "boundary_conditions": "边界条件",
@@ -81,7 +85,6 @@ def build_facts(candidates, results, target):
             value = result.get(metric)
             metric_status = status if value is not None else "unavailable" if status == "success" else status
             add(cid, metric, value, unit, metric_status)
-        add(cid, "target_BLF", target, "1", "task_input")
         add(cid, "target_met", result["BLF_global"] >= target if status == "success" else None, "boolean", status)
         for metric, value in candidate.get("geometry", {}).items():
             add(cid, metric, value, "mm", "design_input")
@@ -108,7 +111,12 @@ def format_fact_value(fact):
     elif isinstance(value, bool):
         display = "达到任务 BLF 下限" if value else "未达到任务 BLF 下限"
     elif isinstance(value, (float, int)):
-        digits = 2 if fact["unit"] == "%" else 3 if fact["unit"] == "mm" else 6 if fact["metric"].startswith("skin_f") else 4
+        # BLF 与判据保留原值，避免靠近门槛时因显示舍入而呈现相反结论。
+        metric = fact["metric"]
+        if metric in {"BLF_global", "max_result_BLF", "required_BLF", "target_BLF"}:
+            digits = None
+        else:
+            digits = 2 if fact["unit"] == "%" else 3 if fact["unit"] == "mm" else 6 if metric.startswith("skin_f") else 4
         display = format_number(value, digits)
     else:
         display = json.dumps(value, ensure_ascii=False) if isinstance(value, list) else STATUS_LABELS.get(str(value), str(value))
@@ -123,13 +131,18 @@ def build_comparison_facts(summary, task_payload):
     def add(cid, metric, value, unit, status="derived"):
         facts.append(dict(candidate_id=cid, metric=metric, value=value, unit=unit, result_status=status))
     recommendation = summary["recommendation"]
-    ranked, best = recommendation["ranked"], recommendation["selected"]
+    ranked = recommendation["ranked"]
+    add(None, "target_BLF", summary["target_BLF"], "1", "task_input")
     add(None, "required_BLF", recommendation["required_BLF"], "1", "task_input")
-    for metric in ("candidate_count", "result_count"):
+    for metric in ("candidate_count", "selected_count", "result_count", "successful_count", "passed_count",
+                   "failed_count", "not_evaluated_count"):
         add(None, metric, summary[metric], "个", "recorded")
     add(None, "comparable_count", len(ranked), "个")
+    add(None, "max_result_BLF", max((row["BLF_global"] for row in summary["results"] if row["status"] == "success"),
+                                    default=None), "1")
+    add(None, "classified_local_count", sum(row["status"] == "success" and row.get("BLF_local") is not None
+                                           for row in summary["results"]), "个")
     add(None, "analysis_scope", ANALYSIS_SCOPE, "", "scope")
-    add(None, "recommendation_status", "有满足条件的方案" if best else "没有满足完整校核及目标比较条件的方案", "")
     for row in ranked:
         cid = row["candidate_id"]
         add(cid, "objective_value", row["objective_value"], row["unit"])
