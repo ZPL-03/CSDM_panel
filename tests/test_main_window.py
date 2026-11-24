@@ -47,13 +47,13 @@ def test_pending_candidates_filter_out_evaluated_samples() -> None:
         app.processEvents()
 
 
-def test_candidate_table_uses_contract_display_name() -> None:
+def test_candidate_table_uses_session_identifier() -> None:
     app = _app()
     window = MainWindow()
     try:
         window.candidate_widget.update_candidates(
             [
-                _candidate()
+                {**_candidate(), "display_name": "候选样本1"}
             ]
         )
 
@@ -246,19 +246,61 @@ def test_close_event_tolerates_deleted_worker_thread() -> None:
         app.processEvents()
 
 
-def test_workbench_tables_use_full_right_pane_width() -> None:
+@pytest.mark.parametrize("size", [(1000, 640), (1280, 800), (1440, 900)])
+def test_workbench_has_three_columns_with_stacked_preview(size) -> None:
+    from PyQt6.QtCore import QPoint
+
     app = _app()
     window = MainWindow()
     try:
-        window.resize(1280, 800)
+        window.resize(*size)
         window.show()
+        window.candidate_widget.update_candidates([
+            {**_candidate(f"TMP_{n}"), "stiffener_type": "BLADE"} for n in range(1, 21)
+        ])
         for panel in (window.candidate_widget, window.abaqus_widget):
             window.tabs.setCurrentWidget(panel)
             app.processEvents()
-            assert panel.table.width() >= panel.width() - 30
+            table, detail, preview = panel.table, panel.detail_browser, panel.preview_widget
+            sidebar = window.workspace_splitter.widget(0)
+            assert sidebar.mapTo(window, sidebar.rect().topRight()).x() < table.mapTo(window, QPoint()).x()
+            assert table.mapTo(window, table.rect().topRight()).x() < detail.mapTo(window, QPoint()).x()
+            assert detail.mapTo(window, QPoint()).x() == preview.mapTo(window, QPoint()).x()
+            assert detail.width() == preview.width()
+            assert detail.mapTo(window, detail.rect().bottomLeft()).y() < preview.mapTo(window, QPoint()).y()
             assert panel.table.horizontalScrollBar().maximum() == 0
-            assert panel.preview_widget.width() > panel.detail_browser.width()
-        assert window.workspace_splitter.sizes()[1] > 2 * window.workspace_splitter.sizes()[0]
+            header = table.horizontalHeader()
+            for col in range(table.columnCount()):
+                if not table.isColumnHidden(col):
+                    label = table.horizontalHeaderItem(col).text()
+                    assert header.fontMetrics().horizontalAdvance(label) + 6 <= header.sectionSize(col)
+        assert window.candidate_widget.table.rowCount() == 20
+        table = window.candidate_widget.table
+        assert table.fontMetrics().horizontalAdvance(table.item(0, 1).text()) + 6 <= table.columnWidth(1)
+    finally:
+        window.close()
+        app.processEvents()
+
+
+def test_candidate_table_keeps_selection_and_only_displays_available_predictions() -> None:
+    from PyQt6.QtCore import QItemSelectionModel
+
+    app = _app()
+    window = MainWindow()
+    try:
+        panel = window.candidate_widget
+        first, second, third = (_candidate(f"TMP_{n}") for n in range(1, 4))
+        panel.update_candidates([first, second, third])
+        assert all(panel.table.isColumnHidden(col) for col in (3, 4, 5))
+        select = QItemSelectionModel.SelectionFlag.Select | QItemSelectionModel.SelectionFlag.Rows
+        panel.table.selectionModel().select(panel.table.model().index(2, 0), select)
+
+        second.update(surrogate_BLF=1.8, surrogate_weight=3.2, rank_score=1.5)
+        panel.update_candidates([third, second, first])
+
+        assert {item["candidate_id"] for item in panel.selected_candidates()} == {"TMP_1", "TMP_3"}
+        assert all(not panel.table.isColumnHidden(col) for col in (3, 4, 5))
+        assert [panel.table.item(1, col).text() for col in (3, 4, 5)] == ["1.8", "3.2", "1.5"]
     finally:
         window.close()
         app.processEvents()

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from html import escape
 from pathlib import Path
 
 from PyQt6 import sip
@@ -10,6 +11,7 @@ from PyQt6.QtCore import QObject, QThread, Qt, QUrl, pyqtSignal
 from PyQt6.QtGui import QCloseEvent, QDesktopServices
 from PyQt6.QtWidgets import (
     QGridLayout,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
@@ -197,9 +199,7 @@ class MainWindow(QMainWindow):
         self.status_label.setObjectName("statusLabel")
 
         self.input_line = QLineEdit()
-        self.input_line.setPlaceholderText(
-            "例如：请为机翼下蒙皮壁板设计一个 T 形/帽形/板式加筋方案，压缩 900 kN/m，剪切 180 kN/m，边界 SSCC，生成 18 个候选，初筛保留 6 个候选"
-        )
+        self.input_line.setPlaceholderText("输入结构、工况和候选数量")
 
         self.generate_button = QPushButton("开始对话设计")
         self.confirm_yes_button = QPushButton("确认继续")
@@ -214,12 +214,12 @@ class MainWindow(QMainWindow):
         self.evaluate_all_button = QPushButton("校核待选")
         self.report_button = QPushButton("导出报告")
         self.reset_button = QPushButton("重置会话")
-        self.screen_button.setToolTip("使用代理模型对候选方案排序")
+        self.screen_button.setToolTip("检查代理模型适用性并选择送检候选")
         self.evaluate_selected_button.setToolTip("对表格中选中的待校核方案执行有限元校核")
         self.evaluate_all_button.setToolTip("对当前候选中的全部待校核方案执行有限元校核")
         self.report_button.setToolTip("根据已完成的有限元结果生成报告")
 
-        self.stage_card = QLabel("阶段：idle")
+        self.stage_card = QLabel("阶段：待输入")
         self.candidate_card = QLabel("候选：0")
         self.pending_card = QLabel("待校核：0")
         self.pass_card = QLabel("通过：0")
@@ -231,7 +231,7 @@ class MainWindow(QMainWindow):
 
         self.tabs = QTabWidget()
         self.tabs.addTab(self.candidate_widget, "候选方案")
-        self.tabs.addTab(self.abaqus_widget, "ABAQUS结果")
+        self.tabs.addTab(self.abaqus_widget, "有限元校核")
         self.tabs.addTab(self.knowledge_widget, "知识库")
         self.tabs.addTab(self.log_widget, "日志")
 
@@ -255,13 +255,6 @@ class MainWindow(QMainWindow):
         utility_button_layout.addWidget(self.refresh_button, 0, 1)
         utility_button_layout.addWidget(self.open_report_button, 0, 2)
 
-        stats_layout = QGridLayout()
-        stats_layout.setSpacing(6)
-        stats_layout.addWidget(self.stage_card, 0, 0)
-        stats_layout.addWidget(self.candidate_card, 0, 1)
-        stats_layout.addWidget(self.pending_card, 1, 0)
-        stats_layout.addWidget(self.pass_card, 1, 1)
-
         manual_header = QLabel("人工操作")
         manual_header.setObjectName("sectionTitle")
         manual_button_layout = QGridLayout()
@@ -278,9 +271,9 @@ class MainWindow(QMainWindow):
             browser.setMinimumHeight(minimum_height)
             browser.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Ignored)
             self.conversation_splitter.addWidget(browser)
-        self.conversation_splitter.setStretchFactor(0, 1)
-        self.conversation_splitter.setStretchFactor(1, 2)
-        self.conversation_splitter.setSizes([140, 280])
+        self.conversation_splitter.setStretchFactor(0, 0)
+        self.conversation_splitter.setStretchFactor(1, 1)
+        self.conversation_splitter.setSizes([158, 350])
 
         controls = QWidget()
         controls.setObjectName("sidebarControls")
@@ -291,7 +284,6 @@ class MainWindow(QMainWindow):
         control_layout.addWidget(self.input_line)
         control_layout.addLayout(primary_button_layout)
         control_layout.addLayout(utility_button_layout)
-        control_layout.addLayout(stats_layout)
         control_layout.addWidget(manual_header)
         control_layout.addLayout(manual_button_layout)
 
@@ -302,6 +294,8 @@ class MainWindow(QMainWindow):
         left_layout.addWidget(controls)
 
         right_layout = QVBoxLayout()
+        right_layout.setContentsMargins(6, 0, 0, 0)
+        right_layout.setSpacing(0)
         right_layout.addWidget(self.tabs)
 
         left_container = QWidget()
@@ -315,16 +309,27 @@ class MainWindow(QMainWindow):
         self.workspace_splitter.addWidget(right_container)
         self.workspace_splitter.setStretchFactor(0, 0)
         self.workspace_splitter.setStretchFactor(1, 1)
-        self.workspace_splitter.setSizes([380, 1200])
+        self.workspace_splitter.setSizes([360, 1200])
 
         root = QWidget()
         root_layout = QVBoxLayout(root)
+        root_layout.setContentsMargins(13, 8, 13, 12)
+        root_layout.setSpacing(9)
         title = QLabel("CSDM_panel")
         title.setObjectName("appTitle")
         subtitle = QLabel("复合材料加筋壁板智能设计系统")
         subtitle.setObjectName("appSubtitle")
-        root_layout.addWidget(title)
-        root_layout.addWidget(subtitle)
+        brand = QHBoxLayout()
+        brand.setSpacing(14)
+        brand.addWidget(title)
+        brand.addWidget(subtitle)
+        brand.addStretch()
+        metrics = QHBoxLayout()
+        metrics.setSpacing(8)
+        for metric in (self.stage_card, self.candidate_card, self.pending_card, self.pass_card):
+            metrics.addWidget(metric, 1)
+        root_layout.addLayout(brand)
+        root_layout.addLayout(metrics)
         root_layout.addWidget(self.workspace_splitter, 1)
         self.setCentralWidget(root)
 
@@ -333,6 +338,7 @@ class MainWindow(QMainWindow):
             card.setProperty("metric", True)
             card.setWordWrap(True)
             card.setMinimumWidth(0)
+        self.stage_card.setProperty("active", True)
         self.generate_button.setProperty("role", "primary")
         self.confirm_yes_button.setProperty("role", "success")
         self.confirm_no_button.setProperty("role", "warning")
@@ -395,7 +401,6 @@ class MainWindow(QMainWindow):
         pending_count = len(self._pending_candidates(self.session.current_candidates)) if self.session.current_candidates else 0
         passed_count = sum(1 for result in self.session.results_by_session_id.values() if result.get("verdict") == "通过")
         candidate_pool_target = requested_candidate_pool_size(self.session.task) if self.session.task else 0
-        requested_top_k = requested_screen_top_k(self.session.task) if self.session.task else 0
         stage_labels = {
             "idle": "待输入", "parsing": "解析需求", "generated": "候选已生成",
             "awaiting_screen_confirmation": "待初筛确认", "screened": "初筛完成",
@@ -403,11 +408,10 @@ class MainWindow(QMainWindow):
             "awaiting_report_confirmation": "待报告确认", "completed": "流程完成",
         }
         self.stage_card.setText(f"阶段：{stage_labels.get(self.session.stage, self.session.stage) or '待输入'}")
-        self.candidate_card.setText(f"候选池：{generated_count} / 目标 {candidate_pool_target}" if self.session.task else "候选池：0")
-        self.pending_card.setText(
-            f"待校核：{pending_count} / 初筛目标 {requested_top_k}" if self.session.task else "待校核：0"
-        )
-        self.pass_card.setText(f"通过：{passed_count}")
+        self.candidate_card.setText(f"候选池：{generated_count} / {candidate_pool_target}" if self.session.task else "候选池：0")
+        queue_label = "未校核" if self.session.stage in ("generated", "awaiting_screen_confirmation") else "待校核"
+        self.pending_card.setText(f"{queue_label}：{pending_count}")
+        self.pass_card.setText(f"已达标：{passed_count}")
 
     def _run_action(self, action: str, payload: dict, status_text: str) -> None:
         self._set_busy(True, status_text)
@@ -449,7 +453,8 @@ class MainWindow(QMainWindow):
         instruction = self.input_line.text().strip()
         if not instruction:
             return
-        self.session = PipelineSession(instruction=instruction)
+        self.session = PipelineSession(instruction=instruction, stage="parsing")
+        self._refresh_design_views()
         self.chat_widget.add_message("USER", instruction)
         self.tabs.setCurrentWidget(self.candidate_widget)
         self._run_action("conversation_start", {"instruction": instruction}, "正在生成候选方案并准备对话流程")
@@ -592,7 +597,7 @@ class MainWindow(QMainWindow):
         self.chat_widget.add_message(sender_label, message)
         self.log_widget.append_log(sender_label, f"[{event_type}] {message}")
 
-        if sender == "FLOW" and event_type == "task_summary":
+        if (sender, event_type) == ("ORCHESTRATOR", "task_parsed"):
             task = payload.get("task")
             if isinstance(task, dict):
                 self.session.task = task
@@ -711,20 +716,18 @@ class MainWindow(QMainWindow):
         task_payload = task_payload_from_request(task)
         material = task_payload.get("material_system", {})
         generated_count = len(self.session.candidates)
-        candidate_pool_target = requested_candidate_pool_size(task)
         requested_top_k = requested_screen_top_k(task)
         effective_top_k = effective_screen_top_k(task, generated_count)
         return (
             "<h3>当前任务</h3>"
-            f"<p><b>会话任务编号：</b>{task.get('task_id')}</p>"
-            f"<p><b>应用场景：</b>{task_payload.get('application')}</p>"
-            f"<p><b>工况：</b>{describe_load_conditions(task_payload.get('load_conditions', {}), display=True)}</p>"
-            f"<p><b>边界条件：</b>{describe_boundary_conditions(task_payload.get('boundary_conditions', {}))}</p>"
-            f"<p><b>候选池：</b>{generated_count} / 目标 {candidate_pool_target}</p>"
-            f"<p><b>初筛目标：</b>Top-{requested_top_k}（当前最多 {effective_top_k}）</p>"
-            f"<p><b>材料：</b>{material.get('name')} | E1={material.get('E1_GPa')} GPa | 密度={material.get('density_kg_per_m3')} kg/m^3</p>"
-            f"<p><b>目标：</b>BLF >= {format_number(task_payload.get('design_targets', {}).get('BLF_min'))}，{task_payload.get('design_targets', {}).get('primary_objective')}</p>"
-            f"<p><b>阶段：</b>{self.session.stage}</p>"
+            f"<p><b>会话任务编号：</b>{escape(str(task.get('task_id') or '-'))}<br>"
+            f"<b>应用场景：</b>{escape(str(task_payload.get('application') or '-'))}<br>"
+            f"<b>工况：</b>{escape(describe_load_conditions(task_payload.get('load_conditions', {}), display=True))}<br>"
+            f"<b>边界：</b>{escape(describe_boundary_conditions(task_payload.get('boundary_conditions', {})))}<br>"
+            f"<b>材料：</b>{escape(str(material.get('name') or '-'))}<br>"
+            f"<b>目标：</b>BLF &ge; {format_number(task_payload.get('design_targets', {}).get('BLF_min'))}，"
+            f"{escape(str(task_payload.get('design_targets', {}).get('primary_objective') or '-'))}<br>"
+            f"<b>送检名额：</b>{requested_top_k}（当前最多 {effective_top_k}）</p>"
         )
 
     def closeEvent(self, event: QCloseEvent) -> None:

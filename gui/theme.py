@@ -1,13 +1,43 @@
 """桌面工作台的黑灰主题、文本与三维视口配色。"""
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QColor, QFont, QPalette
-from PyQt6.QtWidgets import QApplication, QWidget
+from PyQt6.QtWidgets import QApplication, QHeaderView, QTableWidget, QTableWidgetItem, QWidget
 
-BACKGROUND = "#0c0c0f"
-SURFACE = "#151518"
+BACKGROUND = "#101114"
+SURFACE = "#181a1e"
 TEXT = "#ededf0"
-MUTED = "#aaaab4"
-ACCENT = "#66c8ce"
+MUTED = "#a8adb5"
+ACCENT = "#83d6d5"
+SUCCESS = "#94d7aa"
+WARNING = "#f1c783"
+FEM_STATUS_LABELS = {"success": "求解完成", "failed": "求解失败"}
+
+
+def configure_design_table(table: QTableWidget) -> None:
+    """使编号、工程量和校核状态可在同一行比较。"""
+    header = table.horizontalHeader()
+    header.setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+    header.setMinimumSectionSize(52)
+    header.setDefaultAlignment(Qt.AlignmentFlag.AlignCenter)
+    table.verticalHeader().hide()
+    table.verticalHeader().setDefaultSectionSize(28)
+    table.setAlternatingRowColors(True)
+    table.setShowGrid(False)
+    table.setMinimumHeight(114)
+    table.setWordWrap(False)
+
+
+def design_cell(value: object, *, color: str | None = None) -> QTableWidgetItem:
+    item = QTableWidgetItem(str(value))
+    item.setTextAlignment(Qt.AlignmentFlag.AlignCenter)
+    if color is not None:
+        item.setForeground(QColor(color))
+    return item
+
+
+def verdict_color(value: object) -> str | None:
+    return {"通过": SUCCESS, "不通过": WARNING}.get(str(value))
 
 
 def apply_dark_theme(window: QWidget) -> None:
@@ -38,10 +68,16 @@ def apply_dark_theme(window: QWidget) -> None:
         QWidget {{ background: {BACKGROUND}; color: {TEXT}; font-size: 13px; }}
         QLabel {{ background: transparent; }}
         QLabel#appTitle {{ font-size: 21px; font-weight: 700; padding: 4px 0; }}
-        QLabel#appSubtitle {{ color: {MUTED}; padding-bottom: 6px; }}
+        QLabel#appSubtitle {{ color: {MUTED}; }}
         QLabel#sectionTitle {{ color: {MUTED}; font-weight: 600; padding-top: 3px; }}
-        QLabel#statusLabel {{ background: #192326; border-left: 3px solid {ACCENT}; padding: 9px; }}
-        QLabel[metric="true"] {{ background: {SURFACE}; border-bottom: 1px solid #35353d; padding: 9px; font-weight: 600; }}
+        QLabel#statusLabel {{ background: #172729; border-left: 2px solid {ACCENT}; padding: 9px; }}
+        QLabel[metric="true"] {{ background: {SURFACE}; border: 1px solid #30343b; border-radius: 4px; padding: 7px 10px; font-weight: 600; }}
+        QLabel[metric="true"][active="true"] {{ color: {ACCENT}; }}
+        QLabel#tableSummary {{ color: {MUTED}; padding: 4px 0; }}
+        QWidget#sceneViewport {{ border: 1px solid #30343b; border-radius: 4px; }}
+        QLabel#sceneTitle {{ font-weight: 600; color: {TEXT}; }}
+        QToolButton {{ background: #24292e; border: 1px solid #3b4349; border-radius: 4px; padding: 4px; }}
+        QToolButton:hover, QToolButton:focus {{ border-color: {ACCENT}; }}
         QTextBrowser, QPlainTextEdit, QTextEdit, QTableWidget, QLineEdit {{
             background: {SURFACE}; color: {TEXT}; border: 1px solid #303037;
             border-radius: 4px; selection-background-color: #25525b; selection-color: white;
@@ -66,16 +102,15 @@ def apply_dark_theme(window: QWidget) -> None:
         QWidget#sidebarControls QPushButton {{ padding: 5px 7px; }}
         QWidget#sidebarControls QLineEdit {{ padding: 7px; }}
         QWidget#sidebarControls QLabel#statusLabel {{ padding: 6px; }}
-        QWidget#sidebarControls QLabel[metric="true"] {{ padding: 5px 6px; }}
         QTabWidget::pane {{ border: 1px solid #303037; }}
         QTabBar::tab {{ background: #19191d; color: {MUTED}; padding: 10px 16px; border-bottom: 2px solid transparent; }}
         QTabBar::tab:selected {{ color: {TEXT}; background: #232328; border-bottom-color: {ACCENT}; }}
         QTabBar::tab:hover {{ background: #29292f; }}
         QHeaderView::section, QTableCornerButton::section {{
-            background: #232328; color: #cdcdd4; border: 0; border-bottom: 1px solid #3b3b43; padding: 8px;
+            background: #232328; color: #cdcdd4; border: 0; border-bottom: 1px solid #3b3b43; padding: 7px 3px;
         }}
-        QTableWidget {{ gridline-color: #2b2b32; alternate-background-color: #1b1b20; }}
-        QTableWidget::item {{ padding: 4px; }}
+        QTableWidget {{ alternate-background-color: #1e2126; }}
+        QTableWidget::item {{ padding: 2px 3px; }}
         QTableWidget::item:selected {{ background: #25525b; color: white; }}
         QScrollBar:vertical {{ background: #151518; width: 10px; margin: 0; }}
         QScrollBar::handle:vertical {{ background: #484850; min-height: 24px; border-radius: 4px; }}

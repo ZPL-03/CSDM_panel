@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import Dict
 
 from PyQt6.QtCore import QEvent, Qt
-from PyQt6.QtWidgets import QLabel, QStackedLayout, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QHBoxLayout, QLabel, QStackedLayout, QStyle, QToolButton, QVBoxLayout, QWidget
 
 from gui.render_utils import build_candidate_scene, build_mode_shape_scene
 from gui.theme import BACKGROUND, TEXT
@@ -22,7 +22,7 @@ class InteractivePlotWidget(QWidget):
         self.empty_message = empty_message
         self._interactive = QtInteractor is not None
         self.plotter = None
-        self._initial_camera_position = None
+        self._initial_camera = None
 
         self.message_label = QLabel(empty_message)
         self.message_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -30,9 +30,23 @@ class InteractivePlotWidget(QWidget):
         self.message_label.setMinimumHeight(180)
 
         self.plot_container = QWidget()
+        self.plot_container.setObjectName("sceneViewport")
         self.plot_layout = QVBoxLayout(self.plot_container)
-        self.plot_layout.setContentsMargins(0, 0, 0, 0)
-        self.plot_layout.setSpacing(6)
+        self.plot_layout.setContentsMargins(7, 6, 7, 6)
+        self.plot_layout.setSpacing(3)
+
+        self.scene_title = QLabel()
+        self.scene_title.setObjectName("sceneTitle")
+        self.scene_title.setTextFormat(Qt.TextFormat.PlainText)
+        reset = QToolButton()
+        reset.setIcon(self.style().standardIcon(QStyle.StandardPixmap.SP_BrowserReload))
+        reset.setAccessibleName("重置视角")
+        reset.setToolTip("重置视角")
+        reset.clicked.connect(self._restore_initial_camera)
+        toolbar = QHBoxLayout()
+        toolbar.addWidget(self.scene_title, 1)
+        toolbar.addWidget(reset)
+        self.plot_layout.addLayout(toolbar)
 
         self.stack = QStackedLayout()
         self.stack.addWidget(self.message_label)
@@ -87,7 +101,7 @@ class InteractivePlotWidget(QWidget):
         except Exception:
             pass
         self.plotter = None
-        self._initial_camera_position = None
+        self._initial_camera = None
 
     def reset_plotter(self, message: str | None = None) -> None:
         self._dispose_plotter()
@@ -101,26 +115,22 @@ class InteractivePlotWidget(QWidget):
                 self.plotter.set_background(BACKGROUND)
             except Exception:
                 self._dispose_plotter()
-        self._initial_camera_position = None
+        self._initial_camera = None
         self.stack.setCurrentWidget(self.message_label)
-
-    def _store_initial_camera(self) -> None:
-        if self.plotter is not None:
-            self._initial_camera_position = self.plotter.camera_position
 
     def _apply_default_camera(self, zoom: float) -> None:
         assert self.plotter is not None
-        self.plotter.view_isometric()
-        self.plotter.reset_camera()
+        # 每个模型独立适配视口，缩放不沿用上一次预览的视角。
+        self.plotter.camera.view_angle = 30.0
+        self.plotter.view_isometric(render=False)
         self.plotter.camera.zoom(zoom)
-        self._store_initial_camera()
+        self._initial_camera = self.plotter.camera.copy()
         self.plotter.render()
 
     def _restore_initial_camera(self) -> None:
-        if self.plotter is None or self._initial_camera_position is None:
+        if self.plotter is None or self._initial_camera is None:
             return
-        self.plotter.camera_position = self._initial_camera_position
-        self.plotter.reset_camera()
+        self.plotter.camera.DeepCopy(self._initial_camera)
         self.plotter.render()
 
     def eventFilter(self, watched, event):
@@ -136,7 +146,7 @@ class InteractivePlotWidget(QWidget):
         assert self.plotter is not None
         self.plotter.clear()
         self.plotter.set_background(BACKGROUND)
-        self.plotter.add_text(title, position="upper_left", font_size=11, color=TEXT)
+        self.scene_title.setText(title)
         self.plotter.add_axes(line_width=2, color=TEXT)
         self.stack.setCurrentWidget(self.plot_container)
         return True
@@ -151,20 +161,20 @@ class InteractivePlotWidget(QWidget):
             self.clear_scene("\u5f53\u524d\u5019\u9009\u65b9\u6848\u7f3a\u5c11\u51e0\u4f55\u53c2\u6570\uff0c\u65e0\u6cd5\u663e\u793a\u4e09\u7ef4\u6a21\u578b\u3002")
             return
         meshes, title = scene
-        if not self._activate_plotter(title):
+        if not self._activate_plotter(f"候选几何 · {title}"):
             return
         assert self.plotter is not None
         for mesh, kwargs in meshes:
             self.plotter.add_mesh(mesh, **kwargs)
-        self._apply_default_camera(0.94)
+        self._apply_default_camera(1.04)
 
     def show_mode_shape(self, result: Dict) -> None:
         scene = build_mode_shape_scene(result)
         if scene is None:
             self.clear_scene("\u5f53\u524d\u7ed3\u679c\u8fd8\u6ca1\u6709\u53ef\u663e\u793a\u7684\u6a21\u6001\u4e91\u56fe\u6570\u636e\u3002")
             return
-        mesh, scalar_name, title = scene
-        if not self._activate_plotter(title):
+        mesh, scalar_name, _ = scene
+        if not self._activate_plotter(f"屈曲模态 · {result.get('candidate_id') or '-'}（归一化）"):
             return
         assert self.plotter is not None
         self.plotter.add_mesh(
@@ -173,8 +183,9 @@ class InteractivePlotWidget(QWidget):
             cmap="viridis",
             show_edges=False,
             smooth_shading=True,
+            show_scalar_bar=scalar_name is not None,
             scalar_bar_args={
-                "title": "Mode amplitude",
+                "title": "",
                 "color": TEXT,
                 "vertical": False,
                 "position_x": 0.24,
@@ -182,7 +193,7 @@ class InteractivePlotWidget(QWidget):
                 "height": 0.12,
                 "width": 0.64,
                 "n_labels": 3,
-                "title_font_size": 10,
+                "fmt": "%.2f",
                 "label_font_size": 9,
             },
         )
